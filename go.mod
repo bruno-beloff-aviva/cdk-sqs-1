@@ -3,6 +3,7 @@ module sqstest
 go 1.23.4
 
 require (
+	github.com/aws/aws-cdk-go/awscdk v1.204.0-devpreview
 	github.com/aws/aws-cdk-go/awscdk/v2 v2.178.1
 	github.com/aws/aws-cdk-go/awscdklambdagoalpha/v2 v2.178.1-alpha.0
 	github.com/aws/aws-lambda-go v1.47.0
@@ -14,6 +15,8 @@ require (
 	github.com/joerdav/zapray v0.0.28
 	go.uber.org/zap v1.27.0
 )
+
+require github.com/aws/constructs-go/constructs/v3 v3.4.232 // indirect
 
 require (
 	github.com/Masterminds/semver/v3 v3.3.1 // indirect

@@ -6,10 +6,14 @@
 package main
 
 import (
+	sqs "sqstest/sqsaviva"
+
 	"github.com/aws/aws-cdk-go/awscdk/v2"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awsapigateway"
+	"github.com/aws/aws-cdk-go/awscdk/v2/awskms"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awslambda"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awslogs"
+	"github.com/aws/aws-cdk-go/awscdk/v2/awssqs"
 	awslambdago "github.com/aws/aws-cdk-go/awscdklambdagoalpha/v2"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/constructs-go/constructs/v10"
@@ -64,6 +68,28 @@ type CdkWorkshopStackProps struct {
 // 	return s3.NewPrivateS3Bucket(props)
 // }
 
+func NewTestQueue(stack awscdk.Stack) awssqs.IQueue {
+	queueKey := awskms.NewKey(stack, aws.String("queueKey"), &awskms.KeyProps{
+		Alias:             jsii.String("testQueueKey"),
+		EnableKeyRotation: jsii.Bool(true),
+	})
+
+	documentDeliveryQueue := sqs.NewSqsQueueWithDLQ(sqs.SqsQueueWithDLQProps{
+		Stack:                    stack,
+		QueueName:                "TestQueue",
+		SQSKey:                   queueKey,
+		QMaxReceiveCount:         3,
+		QAlarmPeriod:             1,
+		QAlarmThreshold:          1,
+		QAlarmEvaluationPeriod:   1,
+		DLQAlarmPeriod:           1,
+		DLQAlarmThreshold:        1,
+		DLQAlarmEvaluationPeriod: 1,
+	})
+
+	return documentDeliveryQueue
+}
+
 func NewPublishHandler(stack awscdk.Stack, lambdaEnv map[string]*string) awslambdago.GoFunction {
 	publishHandler := awslambdago.NewGoFunction(stack, aws.String(handlerId), &awslambdago.GoFunctionProps{
 		Runtime:       awslambda.Runtime_PROVIDED_AL2(),
@@ -74,6 +100,10 @@ func NewPublishHandler(stack awscdk.Stack, lambdaEnv map[string]*string) awslamb
 		LogRetention:  awslogs.RetentionDays_FIVE_DAYS,
 		Environment:   &lambdaEnv,
 	})
+
+	// Environment: &map[string]*string{
+	// 	"DOCUMENT_DELIVERY_QUEUE_URL": documentDeliveryQueue.QueueUrl(),
+	// },
 
 	return publishHandler
 }
@@ -87,13 +117,18 @@ func NewSQSWorkshopStack(scope constructs.Construct, id string, props *CdkWorksh
 	//	stack...
 	stack := awscdk.NewStack(scope, &id, &sprops)
 
+	// queue...
+	queue := NewTestQueue(stack)
+
 	// lambda...
 	lambdaEnv := map[string]*string{
 		"VERSION":   aws.String(version),
-		"QUEUE_URL": aws.String(queueName), // TODO: fix this
+		"QUEUE_URL": queue.QueueUrl(),
 	}
 
 	publishHandler := NewPublishHandler(stack, lambdaEnv)
+
+	queue.GrantSendMessages(publishHandler)
 
 	// bucket...
 	// bucket := NewHelloBucket(stack, bucketId, bucketName)
