@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/aviva-verde/cdk-standards/alerts"
 	"github.com/aws/aws-cdk-go/awscdk/v2"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awscloudwatch"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awscloudwatchactions"
@@ -46,21 +45,21 @@ func NewDeadletterQueue(stack awscdk.Stack, lambdaName string, props DeadLetterQ
 		TreatMissingData:   awscloudwatch.TreatMissingData_IGNORE,
 	})
 
-	if !props.ExcludeAlarms {
-		alerts.CreateDailyDLQAlarm(alerts.DailyDLQAlarmProps{
-			Stack:  stack,
-			ID:     lambdaName + "DailyDLQAlarm",
-			DLQ:    dlq,
-			Topics: props.Topics,
-		})
+	// if !props.ExcludeAlarms {
+	// 	alerts.CreateDailyDLQAlarm(alerts.DailyDLQAlarmProps{
+	// 		Stack:  stack,
+	// 		ID:     lambdaName + "DailyDLQAlarm",
+	// 		DLQ:    dlq,
+	// 		Topics: props.Topics,
+	// 	})
 
-		alerts.CreateDLQRateAlarm(alerts.DLQRateAlarmProps{
-			Stack:  stack,
-			ID:     lambdaName + "DLQRateAlarm",
-			DLQ:    dlq,
-			Topics: props.Topics,
-		})
-	}
+	// 	alerts.CreateDLQRateAlarm(alerts.DLQRateAlarmProps{
+	// 		Stack:  stack,
+	// 		ID:     lambdaName + "DLQRateAlarm",
+	// 		DLQ:    dlq,
+	// 		Topics: props.Topics,
+	// 	})
+	// }
 
 	for _, topic := range props.Topics {
 		dlqMetricAlarm.AddAlarmAction(awscloudwatchactions.NewSnsAction(topic))
@@ -106,23 +105,23 @@ func NewDeadLetterQueueV2(stack awscdk.Stack, lambdaName string, props DeadLette
 		TreatMissingData:   awscloudwatch.TreatMissingData_IGNORE,
 	})
 
-	if !props.ExcludeDailyAlarm {
-		alerts.CreateDailyDLQAlarm(alerts.DailyDLQAlarmProps{
-			Stack:  stack,
-			ID:     lambdaName + "DailyDLQAlarm",
-			DLQ:    dlq,
-			Topics: props.Topics,
-		})
-	}
+	// if !props.ExcludeDailyAlarm {
+	// 	alerts.CreateDailyDLQAlarm(alerts.DailyDLQAlarmProps{
+	// 		Stack:  stack,
+	// 		ID:     lambdaName + "DailyDLQAlarm",
+	// 		DLQ:    dlq,
+	// 		Topics: props.Topics,
+	// 	})
+	// }
 
-	if !props.ExcludeRateAlarm {
-		alerts.CreateDLQRateAlarm(alerts.DLQRateAlarmProps{
-			Stack:  stack,
-			ID:     lambdaName + "DLQRateAlarm",
-			DLQ:    dlq,
-			Topics: props.Topics,
-		})
-	}
+	// if !props.ExcludeRateAlarm {
+	// 	alerts.CreateDLQRateAlarm(alerts.DLQRateAlarmProps{
+	// 		Stack:  stack,
+	// 		ID:     lambdaName + "DLQRateAlarm",
+	// 		DLQ:    dlq,
+	// 		Topics: props.Topics,
+	// 	})
+	// }
 
 	for _, topic := range props.Topics {
 		dlqMetricAlarm.AddAlarmAction(awscloudwatchactions.NewSnsAction(topic))

@@ -3,7 +3,6 @@
 package sqs
 
 import (
-	"github.com/aviva-verde/cdk-standards/alerts"
 	"github.com/aws/aws-cdk-go/awscdk/v2"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awscloudwatch"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awscloudwatchactions"
@@ -102,19 +101,19 @@ func NewSqsQueueWithDLQ(props SqsQueueWithDLQProps) awssqs.IQueue {
 		a.AddAlarmAction(awscloudwatchactions.NewSnsAction(topic))
 	}
 
-	alerts.CreateDLQRateAlarm(alerts.DLQRateAlarmProps{
-		Stack:  props.Stack,
-		ID:     props.QueueName + "DLQRateAlarm",
-		DLQ:    dlq,
-		Topics: props.DLQAlertTopics,
-	})
+	// alerts.CreateDLQRateAlarm(alerts.DLQRateAlarmProps{
+	// 	Stack:  props.Stack,
+	// 	ID:     props.QueueName + "DLQRateAlarm",
+	// 	DLQ:    dlq,
+	// 	Topics: props.DLQAlertTopics,
+	// })
 
-	alerts.CreateDailyDLQAlarm(alerts.DailyDLQAlarmProps{
-		Stack:  props.Stack,
-		ID:     props.QueueName + "DailyDLQAlarm",
-		DLQ:    dlq,
-		Topics: props.DLQAlertTopics,
-	})
+	// alerts.CreateDailyDLQAlarm(alerts.DailyDLQAlarmProps{
+	// 	Stack:  props.Stack,
+	// 	ID:     props.QueueName + "DailyDLQAlarm",
+	// 	DLQ:    dlq,
+	// 	Topics: props.DLQAlertTopics,
+	// })
 
 	// Queue Alarm
 	awscloudwatch.NewAlarm(props.Stack, aws.String(props.QueueName+"Alarm"), &awscloudwatch.AlarmProps{

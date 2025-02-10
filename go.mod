@@ -3,7 +3,6 @@ module sqstest
 go 1.23.4
 
 require (
-	github.com/aviva-verde/cdk-standards v1.27.0
 	github.com/aws/aws-cdk-go/awscdk/v2 v2.178.1
 	github.com/aws/aws-cdk-go/awscdklambdagoalpha/v2 v2.178.1-alpha.0
 	github.com/aws/aws-lambda-go v1.47.0
