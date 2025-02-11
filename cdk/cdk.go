@@ -6,6 +6,7 @@
 package main
 
 import (
+	apigateway "sqstest/aviva/apigateway"
 	sqs "sqstest/aviva/sqs"
 
 	"github.com/aws/aws-cdk-go/awscdk/v2"
@@ -107,9 +108,17 @@ func NewSubscribeHandler(stack awscdk.Stack) awslambdago.GoFunction {
 }
 
 func NewAPIGateway(stack awscdk.Stack, handler awslambdago.GoFunction) awsapigateway.LambdaRestApi {
-	restApiProps := awsapigateway.LambdaRestApiProps{Handler: handler}
+	props := apigateway.PublicAPIGatewayProps{}
 
-	return awsapigateway.NewLambdaRestApi(stack, aws.String(endpointId), &restApiProps)
+	props.Stack = stack
+	props.Name = endpointId
+	props.Description = "API Gateway for SQS testing"
+	props.DefaultHandler = handler
+
+	return apigateway.NewPublicAPIGateway(props)
+
+	// restApiProps := awsapigateway.LambdaRestApiProps{Handler: handler}
+	// return awsapigateway.NewLambdaRestApi(stack, aws.String(endpointId), &restApiProps)
 }
 
 func NewSQSWorkshopStack(scope constructs.Construct, id string, props *CdkWorkshopStackProps) awscdk.Stack {
