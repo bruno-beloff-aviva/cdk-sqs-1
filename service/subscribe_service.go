@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"sqstest/service/testmessage"
 	"sqstest/sqsmanager"
+	"strings"
+	"time"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -44,6 +46,24 @@ func (m SubscribeService) Process(record events.SQSMessage) (err error) {
 	}
 
 	m.logger.Info("Process: ", zap.Any("message", message))
+
+	// sleep...
+	if strings.Contains(message.Path, "sleep") {
+		m.logger.Info("*** sleep")
+		time.Sleep(10 * time.Second)
+	}
+
+	// error...
+	if strings.Contains(message.Path, "error") {
+		m.logger.Info("*** error")
+		return err
+	}
+
+	// panic...
+	if strings.Contains(message.Path, "panic") {
+		m.logger.Info("*** panic")
+		panic(message.Path)
+	}
 
 	return nil
 }
