@@ -2,6 +2,8 @@ package service
 
 import (
 	"context"
+	"encoding/json"
+	"sqstest/service/testmessage"
 	"sqstest/sqsmanager"
 
 	"github.com/joerdav/zapray"
@@ -18,9 +20,16 @@ func NewPublishService(logger *zapray.Logger, sqsManager sqsmanager.SQSManager, 
 	return PublishService{logger: logger, sqsManager: sqsManager, queueUrl: queueUrl}
 }
 
-func (m PublishService) Publish(ctx context.Context, clientId string) (message string, err error) {
+func (m PublishService) Publish(ctx context.Context, clientId string) (string, error) {
 	m.logger.Info("Publish", zap.String("clientId", clientId))
-	message = "Message from " + clientId // TDOO: add datetime to the message
+	message := testmessage.NewTestMessage(clientId)
 
-	return message, m.sqsManager.Publish(ctx, m.queueUrl, message)
+	jmsg, err := json.Marshal(message)
+	strmsg := string(jmsg)
+
+	if err != nil {
+		panic(err)
+	}
+
+	return strmsg, m.sqsManager.Publish(ctx, m.queueUrl, strmsg)
 }
