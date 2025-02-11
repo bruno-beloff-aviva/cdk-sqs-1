@@ -108,12 +108,16 @@ func NewSubscribeHandler(stack awscdk.Stack) awslambdago.GoFunction {
 }
 
 func NewAPIGateway(stack awscdk.Stack, handler awslambdago.GoFunction) awsapigateway.LambdaRestApi {
-	props := apigateway.PublicAPIGatewayProps{}
+	cors := awsapigateway.CorsOptions{
+		AllowOrigins: &[]*string{},
+	}
 
+	props := apigateway.PublicAPIGatewayProps{}
 	props.Stack = stack
 	props.Name = endpointId
 	props.Description = "API Gateway for SQS testing"
 	props.DefaultHandler = handler
+	props.DefaultCorsPreflightOptions = cors
 
 	return apigateway.NewPublicAPIGateway(props)
 
