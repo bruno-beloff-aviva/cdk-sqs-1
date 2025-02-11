@@ -108,6 +108,9 @@ func NewSubscribeHandler(stack awscdk.Stack) awslambdago.GoFunction {
 }
 
 func NewAPIGateway(stack awscdk.Stack, handler awslambdago.GoFunction) awsapigateway.LambdaRestApi {
+
+	// https://stackoverflow.com/questions/61613801/cdk-deployment-api-gateway-cloudwatch-logs-role-arn-must-be-set-in-account-set
+
 	corsOptions := awsapigateway.CorsOptions{
 		AllowOrigins: awsapigateway.Cors_ALL_ORIGINS(),
 		AllowMethods: awsapigateway.Cors_ALL_METHODS(),
