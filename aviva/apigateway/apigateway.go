@@ -38,9 +38,9 @@ func NewPublicAPIGateway(props PublicAPIGatewayProps) awsapigateway.LambdaRestAp
 		Description:                 jsii.String(props.Description),
 		EndpointExportName:          nil,
 		EndpointTypes:               props.EndpointTypes,
-		EndpointConfiguration: &awsapigateway.EndpointConfiguration{
-			Types: props.EndpointTypes,
-		},
+		// EndpointConfiguration: &awsapigateway.EndpointConfiguration{
+		// 	Types: props.EndpointTypes,
+		// },
 		Handler: props.DefaultHandler,
 		Proxy:   jsii.Bool(false),
 		DeployOptions: &awsapigateway.StageOptions{
