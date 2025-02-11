@@ -28,7 +28,8 @@ const version = "0.0.3"
 
 const queueName = "TestQueue"
 
-const handlerId = project + "PublishHandler"
+const publishHandlerId = project + "PublishHandler"
+const subscribeHandlerId = project + "SubscribeHandler"
 const endpointId = project + "PublishEndpoint"
 const stackId = project + "Stack"
 
@@ -72,10 +73,10 @@ func NewTestQueue(stack awscdk.Stack) awssqs.IQueue {
 }
 
 func NewPublishHandler(stack awscdk.Stack, lambdaEnv map[string]*string) awslambdago.GoFunction {
-	handler := awslambdago.NewGoFunction(stack, aws.String(handlerId), &awslambdago.GoFunctionProps{
+	handler := awslambdago.NewGoFunction(stack, aws.String(publishHandlerId), &awslambdago.GoFunctionProps{
 		Runtime:       awslambda.Runtime_PROVIDED_AL2(),
 		Architecture:  awslambda.Architecture_ARM_64(),
-		Entry:         aws.String("lambda/publish/"),
+		Entry:         aws.String("lambda/"),
 		Timeout:       awscdk.Duration_Seconds(aws.Float64(29)),
 		LoggingFormat: awslambda.LoggingFormat_JSON,
 		LogRetention:  awslogs.RetentionDays_FIVE_DAYS,
@@ -90,10 +91,10 @@ func NewPublishHandler(stack awscdk.Stack, lambdaEnv map[string]*string) awslamb
 }
 
 func NewSubscribeHandler(stack awscdk.Stack, lambdaEnv map[string]*string) awslambdago.GoFunction {
-	handler := awslambdago.NewGoFunction(stack, aws.String(handlerId), &awslambdago.GoFunctionProps{
+	handler := awslambdago.NewGoFunction(stack, aws.String(subscribeHandlerId), &awslambdago.GoFunctionProps{
 		Runtime:       awslambda.Runtime_PROVIDED_AL2(),
 		Architecture:  awslambda.Architecture_ARM_64(),
-		Entry:         aws.String("lambda/subscribe/"),
+		Entry:         aws.String("lambda/"),
 		Timeout:       awscdk.Duration_Seconds(aws.Float64(29)),
 		LoggingFormat: awslambda.LoggingFormat_JSON,
 		LogRetention:  awslogs.RetentionDays_FIVE_DAYS,
