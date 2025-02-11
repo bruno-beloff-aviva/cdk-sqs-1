@@ -59,7 +59,6 @@ func NewTestQueue(stack awscdk.Stack) awssqs.IQueue {
 		Stack:                    stack,
 		QueueName:                queueName,
 		SQSKey:                   queueKey,
-		Fifo:                     true,
 		QMaxReceiveCount:         3,
 		QAlarmPeriod:             1,
 		QAlarmThreshold:          1,
@@ -68,6 +67,7 @@ func NewTestQueue(stack awscdk.Stack) awssqs.IQueue {
 		DLQAlarmThreshold:        1,
 		DLQAlarmEvaluationPeriod: 1,
 	})
+	// Fifo:                     true,
 
 	return messageQueue
 }
