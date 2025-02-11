@@ -15,13 +15,13 @@ type SQSManager struct {
 }
 
 func NewSQSManager(logger *zapray.Logger, cfg aws.Config) SQSManager {
-
 	sqsClient := sqs.NewFromConfig(cfg)
+
 	return SQSManager{logger: logger, sqsClient: sqsClient}
 }
 
 func (m SQSManager) Publish(ctx context.Context, queueUrl string, message string) error {
-	m.logger.Info("Publish", zap.String("queueUrl", queueUrl))
+	m.logger.Debug("Publish", zap.String("queueUrl", queueUrl))
 
 	m.sqsClient.SendMessage(ctx, &sqs.SendMessageInput{
 		MessageBody: &message,

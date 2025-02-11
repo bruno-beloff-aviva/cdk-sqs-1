@@ -58,7 +58,7 @@ func NewTestQueue(stack awscdk.Stack) awssqs.IQueue {
 		Stack:                    stack,
 		QueueName:                queueName,
 		SQSKey:                   queueKey,
-		QMaxReceiveCount:         3,
+		QMaxReceiveCount:         10,
 		QAlarmPeriod:             1,
 		QAlarmThreshold:          1,
 		QAlarmEvaluationPeriod:   1,

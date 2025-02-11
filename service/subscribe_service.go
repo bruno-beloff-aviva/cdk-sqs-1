@@ -21,6 +21,7 @@ type SubscribeService struct {
 
 func NewSubscribeService(logger *zapray.Logger, cfg aws.Config) SubscribeService {
 	sqsManager := sqsmanager.NewSQSManager(logger, cfg)
+
 	return SubscribeService{logger: logger, sqsManager: sqsManager}
 }
 

@@ -19,6 +19,7 @@ type PublishService struct {
 
 func NewPublishService(logger *zapray.Logger, cfg aws.Config, queueUrl string) PublishService {
 	sqsManager := sqsmanager.NewSQSManager(logger, cfg)
+
 	return PublishService{logger: logger, sqsManager: sqsManager, queueUrl: queueUrl}
 }
 
