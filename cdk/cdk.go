@@ -12,6 +12,7 @@ import (
 	"github.com/aws/aws-cdk-go/awscdk/v2/awsapigateway"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awskms"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awslambda"
+	"github.com/aws/aws-cdk-go/awscdk/v2/awslambdaeventsources"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awslogs"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awssqs"
 	awslambdago "github.com/aws/aws-cdk-go/awscdklambdagoalpha/v2"
@@ -47,25 +48,6 @@ type CdkWorkshopStackProps struct {
 // 	return table
 // }
 
-// func NewHelloBucket(stack awscdk.Stack, id string, name string) awss3.IBucket {
-// 	logConfig := s3.BucketLogConfiguration{
-// 		BucketName: name,
-// 		Region:     region,
-// 		LogPrefix:  logPrefix,
-// 	}
-
-// 	props := s3.BucketProps{
-// 		Stack:              stack,
-// 		Name:               id,
-// 		OverrideBucketName: aws.String(name),
-// 		Versioned:          false,
-// 		EventBridgeEnabled: false,
-// 		LogConfiguration:   logConfig,
-// 	}
-
-// 	return s3.NewPrivateS3Bucket(props)
-// }
-
 func NewTestQueue(stack awscdk.Stack) awssqs.IQueue {
 	queueKey := awskms.NewKey(stack, aws.String("queueKey"), &awskms.KeyProps{
 		Alias:             jsii.String("testQueueKey"),
@@ -76,6 +58,7 @@ func NewTestQueue(stack awscdk.Stack) awssqs.IQueue {
 		Stack:                    stack,
 		QueueName:                queueName,
 		SQSKey:                   queueKey,
+		Fifo:                     true,
 		QMaxReceiveCount:         3,
 		QAlarmPeriod:             1,
 		QAlarmThreshold:          1,
@@ -89,10 +72,10 @@ func NewTestQueue(stack awscdk.Stack) awssqs.IQueue {
 }
 
 func NewPublishHandler(stack awscdk.Stack, lambdaEnv map[string]*string) awslambdago.GoFunction {
-	publishHandler := awslambdago.NewGoFunction(stack, aws.String(handlerId), &awslambdago.GoFunctionProps{
+	handler := awslambdago.NewGoFunction(stack, aws.String(handlerId), &awslambdago.GoFunctionProps{
 		Runtime:       awslambda.Runtime_PROVIDED_AL2(),
 		Architecture:  awslambda.Architecture_ARM_64(),
-		Entry:         aws.String("lambda/"),
+		Entry:         aws.String("lambda/publish/"),
 		Timeout:       awscdk.Duration_Seconds(aws.Float64(29)),
 		LoggingFormat: awslambda.LoggingFormat_JSON,
 		LogRetention:  awslogs.RetentionDays_FIVE_DAYS,
@@ -103,7 +86,25 @@ func NewPublishHandler(stack awscdk.Stack, lambdaEnv map[string]*string) awslamb
 	// 	"DOCUMENT_DELIVERY_QUEUE_URL": documentDeliveryQueue.QueueUrl(),
 	// },
 
-	return publishHandler
+	return handler
+}
+
+func NewSubscribeHandler(stack awscdk.Stack, lambdaEnv map[string]*string) awslambdago.GoFunction {
+	handler := awslambdago.NewGoFunction(stack, aws.String(handlerId), &awslambdago.GoFunctionProps{
+		Runtime:       awslambda.Runtime_PROVIDED_AL2(),
+		Architecture:  awslambda.Architecture_ARM_64(),
+		Entry:         aws.String("lambda/subscribe/"),
+		Timeout:       awscdk.Duration_Seconds(aws.Float64(29)),
+		LoggingFormat: awslambda.LoggingFormat_JSON,
+		LogRetention:  awslogs.RetentionDays_FIVE_DAYS,
+		Environment:   &lambdaEnv,
+	})
+
+	// Environment: &map[string]*string{
+	// 	"DOCUMENT_DELIVERY_QUEUE_URL": documentDeliveryQueue.QueueUrl(),
+	// },
+
+	return handler
 }
 
 func NewSQSWorkshopStack(scope constructs.Construct, id string, props *CdkWorkshopStackProps) awscdk.Stack {
@@ -118,7 +119,7 @@ func NewSQSWorkshopStack(scope constructs.Construct, id string, props *CdkWorksh
 	// queue...
 	queue := NewTestQueue(stack)
 
-	// publish lambda...
+	// lambdas...
 	lambdaEnv := map[string]*string{
 		"VERSION":   aws.String(version),
 		"QUEUE_URL": queue.QueueUrl(),
@@ -127,7 +128,9 @@ func NewSQSWorkshopStack(scope constructs.Construct, id string, props *CdkWorksh
 	publishHandler := NewPublishHandler(stack, lambdaEnv)
 	queue.GrantSendMessages(publishHandler)
 
-	// subscribe lambda...
+	subscribeHandler := NewSubscribeHandler(stack, lambdaEnv)
+	subscribeHandler.AddEventSource(awslambdaeventsources.NewSqsEventSource(queue, &awslambdaeventsources.SqsEventSourceProps{}))
+	queue.GrantConsumeMessages(subscribeHandler)
 
 	// gateway...
 	restApiProps := awsapigateway.LambdaRestApiProps{Handler: publishHandler}
