@@ -94,7 +94,7 @@ func NewSubscribeHandler(stack awscdk.Stack, lambdaEnv map[string]*string) awsla
 	handler := awslambdago.NewGoFunction(stack, aws.String(subscribeHandlerId), &awslambdago.GoFunctionProps{
 		Runtime:       awslambda.Runtime_PROVIDED_AL2(),
 		Architecture:  awslambda.Architecture_ARM_64(),
-		Entry:         aws.String("lambda/subcribe/"),
+		Entry:         aws.String("lambda/subscribe/"),
 		Timeout:       awscdk.Duration_Seconds(aws.Float64(29)),
 		LoggingFormat: awslambda.LoggingFormat_JSON,
 		LogRetention:  awslogs.RetentionDays_FIVE_DAYS,
