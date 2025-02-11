@@ -7,8 +7,7 @@ package main
 import (
 	"context"
 	"os"
-	"sqstest/lambda/publish"
-	"sqstest/lambda/subscribe"
+	"sqstest/lambda/publish/publisher"
 	"sqstest/service"
 	"sqstest/sqsmanager"
 
@@ -42,18 +41,11 @@ func main() {
 
 	//	services...
 	publishService := service.NewPublishService(logger, sqsManager, queueUrl)
-	subscribeService := service.NewSubscribeService(logger, sqsManager, queueUrl)
 
-	//	lambdas...
-	publishHandler := publish.NewPublishHandler(logger, publishService)
+	//	lambda...
+	publishHandler := publisher.NewPublishHandler(logger, publishService)
 
 	lambda.StartWithOptions(publishHandler.Handle, lambda.WithEnableSIGTERM(func() {
-		logger.Info("Lambda container shutting down.")
-	}))
-
-	subscribeHandler := subscribe.NewSubscribeHandler(logger, subscribeService)
-
-	lambda.StartWithOptions(subscribeHandler.Handle, lambda.WithEnableSIGTERM(func() {
 		logger.Info("Lambda container shutting down.")
 	}))
 }

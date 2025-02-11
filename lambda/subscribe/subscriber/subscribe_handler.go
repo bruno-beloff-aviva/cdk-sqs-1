@@ -1,6 +1,6 @@
 // https://docs.aws.amazon.com/code-library/latest/ug/go_2_sqs_code_examples.html
 
-package subscribe
+package subscriber
 
 import (
 	"fmt"
