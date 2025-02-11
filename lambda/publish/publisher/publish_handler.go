@@ -25,7 +25,7 @@ func NewPublishHandler(logger *zapray.Logger, publishService service.PublishServ
 }
 
 func (h PublishHandler) Handle(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
-	h.logger.Info("Handle: ", zap.String("request", fmt.Sprintf("%v", request)))
+	h.logger.Debug("Handle: ", zap.String("request", fmt.Sprintf("%v", request)))
 
 	sourceIP := request.RequestContext.Identity.SourceIP
 	message, err := h.publishService.Publish(ctx, sourceIP, request.Path)

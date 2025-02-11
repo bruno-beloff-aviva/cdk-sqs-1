@@ -23,7 +23,7 @@ func NewPublishService(logger *zapray.Logger, cfg aws.Config, queueUrl string) P
 }
 
 func (m PublishService) Publish(ctx context.Context, clientId string, path string) (string, error) {
-	m.logger.Info("Publish", zap.String("clientId", clientId))
+	m.logger.Debug("Publish", zap.String("clientId", clientId))
 
 	message := testmessage.NewTestMessage(clientId, path)
 
@@ -33,6 +33,8 @@ func (m PublishService) Publish(ctx context.Context, clientId string, path strin
 	if err != nil {
 		panic(err)
 	}
+
+	m.logger.Info("Publish", zap.Any("message", message))
 
 	return strmsg, m.sqsManager.Publish(ctx, m.queueUrl, strmsg)
 }

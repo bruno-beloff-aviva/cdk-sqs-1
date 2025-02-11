@@ -35,7 +35,7 @@ func NewSubscribeService(logger *zapray.Logger, cfg aws.Config) SubscribeService
 // }
 
 func (m SubscribeService) Process(record events.SQSMessage) (err error) {
-	m.logger.Info("Process", zap.String("record body", record.Body))
+	m.logger.Debug("Process", zap.String("record body", record.Body))
 	var message testmessage.TestMessage
 
 	err = json.Unmarshal([]byte(record.Body), &message)

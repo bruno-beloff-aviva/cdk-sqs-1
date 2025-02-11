@@ -24,12 +24,9 @@ import (
 )
 
 const project = "SQS1"
-const version = "0.0.3"
-
-// const region = "eu-west-2"
+const version = "0.0.4"
 
 const queueName = "TestQueue"
-
 const publishHandlerId = project + "PublishHandler"
 const subscribeHandlerId = project + "SubscribeHandler"
 const endpointId = project + "PublishEndpoint"
