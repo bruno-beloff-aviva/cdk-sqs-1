@@ -112,12 +112,18 @@ func NewAPIGateway(stack awscdk.Stack, handler awslambdago.GoFunction) awsapigat
 		AllowOrigins: &[]*string{},
 	}
 
+	endpointType := []awsapigateway.EndpointType{
+		awsapigateway.EndpointType_REGIONAL,
+	}
+
 	props := apigateway.PublicAPIGatewayProps{}
 	props.Stack = stack
 	props.Name = endpointId
 	props.Description = "API Gateway for SQS testing"
 	props.DefaultHandler = handler
+
 	props.DefaultCorsPreflightOptions = cors
+	props.EndpointTypes = &endpointType
 
 	return apigateway.NewPublicAPIGateway(props)
 
