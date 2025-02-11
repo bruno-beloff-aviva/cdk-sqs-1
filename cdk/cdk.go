@@ -21,13 +21,11 @@ import (
 )
 
 const project = "SQS1"
-const version = "0.0.2"
+const version = "0.0.3"
 
 // const region = "eu-west-2"
 
 const queueName = "TestQueue"
-
-// const queueId = project + queueName
 
 const handlerId = project + "PublishHandler"
 const endpointId = project + "PublishEndpoint"
@@ -74,9 +72,9 @@ func NewTestQueue(stack awscdk.Stack) awssqs.IQueue {
 		EnableKeyRotation: jsii.Bool(true),
 	})
 
-	documentDeliveryQueue := sqs.NewSqsQueueWithDLQ(sqs.SqsQueueWithDLQProps{
+	messageQueue := sqs.NewSqsQueueWithDLQ(sqs.SqsQueueWithDLQProps{
 		Stack:                    stack,
-		QueueName:                "TestQueue",
+		QueueName:                queueName,
 		SQSKey:                   queueKey,
 		QMaxReceiveCount:         3,
 		QAlarmPeriod:             1,
@@ -87,7 +85,7 @@ func NewTestQueue(stack awscdk.Stack) awssqs.IQueue {
 		DLQAlarmEvaluationPeriod: 1,
 	})
 
-	return documentDeliveryQueue
+	return messageQueue
 }
 
 func NewPublishHandler(stack awscdk.Stack, lambdaEnv map[string]*string) awslambdago.GoFunction {
@@ -120,23 +118,16 @@ func NewSQSWorkshopStack(scope constructs.Construct, id string, props *CdkWorksh
 	// queue...
 	queue := NewTestQueue(stack)
 
-	// lambda...
+	// publish lambda...
 	lambdaEnv := map[string]*string{
 		"VERSION":   aws.String(version),
 		"QUEUE_URL": queue.QueueUrl(),
 	}
 
 	publishHandler := NewPublishHandler(stack, lambdaEnv)
-
 	queue.GrantSendMessages(publishHandler)
 
-	// bucket...
-	// bucket := NewHelloBucket(stack, bucketId, bucketName)
-	// bucket.GrantRead(helloHandler, nil)
-
-	// table...
-	// table := NewHitsTable(stack, tableId, tableName)
-	// table.GrantReadWriteData(helloHandler)
+	// subscribe lambda...
 
 	// gateway...
 	restApiProps := awsapigateway.LambdaRestApiProps{Handler: publishHandler}
