@@ -109,7 +109,8 @@ func NewSubscribeHandler(stack awscdk.Stack) awslambdago.GoFunction {
 
 func NewAPIGateway(stack awscdk.Stack, handler awslambdago.GoFunction) awsapigateway.LambdaRestApi {
 	corsOptions := awsapigateway.CorsOptions{
-		AllowOrigins: &[]*string{},
+		AllowOrigins: awsapigateway.Cors_ALL_ORIGINS(),
+		AllowMethods: awsapigateway.Cors_ALL_METHODS(),
 	}
 
 	endpointType := []awsapigateway.EndpointType{
