@@ -28,7 +28,7 @@ func (h PublishHandler) Handle(ctx context.Context, request events.APIGatewayPro
 	h.logger.Info("Handle: ", zap.String("request", fmt.Sprintf("%v", request)))
 
 	sourceIP := request.RequestContext.Identity.SourceIP
-	message, err := h.publishService.Publish(ctx, sourceIP)
+	message, err := h.publishService.Publish(ctx, sourceIP, request.Path)
 
 	if err != nil {
 		h.logger.Error("Publish error", zap.Error(err))

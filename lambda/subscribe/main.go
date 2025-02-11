@@ -9,7 +9,6 @@ import (
 	"os"
 	"sqstest/lambda/subscribe/subscriber"
 	"sqstest/service"
-	"sqstest/sqsmanager"
 
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -22,7 +21,7 @@ func main() {
 	if err1 != nil {
 		panic("failed to create logger: " + err1.Error())
 	}
-	logger.Info("*** main")
+	logger.Info("*** subscribe main")
 
 	//	context...
 	ctx := context.Background()
@@ -33,14 +32,11 @@ func main() {
 	}
 
 	//	environment...
-	queueUrl := os.Getenv("QUEUE_URL")
-	logger.Info("queueUrl: " + queueUrl)
+	version := os.Getenv("VERSION")
+	logger.Info("version: " + version)
 
-	//	managers...
-	sqsManager := sqsmanager.NewSQSManager(logger, cfg)
-
-	//	services...
-	subscribeService := service.NewSubscribeService(logger, sqsManager, queueUrl)
+	//	service...
+	subscribeService := service.NewSubscribeService(logger, cfg)
 
 	//	lambda...
 	subscribeHandler := subscriber.NewSubscribeHandler(logger, subscribeService)

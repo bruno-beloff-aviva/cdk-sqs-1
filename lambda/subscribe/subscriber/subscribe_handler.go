@@ -32,8 +32,9 @@ func (h SubscribeHandler) Handle(event events.SQSEvent) error {
 		if err != nil {
 			return err
 		}
+
+		// message = json.Unmarshal(record.Body)
 	}
-	h.logger.Info("Handle: done")
 
 	return nil
 }

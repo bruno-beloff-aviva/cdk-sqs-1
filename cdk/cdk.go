@@ -2,6 +2,7 @@
 
 // https://github.com/aviva-verde/cdk-standards.git
 // https://docs.aws.amazon.com/cdk/v2/guide/resources.html
+// https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_lambda_event_sources.SqsEventSource.html
 
 package main
 
@@ -72,38 +73,39 @@ func NewTestQueue(stack awscdk.Stack) awssqs.IQueue {
 	return messageQueue
 }
 
-func NewPublishHandler(stack awscdk.Stack, lambdaEnv map[string]*string) awslambdago.GoFunction {
+func NewPublishHandler(stack awscdk.Stack, queue awssqs.IQueue) awslambdago.GoFunction {
+	lambdaEnv := map[string]*string{
+		"VERSION":   aws.String(version),
+		"QUEUE_URL": queue.QueueUrl(),
+	}
+
 	handler := awslambdago.NewGoFunction(stack, aws.String(publishHandlerId), &awslambdago.GoFunctionProps{
 		Runtime:       awslambda.Runtime_PROVIDED_AL2(),
 		Architecture:  awslambda.Architecture_ARM_64(),
 		Entry:         aws.String("lambda/publish/"),
-		Timeout:       awscdk.Duration_Seconds(aws.Float64(29)),
+		Timeout:       awscdk.Duration_Seconds(aws.Float64(28)),
 		LoggingFormat: awslambda.LoggingFormat_JSON,
 		LogRetention:  awslogs.RetentionDays_FIVE_DAYS,
 		Environment:   &lambdaEnv,
 	})
-
-	// Environment: &map[string]*string{
-	// 	"DOCUMENT_DELIVERY_QUEUE_URL": documentDeliveryQueue.QueueUrl(),
-	// },
 
 	return handler
 }
 
-func NewSubscribeHandler(stack awscdk.Stack, lambdaEnv map[string]*string) awslambdago.GoFunction {
+func NewSubscribeHandler(stack awscdk.Stack) awslambdago.GoFunction {
+	lambdaEnv := map[string]*string{
+		"VERSION": aws.String(version),
+	}
+
 	handler := awslambdago.NewGoFunction(stack, aws.String(subscribeHandlerId), &awslambdago.GoFunctionProps{
 		Runtime:       awslambda.Runtime_PROVIDED_AL2(),
 		Architecture:  awslambda.Architecture_ARM_64(),
 		Entry:         aws.String("lambda/subscribe/"),
-		Timeout:       awscdk.Duration_Seconds(aws.Float64(29)),
+		Timeout:       awscdk.Duration_Seconds(aws.Float64(28)),
 		LoggingFormat: awslambda.LoggingFormat_JSON,
 		LogRetention:  awslogs.RetentionDays_FIVE_DAYS,
 		Environment:   &lambdaEnv,
 	})
-
-	// Environment: &map[string]*string{
-	// 	"DOCUMENT_DELIVERY_QUEUE_URL": documentDeliveryQueue.QueueUrl(),
-	// },
 
 	return handler
 }
@@ -121,15 +123,10 @@ func NewSQSWorkshopStack(scope constructs.Construct, id string, props *CdkWorksh
 	queue := NewTestQueue(stack)
 
 	// lambdas...
-	lambdaEnv := map[string]*string{
-		"VERSION":   aws.String(version),
-		"QUEUE_URL": queue.QueueUrl(),
-	}
-
-	publishHandler := NewPublishHandler(stack, lambdaEnv)
+	publishHandler := NewPublishHandler(stack, queue)
 	queue.GrantSendMessages(publishHandler)
 
-	subscribeHandler := NewSubscribeHandler(stack, lambdaEnv)
+	subscribeHandler := NewSubscribeHandler(stack)
 	subscribeHandler.AddEventSource(awslambdaeventsources.NewSqsEventSource(queue, &awslambdaeventsources.SqsEventSourceProps{}))
 	queue.GrantConsumeMessages(subscribeHandler)
 

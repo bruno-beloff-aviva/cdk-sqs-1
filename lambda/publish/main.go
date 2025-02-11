@@ -9,7 +9,6 @@ import (
 	"os"
 	"sqstest/lambda/publish/publisher"
 	"sqstest/service"
-	"sqstest/sqsmanager"
 
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -22,7 +21,7 @@ func main() {
 	if err1 != nil {
 		panic("failed to create logger: " + err1.Error())
 	}
-	logger.Info("*** main")
+	logger.Info("*** publish main")
 
 	//	context...
 	ctx := context.Background()
@@ -33,14 +32,14 @@ func main() {
 	}
 
 	//	environment...
+	version := os.Getenv("VERSION")
+	logger.Info("version: " + version)
+
 	queueUrl := os.Getenv("QUEUE_URL")
 	logger.Info("queueUrl: " + queueUrl)
 
-	//	managers...
-	sqsManager := sqsmanager.NewSQSManager(logger, cfg)
-
-	//	services...
-	publishService := service.NewPublishService(logger, sqsManager, queueUrl)
+	//	service...
+	publishService := service.NewPublishService(logger, cfg, queueUrl)
 
 	//	lambda...
 	publishHandler := publisher.NewPublishHandler(logger, publishService)

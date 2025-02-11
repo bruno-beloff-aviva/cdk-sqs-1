@@ -4,6 +4,7 @@ import (
 	"sqstest/sqsmanager"
 
 	"github.com/aws/aws-lambda-go/events"
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/joerdav/zapray"
 	"go.uber.org/zap"
 )
@@ -11,11 +12,11 @@ import (
 type SubscribeService struct {
 	logger     *zapray.Logger
 	sqsManager sqsmanager.SQSManager
-	queueUrl   string
 }
 
-func NewSubscribeService(logger *zapray.Logger, sqsManager sqsmanager.SQSManager, queueUrl string) SubscribeService {
-	return SubscribeService{logger: logger, sqsManager: sqsManager, queueUrl: queueUrl}
+func NewSubscribeService(logger *zapray.Logger, cfg aws.Config) SubscribeService {
+	sqsManager := sqsmanager.NewSQSManager(logger, cfg)
+	return SubscribeService{logger: logger, sqsManager: sqsManager}
 }
 
 // func  Publish(ctx context.Context, clientId string) (string, error) {
