@@ -2,6 +2,7 @@ package service
 
 import (
 	"encoding/json"
+	"errors"
 	"sqstest/service/testmessage"
 	"sqstest/sqsmanager"
 	"strings"
@@ -56,7 +57,7 @@ func (m SubscribeService) Process(record events.SQSMessage) (err error) {
 	// error...
 	if strings.Contains(message.Path, "error") {
 		m.logger.Info("*** error")
-		return err
+		return errors.New(message.Path)
 	}
 
 	// panic...

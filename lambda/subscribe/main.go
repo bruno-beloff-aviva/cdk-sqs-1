@@ -42,6 +42,6 @@ func main() {
 	subscribeHandler := subscriber.NewSubscribeHandler(logger, subscribeService)
 
 	lambda.StartWithOptions(subscribeHandler.Handle, lambda.WithEnableSIGTERM(func() {
-		logger.Info("Lambda container shutting down.")
+		logger.Info("<<< Lambda container shutting down.")
 	}))
 }

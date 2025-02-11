@@ -45,6 +45,6 @@ func main() {
 	publishHandler := publisher.NewPublishHandler(logger, publishService)
 
 	lambda.StartWithOptions(publishHandler.Handle, lambda.WithEnableSIGTERM(func() {
-		logger.Info("Lambda container shutting down.")
+		logger.Info("<<< Lambda container shutting down.")
 	}))
 }

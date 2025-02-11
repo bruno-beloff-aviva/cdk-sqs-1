@@ -27,6 +27,7 @@ func (h SubscribeHandler) Handle(event events.SQSEvent) (err error) {
 	for _, record := range event.Records {
 		err = h.subscribeService.Process(record)
 		if err != nil {
+			h.logger.Info("Handle: ", zap.String("err", err.Error()))
 			return err
 		}
 	}
