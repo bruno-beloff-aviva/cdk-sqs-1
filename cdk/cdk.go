@@ -23,7 +23,7 @@ import (
 )
 
 const project = "SQS1"
-const version = "0.0.7"
+const version = "0.0.8"
 
 const queueName = "TestQueue"
 const publishHandlerId = project + "PublishHandler"
