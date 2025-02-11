@@ -2,6 +2,7 @@
 
 // https://github.com/aviva-verde/cdk-standards.git
 // https://docs.aws.amazon.com/cdk/v2/guide/resources.html
+// https://docs.aws.amazon.com/code-library/latest/ug/go_2_sqs_code_examples.html
 // https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_lambda_event_sources.SqsEventSource.html
 
 package main

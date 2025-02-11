@@ -1,6 +1,8 @@
 package service
 
 import (
+	"encoding/json"
+	"sqstest/service/testmessage"
 	"sqstest/sqsmanager"
 
 	"github.com/aws/aws-lambda-go/events"
@@ -32,9 +34,16 @@ func NewSubscribeService(logger *zapray.Logger, cfg aws.Config) SubscribeService
 // 	return strmsg, m.sqsManager.Publish(ctx, m.queueUrl, strmsg)
 // }
 
-func (m SubscribeService) Process(record events.SQSMessage) error {
+func (m SubscribeService) Process(record events.SQSMessage) (err error) {
 	m.logger.Info("Process", zap.String("record body", record.Body))
+	var message testmessage.TestMessage
 
-	// TODO: Do interesting work based on the new message
+	err = json.Unmarshal([]byte(record.Body), &message)
+	if err != nil {
+		return err
+	}
+
+	m.logger.Info("Process: ", zap.Any("message", message))
+
 	return nil
 }

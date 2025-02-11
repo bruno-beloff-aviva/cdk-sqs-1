@@ -1,5 +1,3 @@
-// https://docs.aws.amazon.com/code-library/latest/ug/go_2_sqs_code_examples.html
-
 package subscriber
 
 import (
@@ -23,17 +21,14 @@ func NewSubscribeHandler(logger *zapray.Logger, subscribeService service.Subscri
 	}
 }
 
-func (h SubscribeHandler) Handle(event events.SQSEvent) error {
+func (h SubscribeHandler) Handle(event events.SQSEvent) (err error) {
 	h.logger.Info("Handle: ", zap.String("event", fmt.Sprintf("%v", event)))
 
 	for _, record := range event.Records {
-		err := h.subscribeService.Process(record)
-
+		err = h.subscribeService.Process(record)
 		if err != nil {
 			return err
 		}
-
-		// message = json.Unmarshal(record.Body)
 	}
 
 	return nil
