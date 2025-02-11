@@ -1,5 +1,3 @@
-// cdk deploy --profile bb
-
 // https://github.com/aviva-verde/cdk-standards.git
 // https://docs.aws.amazon.com/cdk/v2/guide/resources.html
 // https://docs.aws.amazon.com/code-library/latest/ug/go_2_sqs_code_examples.html
@@ -8,7 +6,7 @@
 package main
 
 import (
-	sqs "sqstest/sqsaviva"
+	sqs "sqstest/aviva/sqs"
 
 	"github.com/aws/aws-cdk-go/awscdk/v2"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awsapigateway"
@@ -18,13 +16,13 @@ import (
 	"github.com/aws/aws-cdk-go/awscdk/v2/awslogs"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awssqs"
 	awslambdago "github.com/aws/aws-cdk-go/awscdklambdagoalpha/v2"
-	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/constructs-go/constructs/v10"
 	"github.com/aws/jsii-runtime-go"
 )
 
 const project = "SQS1"
-const version = "0.0.6"
+const version = "0.0.7"
 
 const queueName = "TestQueue"
 const publishHandlerId = project + "PublishHandler"
@@ -108,6 +106,12 @@ func NewSubscribeHandler(stack awscdk.Stack) awslambdago.GoFunction {
 	return handler
 }
 
+func NewAPIGateway(stack awscdk.Stack, handler awslambdago.GoFunction) awsapigateway.LambdaRestApi {
+	restApiProps := awsapigateway.LambdaRestApiProps{Handler: handler}
+
+	return awsapigateway.NewLambdaRestApi(stack, aws.String(endpointId), &restApiProps)
+}
+
 func NewSQSWorkshopStack(scope constructs.Construct, id string, props *CdkWorkshopStackProps) awscdk.Stack {
 	var sprops awscdk.StackProps
 	if props != nil {
@@ -129,8 +133,7 @@ func NewSQSWorkshopStack(scope constructs.Construct, id string, props *CdkWorksh
 	queue.GrantConsumeMessages(subscribeHandler)
 
 	// gateway...
-	restApiProps := awsapigateway.LambdaRestApiProps{Handler: publishHandler}
-	awsapigateway.NewLambdaRestApi(stack, aws.String(endpointId), &restApiProps)
+	NewAPIGateway(stack, publishHandler)
 
 	return stack
 }
