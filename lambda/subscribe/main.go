@@ -21,7 +21,7 @@ func main() {
 	if err1 != nil {
 		panic("failed to create logger: " + err1.Error())
 	}
-	logger.Info("*** subscribe main")
+	logger.Info(">>> subscribe main")
 
 	//	context...
 	ctx := context.Background()

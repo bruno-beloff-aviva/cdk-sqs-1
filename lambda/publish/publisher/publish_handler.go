@@ -37,9 +37,9 @@ func (h PublishHandler) Handle(ctx context.Context, request events.APIGatewayPro
 	var resp response.Response
 
 	if err == nil {
-		resp = response.NewOKResponse(message)
+		resp = response.NewOKResponse(message.String())
 	} else {
-		resp = response.NewErrorResponse(err, message)
+		resp = response.NewErrorResponse(err, message.String())
 	}
 
 	return resp.APIResponse() // marshalErr is handled by the container

@@ -21,7 +21,7 @@ func main() {
 	if err1 != nil {
 		panic("failed to create logger: " + err1.Error())
 	}
-	logger.Info("*** publish main")
+	logger.Info(">>> publish main")
 
 	//	context...
 	ctx := context.Background()
