@@ -6,6 +6,7 @@ import (
 	"context"
 	"sqstest/lambda/response"
 	"sqstest/service"
+	"sqstest/service/testmessage"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/joerdav/zapray"
@@ -24,17 +25,18 @@ func NewPublishHandler(logger *zapray.Logger, publishService service.PublishServ
 	}
 }
 
-func (h PublishHandler) Handle(ctx context.Context, request events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+func (h PublishHandler) Handle(ctx context.Context, request events.APIGatewayProxyRequest) (apiResponse events.APIGatewayProxyResponse, err error) {
 	h.logger.Debug("Handle: ", zap.String("request", fmt.Sprintf("%v", request)))
 
+	var message testmessage.TestMessage
+	var resp response.Response
+
 	sourceIP := request.RequestContext.Identity.SourceIP
-	message, err := h.publishService.Publish(ctx, sourceIP, request.Path)
+	message, err = h.publishService.Publish(ctx, sourceIP, request.Path)
 
 	if err != nil {
 		h.logger.Error("Publish error", zap.Error(err))
 	}
-
-	var resp response.Response
 
 	if err == nil {
 		resp = response.NewOKResponse(message.String())
@@ -42,5 +44,10 @@ func (h PublishHandler) Handle(ctx context.Context, request events.APIGatewayPro
 		resp = response.NewErrorResponse(err, message.String())
 	}
 
-	return resp.APIResponse() // marshalErr is handled by the container
+	apiResponse, err = resp.APIResponse()
+	if err != nil {
+		h.logger.Error("APIResponse error", zap.Error(err))
+	}
+
+	return apiResponse, err
 }
