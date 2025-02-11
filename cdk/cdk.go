@@ -117,7 +117,7 @@ func NewAPIGateway(stack awscdk.Stack, handler awslambdago.GoFunction) awsapigat
 	}
 
 	endpointType := []awsapigateway.EndpointType{
-		awsapigateway.EndpointType_REGIONAL,
+		awsapigateway.EndpointType_PRIVATE,
 	}
 
 	props := apigateway.PublicAPIGatewayProps{}

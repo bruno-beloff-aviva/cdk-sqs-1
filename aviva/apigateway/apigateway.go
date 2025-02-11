@@ -34,7 +34,7 @@ type PrivateAPIGatewayProps struct {
 func NewPublicAPIGateway(props PublicAPIGatewayProps) awsapigateway.LambdaRestApi {
 	return awsapigateway.NewLambdaRestApi(props.Stack, jsii.String(props.Name), &awsapigateway.LambdaRestApiProps{
 		DefaultCorsPreflightOptions: &props.DefaultCorsPreflightOptions,
-		CloudWatchRole:              jsii.Bool(true), // BB
+		CloudWatchRole:              jsii.Bool(true), // BB - was false
 		Description:                 jsii.String(props.Description),
 		EndpointExportName:          nil,
 		EndpointTypes:               props.EndpointTypes,
