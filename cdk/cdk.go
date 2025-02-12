@@ -23,11 +23,11 @@ import (
 )
 
 const project = "SQS1"
-const version = "0.0.11"
+const version = "0.0.12"
 
 const queueName = "TestQueue"
 
-const tableName = "TestMessageTable"
+const tableName = "TestMessageTableV1"
 const tableId = project + tableName
 
 const publishHandlerId = project + "PublishHandler"
@@ -131,14 +131,14 @@ func NewAPIGateway(stack awscdk.Stack, handler awslambdago.GoFunction) awsapigat
 	return awsapigateway.NewLambdaRestApi(stack, aws.String(endpointId), &restApiProps)
 }
 
-func NewSQSWorkshopStack(scope constructs.Construct, id string, props *CdkWorkshopStackProps) awscdk.Stack {
+func NewSQSWorkshopStack(scope constructs.Construct, id string, props *CdkWorkshopStackProps) (stack awscdk.Stack) {
 	var sprops awscdk.StackProps
 	if props != nil {
 		sprops = props.StackProps
 	}
 
 	//	stack...
-	stack := awscdk.NewStack(scope, &id, &sprops)
+	stack = awscdk.NewStack(scope, &id, &sprops)
 
 	// queue...
 	queue := NewTestQueue(stack)
@@ -148,7 +148,8 @@ func NewSQSWorkshopStack(scope constructs.Construct, id string, props *CdkWorksh
 	queue.GrantSendMessages(publishHandler)
 
 	subscribeHandler := NewSubscribeHandler(stack)
-	subscribeHandler.AddEventSource(awslambdaeventsources.NewSqsEventSource(queue, &awslambdaeventsources.SqsEventSourceProps{}))
+	eventSourceProps := awslambdaeventsources.SqsEventSourceProps{}
+	subscribeHandler.AddEventSource(awslambdaeventsources.NewSqsEventSource(queue, &eventSourceProps))
 	queue.GrantConsumeMessages(subscribeHandler)
 
 	// gateway...
