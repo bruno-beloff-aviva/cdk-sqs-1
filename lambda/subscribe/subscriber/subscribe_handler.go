@@ -23,7 +23,9 @@ func NewSubscribeHandler(logger *zapray.Logger, subscribeService service.Subscri
 }
 
 func (h SubscribeHandler) Handle(ctx context.Context, event events.SQSEvent) (err error) {
-	h.logger.Info("Handle: ", zap.String("ctx", fmt.Sprintf("%v", ctx)), zap.String("event", fmt.Sprintf("%v", event)))
+	h.logger.Debug("Handle: ", zap.String("ctx", fmt.Sprintf("%v", ctx)), zap.String("event", fmt.Sprintf("%v", event)))
+
+	h.logger.Info("Handle: ", zap.Int("records", len(event.Records)))
 
 	for _, record := range event.Records {
 		err = h.subscribeService.Receive(ctx, record)

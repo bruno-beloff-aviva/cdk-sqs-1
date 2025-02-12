@@ -23,16 +23,19 @@ import (
 )
 
 const project = "SQS1"
-const version = "0.1.0"
+const version = "0.1.1"
 
 const queueName = "TestQueue"
+const queueMaxRetries = 5
 
 const tableName = "TestMessageTableV1"
 const tableId = project + tableName
 
 const publishHandlerId = project + "PublishHandler"
+const publishEndpointId = project + "PublishEndpoint"
+
 const subscribeHandlerId = project + "SubscribeHandler"
-const endpointId = project + "PublishEndpoint"
+
 const stackId = project + "Stack"
 
 type CdkWorkshopStackProps struct {
@@ -59,7 +62,7 @@ func NewTestQueue(stack awscdk.Stack) awssqs.IQueue {
 		Stack:                    stack,
 		QueueName:                queueName,
 		SQSKey:                   queueKey,
-		QMaxReceiveCount:         10,
+		QMaxReceiveCount:         queueMaxRetries,
 		QAlarmPeriod:             1,
 		QAlarmThreshold:          1,
 		QAlarmEvaluationPeriod:   1,
@@ -114,7 +117,7 @@ func NewSubscribeHandler(stack awscdk.Stack) awslambdago.GoFunction {
 func NewAPIGateway(stack awscdk.Stack, handler awslambdago.GoFunction) awsapigateway.LambdaRestApi {
 	stageOptions := awsapigateway.StageOptions{
 		StageName:        aws.String("prod"),
-		LoggingLevel:     awsapigateway.MethodLoggingLevel_INFO,
+		LoggingLevel:     awsapigateway.MethodLoggingLevel_ERROR,
 		TracingEnabled:   aws.Bool(true),
 		MetricsEnabled:   aws.Bool(true),
 		DataTraceEnabled: aws.Bool(true),
@@ -125,7 +128,7 @@ func NewAPIGateway(stack awscdk.Stack, handler awslambdago.GoFunction) awsapigat
 		DeployOptions: &stageOptions,
 	}
 
-	return awsapigateway.NewLambdaRestApi(stack, aws.String(endpointId), &restApiProps)
+	return awsapigateway.NewLambdaRestApi(stack, aws.String(publishEndpointId), &restApiProps)
 }
 
 func NewSQSWorkshopStack(scope constructs.Construct, id string, props *CdkWorkshopStackProps) (stack awscdk.Stack) {
