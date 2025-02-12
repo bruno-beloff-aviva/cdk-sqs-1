@@ -22,7 +22,7 @@ import (
 )
 
 const project = "SQS1"
-const version = "0.0.9"
+const version = "0.0.10"
 
 const queueName = "TestQueue"
 const publishHandlerId = project + "PublishHandler"
@@ -55,6 +55,7 @@ func NewTestQueue(stack awscdk.Stack) awssqs.IQueue {
 	messageQueue := sqs.NewSqsQueueWithDLQ(sqs.SqsQueueWithDLQProps{
 		Stack:                    stack,
 		QueueName:                queueName,
+		Fifo:                     true,
 		SQSKey:                   queueKey,
 		QMaxReceiveCount:         10,
 		QAlarmPeriod:             1,
@@ -64,7 +65,6 @@ func NewTestQueue(stack awscdk.Stack) awssqs.IQueue {
 		DLQAlarmThreshold:        1,
 		DLQAlarmEvaluationPeriod: 1,
 	})
-	// Fifo:                     true,
 
 	return messageQueue
 }
@@ -106,40 +106,13 @@ func NewSubscribeHandler(stack awscdk.Stack) awslambdago.GoFunction {
 	return handler
 }
 
-// func NewAPIGateway(stack awscdk.Stack, handler awslambdago.GoFunction) awsapigateway.LambdaRestApi {
-
-// 	// TODO: create a custom APIGateway configuration - use the aviva one / LambdaRestApiProps as a starting point
-
-// 	// https://stackoverflow.com/questions/61613801/cdk-deployment-api-gateway-cloudwatch-logs-role-arn-must-be-set-in-account-set
-
-// 	corsOptions := awsapigateway.CorsOptions{
-// 		AllowOrigins: awsapigateway.Cors_ALL_ORIGINS(),
-// 		AllowMethods: awsapigateway.Cors_ALL_METHODS(),
-// 	}
-
-// 	endpointType := []awsapigateway.EndpointType{
-// 		awsapigateway.EndpointType_PRIVATE,
-// 	}
-
-// 	props := apigateway.PublicAPIGatewayProps{}
-// 	props.Stack = stack
-// 	props.Name = endpointId
-// 	props.Description = "API Gateway for SQS testing"
-// 	props.DefaultHandler = handler
-
-// 	props.DefaultCorsPreflightOptions = corsOptions
-// 	props.EndpointTypes = &endpointType
-
-// 	return apigateway.NewPublicAPIGateway(props)
-
-// 	// restApiProps := awsapigateway.LambdaRestApiProps{Handler: handler}
-// 	return awsapigateway.NewLambdaRestApi(stack, aws.String(endpointId), &restApiProps)
-// }
-
 func NewAPIGateway(stack awscdk.Stack, handler awslambdago.GoFunction) awsapigateway.LambdaRestApi {
 	stageOptions := awsapigateway.StageOptions{
-		LoggingLevel:   awsapigateway.MethodLoggingLevel_INFO,
-		TracingEnabled: aws.Bool(true),
+		StageName:        aws.String("prod"),
+		LoggingLevel:     awsapigateway.MethodLoggingLevel_INFO,
+		TracingEnabled:   aws.Bool(true),
+		MetricsEnabled:   aws.Bool(true),
+		DataTraceEnabled: aws.Bool(true),
 	}
 
 	restApiProps := awsapigateway.LambdaRestApiProps{
