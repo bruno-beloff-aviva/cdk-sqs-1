@@ -12,7 +12,7 @@ type TestMessage struct {
 }
 
 func NewTestMessage(client string, path string) TestMessage {
-	time := time.Now().UTC().Format(time.RFC3339)
+	time := time.Now().UTC().Format(time.RFC3339Nano)
 
 	return TestMessage{Client: client, Path: path, Created: time}
 }
