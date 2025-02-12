@@ -23,11 +23,11 @@ import (
 )
 
 const project = "SQS1"
-const version = "0.0.10"
+const version = "0.0.11"
 
 const queueName = "TestQueue"
 
-const tableName = "MessageTable"
+const tableName = "TestMessageTable"
 const tableId = project + tableName
 
 const publishHandlerId = project + "PublishHandler"
