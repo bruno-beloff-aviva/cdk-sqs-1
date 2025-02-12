@@ -38,8 +38,8 @@ func NewSubscribeService(logger *zapray.Logger, cfg aws.Config) SubscribeService
 // 	return strmsg, m.sqsManager.Publish(ctx, m.queueUrl, strmsg)
 // }
 
-func (m SubscribeService) Process(record events.SQSMessage) (err error) {
-	m.logger.Debug("Process", zap.String("record body", record.Body))
+func (m SubscribeService) Receive(record events.SQSMessage) (err error) {
+	m.logger.Debug("Receive", zap.String("record body", record.Body))
 	var message testmessage.TestMessage
 
 	err = json.Unmarshal([]byte(record.Body), &message)
@@ -47,7 +47,7 @@ func (m SubscribeService) Process(record events.SQSMessage) (err error) {
 		return err
 	}
 
-	m.logger.Info("Process: ", zap.Any("message", message))
+	m.logger.Info("Receive: ", zap.Any("message", message))
 
 	// sleep...
 	if strings.Contains(message.Path, "sleep") {
@@ -66,6 +66,8 @@ func (m SubscribeService) Process(record events.SQSMessage) (err error) {
 		m.logger.Info("*** panic")
 		panic(message.Path)
 	}
+
+	// TODO: put in dynamodb
 
 	return nil
 }
