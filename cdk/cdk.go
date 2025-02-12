@@ -82,6 +82,7 @@ func NewPublishHandler(stack awscdk.Stack, queue awssqs.IQueue) awslambdago.GoFu
 		Timeout:       awscdk.Duration_Seconds(aws.Float64(28)),
 		LoggingFormat: awslambda.LoggingFormat_JSON,
 		LogRetention:  awslogs.RetentionDays_FIVE_DAYS,
+		Tracing:       awslambda.Tracing_ACTIVE,
 		Environment:   &lambdaEnv,
 	})
 
@@ -100,6 +101,7 @@ func NewSubscribeHandler(stack awscdk.Stack) awslambdago.GoFunction {
 		Timeout:       awscdk.Duration_Seconds(aws.Float64(28)),
 		LoggingFormat: awslambda.LoggingFormat_JSON,
 		LogRetention:  awslogs.RetentionDays_FIVE_DAYS,
+		Tracing:       awslambda.Tracing_ACTIVE,
 		Environment:   &lambdaEnv,
 	})
 
