@@ -40,7 +40,7 @@ type CdkWorkshopStackProps struct {
 }
 
 func NewMessageTable(scope constructs.Construct, id string, name string) awsdynamodb.ITable {
-	// thisConstruct := constructs.NewConstruct(scope, &id)
+	// thisConstruct := constructs.NewConstruct(scope, &id)???
 
 	tableProps := awsdynamodb.TableProps{
 		PartitionKey: &awsdynamodb.Attribute{Name: aws.String("Created"), Type: awsdynamodb.AttributeType_STRING},
@@ -48,7 +48,7 @@ func NewMessageTable(scope constructs.Construct, id string, name string) awsdyna
 		TableName:    aws.String(name),
 	}
 
-	// keep ID different from name at this stage, to prevent "already exists" panic
+	// keep ID different from name at this stage, to prevent "already exists" panic???
 	return awsdynamodb.NewTable(scope, aws.String(id), &tableProps)
 }
 
@@ -61,7 +61,6 @@ func NewTestQueue(stack awscdk.Stack) awssqs.IQueue {
 	messageQueue := sqs.NewSqsQueueWithDLQ(sqs.SqsQueueWithDLQProps{
 		Stack:                    stack,
 		QueueName:                queueName,
-		Fifo:                     true,
 		SQSKey:                   queueKey,
 		QMaxReceiveCount:         10,
 		QAlarmPeriod:             1,
