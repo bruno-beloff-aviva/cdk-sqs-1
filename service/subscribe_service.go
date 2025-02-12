@@ -43,22 +43,24 @@ func (m SubscribeService) Receive(ctx context.Context, record events.SQSMessage)
 
 	m.logger.Info("Receive: ", zap.Any("message", message))
 
-	// sleep...
 	if strings.Contains(message.Path, "sleep") {
-		m.logger.Warn("*** sleep")
+		// sleep...
+		m.logger.Warn("*** SLEEP: ", zap.Any("message", message.Path))
 		time.Sleep(sleepSeconds * time.Second)
-	}
 
-	// error...
-	if strings.Contains(message.Path, "error") {
-		m.logger.Warn("*** error")
+	} else if strings.Contains(message.Path, "error") {
+		// error...
+		m.logger.Warn("*** ERROR: ", zap.Any("message", message.Path))
 		return errors.New(message.Path)
-	}
 
-	// panic...
-	if strings.Contains(message.Path, "panic") {
-		m.logger.Warn("*** panic")
+	} else if strings.Contains(message.Path, "panic") {
+		// panic...
+		m.logger.Warn("*** PANIC: ", zap.Any("message", message.Path))
 		panic(message.Path)
+
+	} else {
+		// ok...
+		m.logger.Warn("*** OK: ", zap.Any("message", message.Path))
 	}
 
 	// dbManager.Put...

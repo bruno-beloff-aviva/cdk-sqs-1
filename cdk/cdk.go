@@ -23,7 +23,7 @@ import (
 )
 
 const project = "SQS1"
-const version = "0.0.14"
+const version = "0.1.0"
 
 const queueName = "TestQueue"
 
