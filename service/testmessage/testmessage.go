@@ -12,9 +12,9 @@ type TestMessage struct {
 }
 
 func NewTestMessage(client string, path string) TestMessage {
-	time := time.Now().UTC().Format(time.RFC3339Nano)
+	now := time.Now().UTC().Format(time.RFC3339Nano)
 
-	return TestMessage{Sent: time, Path: path, Client: client}
+	return TestMessage{Sent: now, Path: path, Client: client}
 }
 
 func (m *TestMessage) String() string {
@@ -27,9 +27,9 @@ type TestReception struct {
 }
 
 func NewTestReception(message TestMessage) TestReception {
-	time := time.Now().UTC().Format(time.RFC3339Nano)
+	now := time.Now().UTC().Format(time.RFC3339Nano)
 
-	return TestReception{Received: time, TestMessage: message}
+	return TestReception{Received: now, TestMessage: message}
 }
 
 func (r *TestReception) String() string {

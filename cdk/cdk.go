@@ -23,7 +23,7 @@ import (
 )
 
 const project = "SQS1"
-const version = "0.0.12"
+const version = "0.0.14"
 
 const queueName = "TestQueue"
 
@@ -40,15 +40,12 @@ type CdkWorkshopStackProps struct {
 }
 
 func NewMessageTable(scope constructs.Construct, id string, name string) awsdynamodb.ITable {
-	// thisConstruct := constructs.NewConstruct(scope, &id)???
-
 	tableProps := awsdynamodb.TableProps{
 		PartitionKey: &awsdynamodb.Attribute{Name: aws.String("Sent"), Type: awsdynamodb.AttributeType_STRING},
 		SortKey:      &awsdynamodb.Attribute{Name: aws.String("Path"), Type: awsdynamodb.AttributeType_STRING},
 		TableName:    aws.String(name),
 	}
 
-	// keep ID different from name at this stage, to prevent "already exists" panic???
 	return awsdynamodb.NewTable(scope, aws.String(id), &tableProps)
 }
 
@@ -132,13 +129,14 @@ func NewAPIGateway(stack awscdk.Stack, handler awslambdago.GoFunction) awsapigat
 }
 
 func NewSQSWorkshopStack(scope constructs.Construct, id string, props *CdkWorkshopStackProps) (stack awscdk.Stack) {
-	var sprops awscdk.StackProps
-	if props != nil {
-		sprops = props.StackProps
-	}
+	var stackProps awscdk.StackProps
 
 	//	stack...
-	stack = awscdk.NewStack(scope, &id, &sprops)
+	if props != nil {
+		stackProps = props.StackProps
+	}
+
+	stack = awscdk.NewStack(scope, &id, &stackProps)
 
 	// queue...
 	queue := NewTestQueue(stack)

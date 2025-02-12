@@ -16,6 +16,8 @@ import (
 	"go.uber.org/zap"
 )
 
+const sleepSeconds = 20
+
 type SubscribeService struct {
 	logger     *zapray.Logger
 	sqsManager sqsmanager.SQSManager
@@ -30,6 +32,7 @@ func NewSubscribeService(logger *zapray.Logger, cfg aws.Config, dbManager dynamo
 
 func (m SubscribeService) Receive(ctx context.Context, record events.SQSMessage) (err error) {
 	m.logger.Debug("Receive", zap.String("record body", record.Body))
+
 	var message testmessage.TestMessage
 	var reception testmessage.TestReception
 
@@ -42,19 +45,19 @@ func (m SubscribeService) Receive(ctx context.Context, record events.SQSMessage)
 
 	// sleep...
 	if strings.Contains(message.Path, "sleep") {
-		m.logger.Info("*** sleep")
-		time.Sleep(10 * time.Second)
+		m.logger.Warn("*** sleep")
+		time.Sleep(sleepSeconds * time.Second)
 	}
 
 	// error...
 	if strings.Contains(message.Path, "error") {
-		m.logger.Info("*** error")
+		m.logger.Warn("*** error")
 		return errors.New(message.Path)
 	}
 
 	// panic...
 	if strings.Contains(message.Path, "panic") {
-		m.logger.Info("*** panic")
+		m.logger.Warn("*** panic")
 		panic(message.Path)
 	}
 
