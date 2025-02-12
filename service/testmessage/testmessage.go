@@ -6,19 +6,19 @@ import (
 )
 
 type TestMessage struct {
-	Created string
-	Path    string
-	Client  string
+	Sent   string
+	Path   string
+	Client string
 }
 
 func NewTestMessage(client string, path string) TestMessage {
 	time := time.Now().UTC().Format(time.RFC3339Nano)
 
-	return TestMessage{Created: time, Path: path, Client: client}
+	return TestMessage{Sent: time, Path: path, Client: client}
 }
 
 func (m *TestMessage) String() string {
-	return fmt.Sprintf("TestMessage:{Created:%s Path:%s Client:%s}", m.Created, m.Path, m.Client)
+	return fmt.Sprintf("TestMessage:{Sent:%s Path:%s Client:%s}", m.Sent, m.Path, m.Client)
 }
 
 type TestReception struct {
@@ -33,7 +33,7 @@ func NewTestReception(message TestMessage) TestReception {
 }
 
 func (r *TestReception) String() string {
-	return fmt.Sprintf("TestReception:{Received:%s Created:%s Path:%s Client:%s}", r.Received, r.Created, r.Path, r.Client)
+	return fmt.Sprintf("TestReception:{Received:%s Sent:%s Path:%s Client:%s}", r.Received, r.Sent, r.Path, r.Client)
 }
 
 func (r *TestReception) GetKey() map[string]any {

@@ -43,8 +43,8 @@ func NewMessageTable(scope constructs.Construct, id string, name string) awsdyna
 	// thisConstruct := constructs.NewConstruct(scope, &id)???
 
 	tableProps := awsdynamodb.TableProps{
-		PartitionKey: &awsdynamodb.Attribute{Name: aws.String("Path"), Type: awsdynamodb.AttributeType_STRING},
-		SortKey:      &awsdynamodb.Attribute{Name: aws.String("Received"), Type: awsdynamodb.AttributeType_STRING},
+		PartitionKey: &awsdynamodb.Attribute{Name: aws.String("Sent"), Type: awsdynamodb.AttributeType_STRING},
+		SortKey:      &awsdynamodb.Attribute{Name: aws.String("Path"), Type: awsdynamodb.AttributeType_STRING},
 		TableName:    aws.String(name),
 	}
 
@@ -58,7 +58,7 @@ func NewTestQueue(stack awscdk.Stack) awssqs.IQueue {
 		EnableKeyRotation: jsii.Bool(true),
 	})
 
-	messageQueue := sqs.NewSqsQueueWithDLQ(sqs.SqsQueueWithDLQProps{
+	queueProps := sqs.SqsQueueWithDLQProps{
 		Stack:                    stack,
 		QueueName:                queueName,
 		SQSKey:                   queueKey,
@@ -69,9 +69,9 @@ func NewTestQueue(stack awscdk.Stack) awssqs.IQueue {
 		DLQAlarmPeriod:           1,
 		DLQAlarmThreshold:        1,
 		DLQAlarmEvaluationPeriod: 1,
-	})
+	}
 
-	return messageQueue
+	return sqs.NewSqsQueueWithDLQ(queueProps)
 }
 
 func NewPublishHandler(stack awscdk.Stack, queue awssqs.IQueue) awslambdago.GoFunction {
@@ -80,7 +80,7 @@ func NewPublishHandler(stack awscdk.Stack, queue awssqs.IQueue) awslambdago.GoFu
 		"QUEUE_URL": queue.QueueUrl(),
 	}
 
-	handler := awslambdago.NewGoFunction(stack, aws.String(publishHandlerId), &awslambdago.GoFunctionProps{
+	handlerProps := awslambdago.GoFunctionProps{
 		Runtime:       awslambda.Runtime_PROVIDED_AL2(),
 		Architecture:  awslambda.Architecture_ARM_64(),
 		Entry:         aws.String("lambda/publish/"),
@@ -89,9 +89,9 @@ func NewPublishHandler(stack awscdk.Stack, queue awssqs.IQueue) awslambdago.GoFu
 		LogRetention:  awslogs.RetentionDays_FIVE_DAYS,
 		Tracing:       awslambda.Tracing_ACTIVE,
 		Environment:   &lambdaEnv,
-	})
+	}
 
-	return handler
+	return awslambdago.NewGoFunction(stack, aws.String(publishHandlerId), &handlerProps)
 }
 
 func NewSubscribeHandler(stack awscdk.Stack) awslambdago.GoFunction {
@@ -100,7 +100,7 @@ func NewSubscribeHandler(stack awscdk.Stack) awslambdago.GoFunction {
 		"MESSAGE_TABLE_NAME": aws.String(tableName),
 	}
 
-	handler := awslambdago.NewGoFunction(stack, aws.String(subscribeHandlerId), &awslambdago.GoFunctionProps{
+	handlerProps := awslambdago.GoFunctionProps{
 		Runtime:       awslambda.Runtime_PROVIDED_AL2(),
 		Architecture:  awslambda.Architecture_ARM_64(),
 		Entry:         aws.String("lambda/subscribe/"),
@@ -109,9 +109,9 @@ func NewSubscribeHandler(stack awscdk.Stack) awslambdago.GoFunction {
 		LogRetention:  awslogs.RetentionDays_FIVE_DAYS,
 		Tracing:       awslambda.Tracing_ACTIVE,
 		Environment:   &lambdaEnv,
-	})
+	}
 
-	return handler
+	return awslambdago.NewGoFunction(stack, aws.String(subscribeHandlerId), &handlerProps)
 }
 
 func NewAPIGateway(stack awscdk.Stack, handler awslambdago.GoFunction) awsapigateway.LambdaRestApi {
