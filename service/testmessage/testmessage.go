@@ -32,6 +32,10 @@ func NewTestReception(message TestMessage) TestReception {
 	return TestReception{Received: time, TestMessage: message}
 }
 
-func (m *TestReception) String() string {
-	return fmt.Sprintf("TestReception:{Received:%s Created:%s Path:%s Client:%s}", m.Received, m.Created, m.Path, m.Client)
+func (r *TestReception) String() string {
+	return fmt.Sprintf("TestReception:{Received:%s Created:%s Path:%s Client:%s}", r.Received, r.Created, r.Path, r.Client)
+}
+
+func (r *TestReception) GetKey() map[string]any {
+	return map[string]any{"Path": r.Path}
 }

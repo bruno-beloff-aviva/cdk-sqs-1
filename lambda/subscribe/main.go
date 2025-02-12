@@ -7,6 +7,7 @@ package main
 import (
 	"context"
 	"os"
+	"sqstest/dynamomanager"
 	"sqstest/lambda/subscribe/subscriber"
 	"sqstest/service"
 
@@ -35,8 +36,19 @@ func main() {
 	version := os.Getenv("VERSION")
 	logger.Info("version: " + version)
 
+	tableName := os.Getenv("MESSAGE_TABLE_NAME")
+	logger.Info("tableName: " + tableName)
+
+	//	managers...
+	dbManager := dynamomanager.NewDynamoManager(logger, cfg, tableName)
+	tableIsAvailable := dbManager.TableIsAvailable(ctx)
+
+	if !tableIsAvailable {
+		panic("Table not available: " + tableName)
+	}
+
 	//	service...
-	subscribeService := service.NewSubscribeService(logger, cfg)
+	subscribeService := service.NewSubscribeService(logger, cfg, dbManager)
 
 	//	lambda...
 	subscribeHandler := subscriber.NewSubscribeHandler(logger, subscribeService)

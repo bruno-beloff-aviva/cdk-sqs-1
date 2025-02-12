@@ -43,8 +43,8 @@ func NewMessageTable(scope constructs.Construct, id string, name string) awsdyna
 	// thisConstruct := constructs.NewConstruct(scope, &id)???
 
 	tableProps := awsdynamodb.TableProps{
-		PartitionKey: &awsdynamodb.Attribute{Name: aws.String("Created"), Type: awsdynamodb.AttributeType_STRING},
-		SortKey:      &awsdynamodb.Attribute{Name: aws.String("Path"), Type: awsdynamodb.AttributeType_STRING},
+		PartitionKey: &awsdynamodb.Attribute{Name: aws.String("Path"), Type: awsdynamodb.AttributeType_STRING},
+		SortKey:      &awsdynamodb.Attribute{Name: aws.String("Received"), Type: awsdynamodb.AttributeType_STRING},
 		TableName:    aws.String(name),
 	}
 
@@ -96,7 +96,8 @@ func NewPublishHandler(stack awscdk.Stack, queue awssqs.IQueue) awslambdago.GoFu
 
 func NewSubscribeHandler(stack awscdk.Stack) awslambdago.GoFunction {
 	lambdaEnv := map[string]*string{
-		"VERSION": aws.String(version),
+		"VERSION":            aws.String(version),
+		"MESSAGE_TABLE_NAME": aws.String(tableName),
 	}
 
 	handler := awslambdago.NewGoFunction(stack, aws.String(subscribeHandlerId), &awslambdago.GoFunctionProps{

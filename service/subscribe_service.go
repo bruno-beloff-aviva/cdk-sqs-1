@@ -1,8 +1,10 @@
 package service
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
+	"sqstest/dynamomanager"
 	"sqstest/service/testmessage"
 	"sqstest/sqsmanager"
 	"strings"
@@ -17,30 +19,19 @@ import (
 type SubscribeService struct {
 	logger     *zapray.Logger
 	sqsManager sqsmanager.SQSManager
+	dbManager  dynamomanager.DynamoManager
 }
 
-func NewSubscribeService(logger *zapray.Logger, cfg aws.Config) SubscribeService {
+func NewSubscribeService(logger *zapray.Logger, cfg aws.Config, dbManager dynamomanager.DynamoManager) SubscribeService {
 	sqsManager := sqsmanager.NewSQSManager(logger, cfg)
 
-	return SubscribeService{logger: logger, sqsManager: sqsManager}
+	return SubscribeService{logger: logger, sqsManager: sqsManager, dbManager: dbManager}
 }
 
-// func  Publish(ctx context.Context, clientId string) (string, error) {
-// 	message := testmessage.NewTestMessage(clientId)
-
-// 	jmsg, err := json.Marshal(message)
-// 	strmsg := string(jmsg)
-
-// 	if err != nil {
-// 		panic(err)
-// 	}
-
-// 	return strmsg, m.sqsManager.Publish(ctx, m.queueUrl, strmsg)
-// }
-
-func (m SubscribeService) Receive(record events.SQSMessage) (err error) {
+func (m SubscribeService) Receive(ctx context.Context, record events.SQSMessage) (err error) {
 	m.logger.Debug("Receive", zap.String("record body", record.Body))
 	var message testmessage.TestMessage
+	var reception testmessage.TestReception
 
 	err = json.Unmarshal([]byte(record.Body), &message)
 	if err != nil {
@@ -67,7 +58,15 @@ func (m SubscribeService) Receive(record events.SQSMessage) (err error) {
 		panic(message.Path)
 	}
 
+	reception = testmessage.NewTestReception(message)
+	m.logger.Info("Receive: ", zap.Any("reception", reception))
+
 	// TODO: put in dynamodb
+
+	err = m.dbManager.Put(ctx, &reception)
+	if err != nil {
+		m.logger.Error("Receive: ", zap.Error(err))
+	}
 
 	return nil
 }
