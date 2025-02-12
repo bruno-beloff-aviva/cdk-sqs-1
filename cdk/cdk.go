@@ -10,6 +10,7 @@ import (
 
 	"github.com/aws/aws-cdk-go/awscdk/v2"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awsapigateway"
+	"github.com/aws/aws-cdk-go/awscdk/v2/awsdynamodb"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awskms"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awslambda"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awslambdaeventsources"
@@ -25,6 +26,10 @@ const project = "SQS1"
 const version = "0.0.10"
 
 const queueName = "TestQueue"
+
+const tableName = "MessageTable"
+const tableId = project + tableName
+
 const publishHandlerId = project + "PublishHandler"
 const subscribeHandlerId = project + "SubscribeHandler"
 const endpointId = project + "PublishEndpoint"
@@ -34,17 +39,18 @@ type CdkWorkshopStackProps struct {
 	awscdk.StackProps
 }
 
-// func NewHitsTable(scope constructs.Construct, id string, name string) awsdynamodb.ITable {
-// 	this := constructs.NewConstruct(scope, &id)
+func NewMessageTable(scope constructs.Construct, id string, name string) awsdynamodb.ITable {
+	// thisConstruct := constructs.NewConstruct(scope, &id)
 
-// 	// keep ID different from name at this stage, to prevent "already exists" panic
-// 	table := awsdynamodb.NewTable(this, aws.String(id), &awsdynamodb.TableProps{
-// 		PartitionKey: &awsdynamodb.Attribute{Name: aws.String("path"), Type: awsdynamodb.AttributeType_STRING},
-// 		TableName:    aws.String(name),
-// 	})
+	tableProps := awsdynamodb.TableProps{
+		PartitionKey: &awsdynamodb.Attribute{Name: aws.String("Created"), Type: awsdynamodb.AttributeType_STRING},
+		SortKey:      &awsdynamodb.Attribute{Name: aws.String("Path"), Type: awsdynamodb.AttributeType_STRING},
+		TableName:    aws.String(name),
+	}
 
-// 	return table
-// }
+	// keep ID different from name at this stage, to prevent "already exists" panic
+	return awsdynamodb.NewTable(scope, aws.String(id), &tableProps)
+}
 
 func NewTestQueue(stack awscdk.Stack) awssqs.IQueue {
 	queueKey := awskms.NewKey(stack, aws.String("queueKey"), &awskms.KeyProps{
@@ -121,6 +127,7 @@ func NewAPIGateway(stack awscdk.Stack, handler awslambdago.GoFunction) awsapigat
 		Handler:       handler,
 		DeployOptions: &stageOptions,
 	}
+
 	return awsapigateway.NewLambdaRestApi(stack, aws.String(endpointId), &restApiProps)
 }
 
@@ -146,6 +153,10 @@ func NewSQSWorkshopStack(scope constructs.Construct, id string, props *CdkWorksh
 
 	// gateway...
 	NewAPIGateway(stack, publishHandler)
+
+	// table...
+	table := NewMessageTable(stack, tableId, tableName)
+	table.GrantReadWriteData(subscribeHandler)
 
 	return stack
 }

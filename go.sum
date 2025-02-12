@@ -4,6 +4,8 @@ github.com/Masterminds/semver/v3 v3.3.1 h1:QtNSWtVZ3nBfk8mAOu/B6v7FMJ+NHTIgUPi7r
 github.com/Masterminds/semver/v3 v3.3.1/go.mod h1:4V+yj/TJE1HU9XfppCwVMZq3I84lprf4nC11bSS5beM=
 github.com/andybalholm/brotli v1.1.1 h1:PR2pgnyFznKEugtsUo0xLdDop5SKXd5Qf5ysW+7XdTA=
 github.com/andybalholm/brotli v1.1.1/go.mod h1:05ib4cKhjx3OQYUY22hTVd34Bc8upXjOLL2rKwwZBoA=
+github.com/aws/aws-cdk-go/awscdk v1.204.0-devpreview h1:t3TI4mtmRQlUF5OceL3zhhTlz1RtFMMbsWQ1oMrAsWg=
+github.com/aws/aws-cdk-go/awscdk v1.204.0-devpreview/go.mod h1:ZAyiU+hVHfDS6Vvxf1ljmwawmA5Ri6FUay6M04+93pk=
 github.com/aws/aws-cdk-go/awscdk/v2 v2.178.1 h1:LkFzQRSi7H3vHHuzFMhsoDQ8sZShtJzkcCA2FvWcwwY=
 github.com/aws/aws-cdk-go/awscdk/v2 v2.178.1/go.mod h1:pfTJhAYYAyBMhRTiC2/cehvhrHX7LwmErOmDolfhZ2w=
 github.com/aws/aws-cdk-go/awscdklambdagoalpha/v2 v2.178.1-alpha.0 h1:+ZjXzL6u7KQFed9PmHV0Bhc7tOA/HNAl5DAWZOQSES4=
@@ -42,6 +44,8 @@ github.com/aws/aws-xray-sdk-go v1.8.4 h1:5D631fWhs5hdBFW/8ALjWam+alm4tW42UGAuMJ1
 github.com/aws/aws-xray-sdk-go v1.8.4/go.mod h1:mbN1uxWCue9WjS2Oj2FWg7TGIsLikxMOscD0qtEjFFY=
 github.com/aws/constructs-go/constructs/v10 v10.4.2 h1:+hDLTsFGLJmKIn0Dg20vWpKBrVnFrEWYgTEY5UiTEG8=
 github.com/aws/constructs-go/constructs/v10 v10.4.2/go.mod h1:cXsNCKDV+9eR9zYYfwy6QuE4uPFp6jsq6TtH1MwBx9w=
+github.com/aws/constructs-go/constructs/v3 v3.4.232 h1:YLw1wSu8/qqmacsZWPXI+qFNu4ml2YZwtRZHL2gaB8M=
+github.com/aws/constructs-go/constructs/v3 v3.4.232/go.mod h1:ejR5Hd2llgfqo68taM7H/hnri4hrHObbsqbT6YySLMI=
 github.com/aws/jsii-runtime-go v1.106.0 h1:wClD7enF+FOGR6l2TQ6STcE1nEIVKdODbipl5ZrbyC8=
 github.com/aws/jsii-runtime-go v1.106.0/go.mod h1:HMdZwwcI8gpwetrneEa/RUkefS194IeCeh8eJQP3xSk=
 github.com/aws/smithy-go v1.22.2 h1:6D9hW43xKFrRx/tXXfAlIZc4JI+yQe6snnWcQyxSyLQ=

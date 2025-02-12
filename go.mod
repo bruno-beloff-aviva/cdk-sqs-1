@@ -15,9 +15,12 @@ require (
 	go.uber.org/zap v1.27.0
 )
 
+require github.com/aws/constructs-go/constructs/v3 v3.4.232 // indirect
+
 require (
 	github.com/Masterminds/semver/v3 v3.3.1 // indirect
 	github.com/andybalholm/brotli v1.1.1 // indirect
+	github.com/aws/aws-cdk-go/awscdk v1.204.0-devpreview
 	github.com/aws/aws-sdk-go-v2/credentials v1.17.59 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.16.28 // indirect
 	github.com/aws/aws-sdk-go-v2/internal/configsources v1.3.32 // indirect
