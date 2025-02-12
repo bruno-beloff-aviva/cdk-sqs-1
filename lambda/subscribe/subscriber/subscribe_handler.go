@@ -1,6 +1,7 @@
 package subscriber
 
 import (
+	"context"
 	"fmt"
 	"sqstest/service"
 
@@ -21,11 +22,11 @@ func NewSubscribeHandler(logger *zapray.Logger, subscribeService service.Subscri
 	}
 }
 
-func (h SubscribeHandler) Handle(event events.SQSEvent) (err error) {
-	h.logger.Debug("Handle: ", zap.String("event", fmt.Sprintf("%v", event)))
+func (h SubscribeHandler) Handle(ctx context.Context, event events.SQSEvent) (err error) {
+	h.logger.Debug("Handle: ", zap.String("ctx", fmt.Sprintf("%v", ctx)), zap.String("event", fmt.Sprintf("%v", event)))
 
 	for _, record := range event.Records {
-		err = h.subscribeService.Receive(record)
+		err = h.subscribeService.Receive(ctx, record)
 		if err != nil {
 			h.logger.Info("Handle: ", zap.String("err", err.Error()))
 			return err

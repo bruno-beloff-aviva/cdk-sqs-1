@@ -58,10 +58,9 @@ func (m SubscribeService) Receive(ctx context.Context, record events.SQSMessage)
 		panic(message.Path)
 	}
 
+	// dbManager.Put...
 	reception = testmessage.NewTestReception(message)
 	m.logger.Info("Receive: ", zap.Any("reception", reception))
-
-	// TODO: put in dynamodb
 
 	err = m.dbManager.Put(ctx, &reception)
 	if err != nil {
