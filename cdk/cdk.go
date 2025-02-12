@@ -6,7 +6,6 @@
 package main
 
 import (
-	apigateway "sqstest/aviva/apigateway"
 	sqs "sqstest/aviva/sqs"
 
 	"github.com/aws/aws-cdk-go/awscdk/v2"
@@ -23,7 +22,7 @@ import (
 )
 
 const project = "SQS1"
-const version = "0.0.8"
+const version = "0.0.9"
 
 const queueName = "TestQueue"
 const publishHandlerId = project + "PublishHandler"
@@ -107,32 +106,47 @@ func NewSubscribeHandler(stack awscdk.Stack) awslambdago.GoFunction {
 	return handler
 }
 
+// func NewAPIGateway(stack awscdk.Stack, handler awslambdago.GoFunction) awsapigateway.LambdaRestApi {
+
+// 	// TODO: create a custom APIGateway configuration - use the aviva one / LambdaRestApiProps as a starting point
+
+// 	// https://stackoverflow.com/questions/61613801/cdk-deployment-api-gateway-cloudwatch-logs-role-arn-must-be-set-in-account-set
+
+// 	corsOptions := awsapigateway.CorsOptions{
+// 		AllowOrigins: awsapigateway.Cors_ALL_ORIGINS(),
+// 		AllowMethods: awsapigateway.Cors_ALL_METHODS(),
+// 	}
+
+// 	endpointType := []awsapigateway.EndpointType{
+// 		awsapigateway.EndpointType_PRIVATE,
+// 	}
+
+// 	props := apigateway.PublicAPIGatewayProps{}
+// 	props.Stack = stack
+// 	props.Name = endpointId
+// 	props.Description = "API Gateway for SQS testing"
+// 	props.DefaultHandler = handler
+
+// 	props.DefaultCorsPreflightOptions = corsOptions
+// 	props.EndpointTypes = &endpointType
+
+// 	return apigateway.NewPublicAPIGateway(props)
+
+// 	// restApiProps := awsapigateway.LambdaRestApiProps{Handler: handler}
+// 	return awsapigateway.NewLambdaRestApi(stack, aws.String(endpointId), &restApiProps)
+// }
+
 func NewAPIGateway(stack awscdk.Stack, handler awslambdago.GoFunction) awsapigateway.LambdaRestApi {
-
-	// https://stackoverflow.com/questions/61613801/cdk-deployment-api-gateway-cloudwatch-logs-role-arn-must-be-set-in-account-set
-
-	corsOptions := awsapigateway.CorsOptions{
-		AllowOrigins: awsapigateway.Cors_ALL_ORIGINS(),
-		AllowMethods: awsapigateway.Cors_ALL_METHODS(),
+	stageOptions := awsapigateway.StageOptions{
+		LoggingLevel:   awsapigateway.MethodLoggingLevel_INFO,
+		TracingEnabled: aws.Bool(true),
 	}
 
-	endpointType := []awsapigateway.EndpointType{
-		awsapigateway.EndpointType_PRIVATE,
+	restApiProps := awsapigateway.LambdaRestApiProps{
+		Handler:       handler,
+		DeployOptions: &stageOptions,
 	}
-
-	props := apigateway.PublicAPIGatewayProps{}
-	props.Stack = stack
-	props.Name = endpointId
-	props.Description = "API Gateway for SQS testing"
-	props.DefaultHandler = handler
-
-	props.DefaultCorsPreflightOptions = corsOptions
-	props.EndpointTypes = &endpointType
-
-	return apigateway.NewPublicAPIGateway(props)
-
-	// restApiProps := awsapigateway.LambdaRestApiProps{Handler: handler}
-	// return awsapigateway.NewLambdaRestApi(stack, aws.String(endpointId), &restApiProps)
+	return awsapigateway.NewLambdaRestApi(stack, aws.String(endpointId), &restApiProps)
 }
 
 func NewSQSWorkshopStack(scope constructs.Construct, id string, props *CdkWorkshopStackProps) awscdk.Stack {
