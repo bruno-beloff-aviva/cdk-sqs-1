@@ -8,7 +8,7 @@ import (
 	"context"
 	"os"
 	"sqstest/dynamomanager"
-	"sqstest/lambda/subscribe/subscriber"
+	"sqstest/lambda/subscriber"
 	"sqstest/service"
 	"strconv"
 
@@ -52,7 +52,7 @@ func main() {
 	}
 
 	//	service...
-	subscribeService := service.NewSubscribeService(logger, cfg, dbManager)
+	subscribeService := service.NewSuspendableService(logger, cfg, dbManager)
 
 	//	lambda...
 	subscribeHandler := subscriber.NewSubscribeHandler(logger, *subscribeService)

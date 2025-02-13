@@ -104,7 +104,7 @@ func NewSubscribeHandler(stack awscdk.Stack) awslambdago.GoFunction {
 	handlerProps := awslambdago.GoFunctionProps{
 		Runtime:       awslambda.Runtime_PROVIDED_AL2(),
 		Architecture:  awslambda.Architecture_ARM_64(),
-		Entry:         aws.String("lambda/subscribe/"),
+		Entry:         aws.String("lambda/suspendablesubscribe/"),
 		Timeout:       awscdk.Duration_Seconds(aws.Float64(28)),
 		LoggingFormat: awslambda.LoggingFormat_JSON,
 		LogRetention:  awslogs.RetentionDays_FIVE_DAYS,

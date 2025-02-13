@@ -7,7 +7,7 @@ package main
 import (
 	"context"
 	"os"
-	"sqstest/lambda/publish/publisher"
+	"sqstest/lambda/publisher"
 	"sqstest/service"
 
 	"github.com/aws/aws-lambda-go/lambda"

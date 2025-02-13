@@ -12,10 +12,10 @@ import (
 
 type SubscribeHandler struct {
 	logger           *zapray.Logger
-	subscribeService service.SubscribeService
+	subscribeService service.SuspendableService
 }
 
-func NewSubscribeHandler(logger *zapray.Logger, subscribeService service.SubscribeService) SubscribeHandler {
+func NewSubscribeHandler(logger *zapray.Logger, subscribeService service.SuspendableService) SubscribeHandler {
 	return SubscribeHandler{
 		logger:           logger,
 		subscribeService: subscribeService,
@@ -24,8 +24,7 @@ func NewSubscribeHandler(logger *zapray.Logger, subscribeService service.Subscri
 
 func (h SubscribeHandler) Handle(ctx context.Context, event events.SQSEvent) (err error) {
 	h.logger.Debug("Handle: ", zap.String("ctx", fmt.Sprintf("%v", ctx)), zap.String("event", fmt.Sprintf("%v", event)))
-
-	h.logger.Info("Handle: ", zap.Int("records", len(event.Records)))
+	h.logger.Debug("Handle: ", zap.Int("records", len(event.Records)))
 
 	for _, record := range event.Records {
 		err = h.subscribeService.Receive(ctx, record)
