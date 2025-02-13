@@ -1,29 +1,29 @@
-package service
+package pub
 
 import (
 	"context"
 	"encoding/json"
+	"sqstest/manager/sqsmanager"
 	"sqstest/service/testmessage"
-	"sqstest/sqsmanager"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/joerdav/zapray"
 	"go.uber.org/zap"
 )
 
-type PubService struct {
+type SQSPubService struct {
 	logger     *zapray.Logger
 	sqsManager sqsmanager.SQSManager
 	queueUrl   string
 }
 
-func NewPubService(logger *zapray.Logger, cfg aws.Config, queueUrl string) PubService {
+func NewSQSPubService(logger *zapray.Logger, cfg aws.Config, queueUrl string) SQSPubService {
 	sqsManager := sqsmanager.NewSQSManager(logger, cfg)
 
-	return PubService{logger: logger, sqsManager: sqsManager, queueUrl: queueUrl}
+	return SQSPubService{logger: logger, sqsManager: sqsManager, queueUrl: queueUrl}
 }
 
-func (m PubService) Publish(ctx context.Context, clientId string, path string) (testmessage.TestMessage, error) {
+func (m SQSPubService) Publish(ctx context.Context, clientId string, path string) (testmessage.TestMessage, error) {
 	m.logger.Debug("Publish", zap.String("clientId", clientId))
 
 	message := testmessage.NewTestMessage(clientId, path)

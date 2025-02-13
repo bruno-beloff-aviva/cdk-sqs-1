@@ -7,9 +7,9 @@ package main
 import (
 	"context"
 	"os"
-	"sqstest/dynamomanager"
-	"sqstest/lambda/subhandler"
-	"sqstest/service"
+	"sqstest/lambda/handler/subhandler"
+	"sqstest/manager/dbmanager"
+	"sqstest/service/sub"
 
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -40,7 +40,7 @@ func main() {
 	logger.Info("tableName: " + tableName)
 
 	//	managers...
-	dbManager := dynamomanager.NewDynamoManager(logger, cfg, tableName)
+	dbManager := dbmanager.NewDynamoManager(logger, cfg, tableName)
 	tableIsAvailable := dbManager.TableIsAvailable(ctx)
 
 	if !tableIsAvailable {
@@ -48,7 +48,7 @@ func main() {
 	}
 
 	//	service...
-	subService := service.NewContinuousService(logger, cfg, dbManager, "continuous")
+	subService := sub.NewContinuousService(logger, cfg, dbManager, "continuous")
 
 	//	lambda...
 	subHandler := subhandler.NewSubHandler(logger, subService)

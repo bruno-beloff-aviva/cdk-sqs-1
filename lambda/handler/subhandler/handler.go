@@ -3,7 +3,7 @@ package subhandler
 import (
 	"context"
 	"fmt"
-	"sqstest/service"
+	"sqstest/service/sub"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/joerdav/zapray"
@@ -11,14 +11,14 @@ import (
 )
 
 type SubHandler struct {
-	logger              *zapray.Logger
-	subscriptionService service.SubService
+	logger     *zapray.Logger
+	subService sub.SubService
 }
 
-func NewSubHandler(logger *zapray.Logger, subscriptionService service.SubService) SubHandler {
+func NewSubHandler(logger *zapray.Logger, subService sub.SubService) SubHandler {
 	return SubHandler{
-		logger:              logger,
-		subscriptionService: subscriptionService,
+		logger:     logger,
+		subService: subService,
 	}
 }
 
@@ -27,7 +27,7 @@ func (h SubHandler) Handle(ctx context.Context, event events.SQSEvent) (err erro
 	h.logger.Debug("Handle: ", zap.Int("records", len(event.Records)))
 
 	for _, record := range event.Records {
-		err = h.subscriptionService.Receive(ctx, record)
+		err = h.subService.Receive(ctx, record)
 		if err != nil {
 			h.logger.Info("Handle: ", zap.String("err", err.Error()))
 			return err

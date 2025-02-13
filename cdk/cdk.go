@@ -15,12 +15,16 @@ import (
 	"github.com/aws/aws-cdk-go/awscdk/v2/awslambda"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awslambdaeventsources"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awslogs"
+	"github.com/aws/aws-cdk-go/awscdk/v2/awssns"
+	"github.com/aws/aws-cdk-go/awscdk/v2/awssnssubscriptions"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awssqs"
 	awslambdago "github.com/aws/aws-cdk-go/awscdklambdagoalpha/v2"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/constructs-go/constructs/v10"
 	"github.com/aws/jsii-runtime-go"
 )
+
+// the aws-cdk-lib/aws-sns-subscriptions package:
 
 const project = "SQS1"
 const version = "0.1.4"
@@ -53,6 +57,7 @@ func NewMessageTable(scope constructs.Construct, id string, name string) awsdyna
 	return awsdynamodb.NewTable(scope, aws.String(id), &tableProps)
 }
 
+// TODO: each lambda must have its own queue
 func NewTestQueue(stack awscdk.Stack) awssqs.IQueue {
 	queueKey := awskms.NewKey(stack, aws.String("queueKey"), &awskms.KeyProps{
 		Alias:             jsii.String("testQueueKey"),
@@ -182,6 +187,15 @@ func NewSQSWorkshopStack(scope constructs.Construct, id string, props *CdkWorksh
 
 	// gateway...
 	NewAPIGateway(stack, pubHandler)
+
+	// topic...
+	snsTopic := awssns.NewTopic(stack, jsii.String("sns-topic"), nil)
+
+	subProps := awssnssubscriptions.SqsSubscriptionProps{}
+	snsTopic.AddSubscription(awssnssubscriptions.NewSqsSubscription(queue, &subProps))
+	snsTopic.GrantPublish(pubHandler)
+
+	// snsTopic.TopicArn()
 
 	// table...
 	table := NewMessageTable(stack, tableId, tableName)

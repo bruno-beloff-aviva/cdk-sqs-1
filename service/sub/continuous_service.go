@@ -1,9 +1,9 @@
-package service
+package sub
 
 import (
 	"context"
 	"encoding/json"
-	"sqstest/dynamomanager"
+	"sqstest/manager/dbmanager"
 	"sqstest/service/testmessage"
 
 	"github.com/aws/aws-lambda-go/events"
@@ -14,11 +14,11 @@ import (
 
 type ContinuousService struct {
 	logger    *zapray.Logger
-	dbManager dynamomanager.DynamoManager
+	dbManager dbmanager.DynamoManager
 	id        string
 }
 
-func NewContinuousService(logger *zapray.Logger, cfg aws.Config, dbManager dynamomanager.DynamoManager, id string) ContinuousService {
+func NewContinuousService(logger *zapray.Logger, cfg aws.Config, dbManager dbmanager.DynamoManager, id string) ContinuousService {
 	return ContinuousService{logger: logger, dbManager: dbManager, id: id}
 }
 

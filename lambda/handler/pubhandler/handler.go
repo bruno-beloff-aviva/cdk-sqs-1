@@ -5,7 +5,7 @@ import (
 
 	"context"
 	"sqstest/lambda/response"
-	"sqstest/service"
+	"sqstest/service/pub"
 	"sqstest/service/testmessage"
 
 	"github.com/aws/aws-lambda-go/events"
@@ -14,14 +14,14 @@ import (
 )
 
 type PubHandler struct {
-	logger         *zapray.Logger
-	publishService service.PubService
+	logger     *zapray.Logger
+	pubService pub.PubService
 }
 
-func NewPubHandler(logger *zapray.Logger, publishService service.PubService) PubHandler {
+func NewPubHandler(logger *zapray.Logger, pubService pub.PubService) PubHandler {
 	return PubHandler{
-		logger:         logger,
-		publishService: publishService,
+		logger:     logger,
+		pubService: pubService,
 	}
 }
 
@@ -32,7 +32,7 @@ func (h PubHandler) Handle(ctx context.Context, request events.APIGatewayProxyRe
 	var resp response.Response
 
 	sourceIP := request.RequestContext.Identity.SourceIP
-	message, err = h.publishService.Publish(ctx, sourceIP, request.Path)
+	message, err = h.pubService.Publish(ctx, sourceIP, request.Path)
 
 	if err != nil {
 		h.logger.Error("Pub error", zap.Error(err))

@@ -1,11 +1,11 @@
-package service
+package sub
 
 import (
 	"context"
 	"encoding/json"
 	"errors"
 	"os"
-	"sqstest/dynamomanager"
+	"sqstest/manager/dbmanager"
 	"sqstest/service/testmessage"
 	"strings"
 	"time"
@@ -20,11 +20,11 @@ const sleepSeconds = 20
 
 type SuspendableService struct {
 	logger    *zapray.Logger
-	dbManager dynamomanager.DynamoManager
+	dbManager dbmanager.DynamoManager
 	id        string
 }
 
-func NewSuspendableService(logger *zapray.Logger, cfg aws.Config, dbManager dynamomanager.DynamoManager, id string) SuspendableService {
+func NewSuspendableService(logger *zapray.Logger, cfg aws.Config, dbManager dbmanager.DynamoManager, id string) SuspendableService {
 	return SuspendableService{logger: logger, dbManager: dbManager, id: id}
 }
 
@@ -48,7 +48,7 @@ func (m SuspendableService) Receive(ctx context.Context, record events.SQSMessag
 		return errors.New("Suspended")
 	}
 
-	err = m.operation(message.Path)
+	err = m.stateChange(message.Path)
 	if err != nil {
 		return err
 	}
@@ -65,7 +65,7 @@ func (m SuspendableService) Receive(ctx context.Context, record events.SQSMessag
 	return nil
 }
 
-func (m SuspendableService) operation(path string) (err error) {
+func (m SuspendableService) stateChange(path string) (err error) {
 	switch {
 	case strings.Contains(path, "suspend"):
 		m.logger.Warn("DO SUSPEND", zap.Any("Path", path))

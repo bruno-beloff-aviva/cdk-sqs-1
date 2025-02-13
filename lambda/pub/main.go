@@ -7,8 +7,8 @@ package main
 import (
 	"context"
 	"os"
-	"sqstest/lambda/pubhandler"
-	"sqstest/service"
+	"sqstest/lambda/handler/pubhandler"
+	"sqstest/service/pub"
 
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -39,7 +39,7 @@ func main() {
 	logger.Info("queueUrl: " + queueUrl)
 
 	//	service...
-	pubService := service.NewPubService(logger, cfg, queueUrl)
+	pubService := pub.NewSQSPubService(logger, cfg, queueUrl)
 
 	//	lambda...
 	publishHandler := pubhandler.NewPubHandler(logger, pubService)

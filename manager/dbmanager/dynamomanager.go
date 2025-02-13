@@ -7,7 +7,7 @@
 
 // https://www.youtube.com/watch?v=bLY7-kTsQBM
 
-package dynamomanager
+package dbmanager
 
 import (
 	"context"

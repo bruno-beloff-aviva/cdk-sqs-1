@@ -7,9 +7,9 @@ package main
 import (
 	"context"
 	"os"
-	"sqstest/dynamomanager"
-	"sqstest/lambda/subhandler"
-	"sqstest/service"
+	"sqstest/lambda/handler/subhandler"
+	"sqstest/manager/dbmanager"
+	"sqstest/service/sub"
 	"strconv"
 
 	"github.com/aws/aws-lambda-go/lambda"
@@ -44,7 +44,7 @@ func main() {
 	logger.Info("suspended: " + strconv.FormatBool(suspended))
 
 	//	managers...
-	dbManager := dynamomanager.NewDynamoManager(logger, cfg, tableName)
+	dbManager := dbmanager.NewDynamoManager(logger, cfg, tableName)
 	tableIsAvailable := dbManager.TableIsAvailable(ctx)
 
 	if !tableIsAvailable {
@@ -52,7 +52,7 @@ func main() {
 	}
 
 	//	service...
-	subService := service.NewSuspendableService(logger, cfg, dbManager, "suspendable")
+	subService := sub.NewSuspendableService(logger, cfg, dbManager, "suspendable")
 
 	//	lambda...
 	subHandler := subhandler.NewSubHandler(logger, subService)
