@@ -41,32 +41,33 @@ func (m *SubscribeService) Receive(ctx context.Context, record events.SQSMessage
 	m.logger.Debug("Receive: ", zap.Any("message", message))
 
 	if m.Suspended && !strings.Contains(message.Path, "resume") {
+		m.logger.Warn("SUSPENDED", zap.Any("Path", message.Path))
 		return errors.New("Suspended")
 	}
 
 	switch {
 	case strings.Contains(message.Path, "suspend"):
-		m.logger.Warn("*** SUSPEND: ", zap.Any("Path", message.Path))
+		m.logger.Warn("DO SUSPEND", zap.Any("Path", message.Path))
 		m.Suspended = true
 
 	case strings.Contains(message.Path, "resume"):
-		m.logger.Warn("*** RESUME: ", zap.Any("Path", message.Path))
+		m.logger.Warn("DO RESUME", zap.Any("Path", message.Path))
 		m.Suspended = false
 
 	case strings.Contains(message.Path, "sleep"):
-		m.logger.Warn("*** SLEEP: ", zap.Any("Path", message.Path))
+		m.logger.Warn("DO SLEEP", zap.Any("Path", message.Path))
 		time.Sleep(sleepSeconds * time.Second)
 
 	case strings.Contains(message.Path, "error"):
-		m.logger.Warn("*** ERROR: ", zap.Any("Path", message.Path))
+		m.logger.Warn("DO ERROR", zap.Any("Path", message.Path))
 		return errors.New(message.Path)
 
 	case strings.Contains(message.Path, "panic"):
-		m.logger.Warn("*** PANIC: ", zap.Any("Path", message.Path))
+		m.logger.Warn("DO PANIC", zap.Any("Path", message.Path))
 		panic(message.Path)
 
 	default:
-		m.logger.Warn("*** OK: ", zap.Any("Path", message.Path))
+		m.logger.Warn("DO OK", zap.Any("Path", message.Path))
 	}
 
 	// dbManager.Put...
