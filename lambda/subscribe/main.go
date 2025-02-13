@@ -10,6 +10,7 @@ import (
 	"sqstest/dynamomanager"
 	"sqstest/lambda/subscribe/subscriber"
 	"sqstest/service"
+	"strconv"
 
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -38,6 +39,9 @@ func main() {
 
 	tableName := os.Getenv("MESSAGE_TABLE_NAME")
 	logger.Info("tableName: " + tableName)
+
+	suspended := os.Getenv("SUSPENDED") == "true"
+	logger.Info("suspended: " + strconv.FormatBool(suspended))
 
 	//	managers...
 	dbManager := dynamomanager.NewDynamoManager(logger, cfg, tableName)

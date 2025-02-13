@@ -23,7 +23,7 @@ import (
 )
 
 const project = "SQS1"
-const version = "0.1.1"
+const version = "0.1.2"
 
 const queueName = "TestQueue"
 const queueMaxRetries = 5
@@ -98,6 +98,7 @@ func NewSubscribeHandler(stack awscdk.Stack) awslambdago.GoFunction {
 	lambdaEnv := map[string]*string{
 		"VERSION":            aws.String(version),
 		"MESSAGE_TABLE_NAME": aws.String(tableName),
+		"SUSPENDED":          aws.String("false"),
 	}
 
 	handlerProps := awslambdago.GoFunctionProps{

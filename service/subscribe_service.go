@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"os"
 	"sqstest/dynamomanager"
 	"sqstest/service/testmessage"
 	"strings"
@@ -20,11 +21,10 @@ const sleepSeconds = 20
 type SubscribeService struct {
 	logger    *zapray.Logger
 	dbManager dynamomanager.DynamoManager
-	Suspended bool
 }
 
 func NewSubscribeService(logger *zapray.Logger, cfg aws.Config, dbManager dynamomanager.DynamoManager) *SubscribeService {
-	return &SubscribeService{logger: logger, dbManager: dbManager, Suspended: false}
+	return &SubscribeService{logger: logger, dbManager: dbManager}
 }
 
 func (m *SubscribeService) Receive(ctx context.Context, record events.SQSMessage) (err error) {
@@ -33,6 +33,8 @@ func (m *SubscribeService) Receive(ctx context.Context, record events.SQSMessage
 	var message testmessage.TestMessage
 	var reception testmessage.TestReception
 
+	suspended := os.Getenv("SUSPENDED") == "true"
+
 	err = json.Unmarshal([]byte(record.Body), &message)
 	if err != nil {
 		return err
@@ -40,7 +42,7 @@ func (m *SubscribeService) Receive(ctx context.Context, record events.SQSMessage
 
 	m.logger.Debug("Receive: ", zap.Any("message", message))
 
-	if m.Suspended && !strings.Contains(message.Path, "resume") {
+	if suspended && !strings.Contains(message.Path, "resume") {
 		m.logger.Warn("SUSPENDED", zap.Any("Path", message.Path))
 		return errors.New("Suspended")
 	}
@@ -48,11 +50,11 @@ func (m *SubscribeService) Receive(ctx context.Context, record events.SQSMessage
 	switch {
 	case strings.Contains(message.Path, "suspend"):
 		m.logger.Warn("DO SUSPEND", zap.Any("Path", message.Path))
-		m.Suspended = true
+		os.Setenv("SUSPENDED", "true")
 
 	case strings.Contains(message.Path, "resume"):
 		m.logger.Warn("DO RESUME", zap.Any("Path", message.Path))
-		m.Suspended = false
+		os.Setenv("SUSPENDED", "false")
 
 	case strings.Contains(message.Path, "sleep"):
 		m.logger.Warn("DO SLEEP", zap.Any("Path", message.Path))
