@@ -6,7 +6,6 @@ import (
 	"errors"
 	"sqstest/dynamomanager"
 	"sqstest/service/testmessage"
-	"sqstest/sqsmanager"
 	"strings"
 	"time"
 
@@ -19,18 +18,16 @@ import (
 const sleepSeconds = 20
 
 type SubscribeService struct {
-	logger     *zapray.Logger
-	sqsManager sqsmanager.SQSManager
-	dbManager  dynamomanager.DynamoManager
+	logger    *zapray.Logger
+	dbManager dynamomanager.DynamoManager
+	Suspended bool
 }
 
-func NewSubscribeService(logger *zapray.Logger, cfg aws.Config, dbManager dynamomanager.DynamoManager) SubscribeService {
-	sqsManager := sqsmanager.NewSQSManager(logger, cfg)
-
-	return SubscribeService{logger: logger, sqsManager: sqsManager, dbManager: dbManager}
+func NewSubscribeService(logger *zapray.Logger, cfg aws.Config, dbManager dynamomanager.DynamoManager) *SubscribeService {
+	return &SubscribeService{logger: logger, dbManager: dbManager, Suspended: false}
 }
 
-func (m SubscribeService) Receive(ctx context.Context, record events.SQSMessage) (err error) {
+func (m *SubscribeService) Receive(ctx context.Context, record events.SQSMessage) (err error) {
 	m.logger.Debug("Receive", zap.String("record body", record.Body))
 
 	var message testmessage.TestMessage
@@ -43,23 +40,32 @@ func (m SubscribeService) Receive(ctx context.Context, record events.SQSMessage)
 
 	m.logger.Debug("Receive: ", zap.Any("message", message))
 
-	if strings.Contains(message.Path, "sleep") {
-		// sleep...
+	if m.Suspended && !strings.Contains(message.Path, "resume") {
+		return errors.New("Suspended")
+	}
+
+	switch {
+	case strings.Contains(message.Path, "suspend"):
+		m.logger.Warn("*** SUSPEND: ", zap.Any("Path", message.Path))
+		m.Suspended = true
+
+	case strings.Contains(message.Path, "resume"):
+		m.logger.Warn("*** RESUME: ", zap.Any("Path", message.Path))
+		m.Suspended = false
+
+	case strings.Contains(message.Path, "sleep"):
 		m.logger.Warn("*** SLEEP: ", zap.Any("Path", message.Path))
 		time.Sleep(sleepSeconds * time.Second)
 
-	} else if strings.Contains(message.Path, "error") {
-		// error...
+	case strings.Contains(message.Path, "error"):
 		m.logger.Warn("*** ERROR: ", zap.Any("Path", message.Path))
 		return errors.New(message.Path)
 
-	} else if strings.Contains(message.Path, "panic") {
-		// panic...
+	case strings.Contains(message.Path, "panic"):
 		m.logger.Warn("*** PANIC: ", zap.Any("Path", message.Path))
 		panic(message.Path)
 
-	} else {
-		// ok...
+	default:
 		m.logger.Warn("*** OK: ", zap.Any("Path", message.Path))
 	}
 
