@@ -31,8 +31,8 @@ const queueMaxRetries = 3
 const tableName = "TestMessageTableV1"
 const tableId = project + tableName
 
-const publishHandlerId = project + "PubHandler"
-const publishEndpointId = project + "PubEndpoint"
+const pubHandlerId = project + "PubHandler"
+const pubEndpointId = project + "PubEndpoint"
 
 const continuousSubHandlerId = project + "ContinuousHandler"
 const suspendableSubHandlerId = project + "SudspendableHandler"
@@ -84,7 +84,7 @@ func NewPubHandler(stack awscdk.Stack, queue awssqs.IQueue) awslambdago.GoFuncti
 	handlerProps := awslambdago.GoFunctionProps{
 		Runtime:       awslambda.Runtime_PROVIDED_AL2(),
 		Architecture:  awslambda.Architecture_ARM_64(),
-		Entry:         aws.String("lambda/publish/"),
+		Entry:         aws.String("lambda/pub/"),
 		Timeout:       awscdk.Duration_Seconds(aws.Float64(28)),
 		LoggingFormat: awslambda.LoggingFormat_JSON,
 		LogRetention:  awslogs.RetentionDays_FIVE_DAYS,
@@ -92,7 +92,7 @@ func NewPubHandler(stack awscdk.Stack, queue awssqs.IQueue) awslambdago.GoFuncti
 		Environment:   &lambdaEnv,
 	}
 
-	return awslambdago.NewGoFunction(stack, aws.String(publishHandlerId), &handlerProps)
+	return awslambdago.NewGoFunction(stack, aws.String(pubHandlerId), &handlerProps)
 }
 
 func NewContinuousSubHandler(stack awscdk.Stack) awslambdago.GoFunction {
@@ -104,7 +104,7 @@ func NewContinuousSubHandler(stack awscdk.Stack) awslambdago.GoFunction {
 	handlerProps := awslambdago.GoFunctionProps{
 		Runtime:       awslambda.Runtime_PROVIDED_AL2(),
 		Architecture:  awslambda.Architecture_ARM_64(),
-		Entry:         aws.String("lambda/subscribecontinuous/"),
+		Entry:         aws.String("lambda/subcontinuous/"),
 		Timeout:       awscdk.Duration_Seconds(aws.Float64(28)),
 		LoggingFormat: awslambda.LoggingFormat_JSON,
 		LogRetention:  awslogs.RetentionDays_FIVE_DAYS,
@@ -125,7 +125,7 @@ func NewSuspendableSubHandler(stack awscdk.Stack) awslambdago.GoFunction {
 	handlerProps := awslambdago.GoFunctionProps{
 		Runtime:       awslambda.Runtime_PROVIDED_AL2(),
 		Architecture:  awslambda.Architecture_ARM_64(),
-		Entry:         aws.String("lambda/subscribesuspendable/"),
+		Entry:         aws.String("lambda/subsuspendable/"),
 		Timeout:       awscdk.Duration_Seconds(aws.Float64(28)),
 		LoggingFormat: awslambda.LoggingFormat_JSON,
 		LogRetention:  awslogs.RetentionDays_FIVE_DAYS,
@@ -150,7 +150,7 @@ func NewAPIGateway(stack awscdk.Stack, handler awslambdago.GoFunction) awsapigat
 		DeployOptions: &stageOptions,
 	}
 
-	return awsapigateway.NewLambdaRestApi(stack, aws.String(publishEndpointId), &restApiProps)
+	return awsapigateway.NewLambdaRestApi(stack, aws.String(pubEndpointId), &restApiProps)
 }
 
 func NewSQSWorkshopStack(scope constructs.Construct, id string, props *CdkWorkshopStackProps) (stack awscdk.Stack) {
@@ -167,8 +167,8 @@ func NewSQSWorkshopStack(scope constructs.Construct, id string, props *CdkWorksh
 	queue := NewTestQueue(stack)
 
 	// lambdas...
-	publicationHandler := NewPubHandler(stack, queue)
-	queue.GrantSendMessages(publicationHandler)
+	pubHandler := NewPubHandler(stack, queue)
+	queue.GrantSendMessages(pubHandler)
 
 	eventSourceProps := awslambdaeventsources.SqsEventSourceProps{}
 
@@ -181,7 +181,7 @@ func NewSQSWorkshopStack(scope constructs.Construct, id string, props *CdkWorksh
 	queue.GrantConsumeMessages(suspendableSubHandler)
 
 	// gateway...
-	NewAPIGateway(stack, publicationHandler)
+	NewAPIGateway(stack, pubHandler)
 
 	// table...
 	table := NewMessageTable(stack, tableId, tableName)
