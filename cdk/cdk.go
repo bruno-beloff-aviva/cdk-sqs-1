@@ -172,7 +172,7 @@ func NewSQSWorkshopStack(scope constructs.Construct, id string, props *CdkWorksh
 
 	eventSourceProps := awslambdaeventsources.SqsEventSourceProps{}
 
-	continuousSubscriptionHandler := NewSuspendableSubscriptionHandler(stack)
+	continuousSubscriptionHandler := NewContinuousSubscriptionHandler(stack)
 	continuousSubscriptionHandler.AddEventSource(awslambdaeventsources.NewSqsEventSource(queue, &eventSourceProps))
 	queue.GrantConsumeMessages(continuousSubscriptionHandler)
 
