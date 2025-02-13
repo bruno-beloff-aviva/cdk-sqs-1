@@ -8,7 +8,7 @@ import (
 	"context"
 	"os"
 	"sqstest/dynamomanager"
-	"sqstest/lambda/subscriptionhandler"
+	"sqstest/lambda/subhandler"
 	"sqstest/service"
 
 	"github.com/aws/aws-lambda-go/lambda"
@@ -48,12 +48,12 @@ func main() {
 	}
 
 	//	service...
-	subscriptionservice := service.NewContinuousService(logger, cfg, dbManager, "continuous")
+	subService := service.NewContinuousService(logger, cfg, dbManager, "continuous")
 
 	//	lambda...
-	subscribeHandler := subscriptionhandler.NewSubscriptionHandler(logger, subscriptionservice)
+	subHandler := subhandler.NewSubHandler(logger, subService)
 
-	lambda.StartWithOptions(subscribeHandler.Handle, lambda.WithEnableSIGTERM(func() {
+	lambda.StartWithOptions(subHandler.Handle, lambda.WithEnableSIGTERM(func() {
 		logger.Info("<<< Lambda container shutting down.")
 	}))
 }

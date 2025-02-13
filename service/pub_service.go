@@ -11,19 +11,19 @@ import (
 	"go.uber.org/zap"
 )
 
-type PublishService struct {
+type PubService struct {
 	logger     *zapray.Logger
 	sqsManager sqsmanager.SQSManager
 	queueUrl   string
 }
 
-func NewPublishService(logger *zapray.Logger, cfg aws.Config, queueUrl string) PublishService {
+func NewPubService(logger *zapray.Logger, cfg aws.Config, queueUrl string) PubService {
 	sqsManager := sqsmanager.NewSQSManager(logger, cfg)
 
-	return PublishService{logger: logger, sqsManager: sqsManager, queueUrl: queueUrl}
+	return PubService{logger: logger, sqsManager: sqsManager, queueUrl: queueUrl}
 }
 
-func (m PublishService) Publish(ctx context.Context, clientId string, path string) (testmessage.TestMessage, error) {
+func (m PubService) Publish(ctx context.Context, clientId string, path string) (testmessage.TestMessage, error) {
 	m.logger.Debug("Publish", zap.String("clientId", clientId))
 
 	message := testmessage.NewTestMessage(clientId, path)
@@ -37,5 +37,5 @@ func (m PublishService) Publish(ctx context.Context, clientId string, path strin
 
 	m.logger.Info("Publish", zap.Any("message", message))
 
-	return message, m.sqsManager.Publish(ctx, m.queueUrl, strmsg)
+	return message, m.sqsManager.Pub(ctx, m.queueUrl, strmsg)
 }

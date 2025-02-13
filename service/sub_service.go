@@ -6,6 +6,6 @@ import (
 	"github.com/aws/aws-lambda-go/events"
 )
 
-type SubscriptionService interface {
+type SubService interface {
 	Receive(ctx context.Context, record events.SQSMessage) (err error)
 }

@@ -31,11 +31,11 @@ const queueMaxRetries = 3
 const tableName = "TestMessageTableV1"
 const tableId = project + tableName
 
-const publishHandlerId = project + "PublishHandler"
-const publishEndpointId = project + "PublishEndpoint"
+const publishHandlerId = project + "PubHandler"
+const publishEndpointId = project + "PubEndpoint"
 
-const continuousSubscriptionHandlerId = project + "ContinuousHandler"
-const suspendableSubscriptionHandlerId = project + "SudspendableHandler"
+const continuousSubHandlerId = project + "ContinuousHandler"
+const suspendableSubHandlerId = project + "SudspendableHandler"
 
 const stackId = project + "Stack"
 
@@ -75,7 +75,7 @@ func NewTestQueue(stack awscdk.Stack) awssqs.IQueue {
 	return sqs.NewSqsQueueWithDLQ(queueProps)
 }
 
-func NewPublicationHandler(stack awscdk.Stack, queue awssqs.IQueue) awslambdago.GoFunction {
+func NewPubHandler(stack awscdk.Stack, queue awssqs.IQueue) awslambdago.GoFunction {
 	lambdaEnv := map[string]*string{
 		"VERSION":   aws.String(version),
 		"QUEUE_URL": queue.QueueUrl(),
@@ -95,7 +95,7 @@ func NewPublicationHandler(stack awscdk.Stack, queue awssqs.IQueue) awslambdago.
 	return awslambdago.NewGoFunction(stack, aws.String(publishHandlerId), &handlerProps)
 }
 
-func NewContinuousSubscriptionHandler(stack awscdk.Stack) awslambdago.GoFunction {
+func NewContinuousSubHandler(stack awscdk.Stack) awslambdago.GoFunction {
 	lambdaEnv := map[string]*string{
 		"VERSION":            aws.String(version),
 		"MESSAGE_TABLE_NAME": aws.String(tableName),
@@ -112,10 +112,10 @@ func NewContinuousSubscriptionHandler(stack awscdk.Stack) awslambdago.GoFunction
 		Environment:   &lambdaEnv,
 	}
 
-	return awslambdago.NewGoFunction(stack, aws.String(continuousSubscriptionHandlerId), &handlerProps)
+	return awslambdago.NewGoFunction(stack, aws.String(continuousSubHandlerId), &handlerProps)
 }
 
-func NewSuspendableSubscriptionHandler(stack awscdk.Stack) awslambdago.GoFunction {
+func NewSuspendableSubHandler(stack awscdk.Stack) awslambdago.GoFunction {
 	lambdaEnv := map[string]*string{
 		"VERSION":            aws.String(version),
 		"MESSAGE_TABLE_NAME": aws.String(tableName),
@@ -133,7 +133,7 @@ func NewSuspendableSubscriptionHandler(stack awscdk.Stack) awslambdago.GoFunctio
 		Environment:   &lambdaEnv,
 	}
 
-	return awslambdago.NewGoFunction(stack, aws.String(suspendableSubscriptionHandlerId), &handlerProps)
+	return awslambdago.NewGoFunction(stack, aws.String(suspendableSubHandlerId), &handlerProps)
 }
 
 func NewAPIGateway(stack awscdk.Stack, handler awslambdago.GoFunction) awsapigateway.LambdaRestApi {
@@ -167,26 +167,26 @@ func NewSQSWorkshopStack(scope constructs.Construct, id string, props *CdkWorksh
 	queue := NewTestQueue(stack)
 
 	// lambdas...
-	publicationHandler := NewPublicationHandler(stack, queue)
+	publicationHandler := NewPubHandler(stack, queue)
 	queue.GrantSendMessages(publicationHandler)
 
 	eventSourceProps := awslambdaeventsources.SqsEventSourceProps{}
 
-	continuousSubscriptionHandler := NewContinuousSubscriptionHandler(stack)
-	continuousSubscriptionHandler.AddEventSource(awslambdaeventsources.NewSqsEventSource(queue, &eventSourceProps))
-	queue.GrantConsumeMessages(continuousSubscriptionHandler)
+	continuousSubHandler := NewContinuousSubHandler(stack)
+	continuousSubHandler.AddEventSource(awslambdaeventsources.NewSqsEventSource(queue, &eventSourceProps))
+	queue.GrantConsumeMessages(continuousSubHandler)
 
-	suspendableSubscriptionHandler := NewSuspendableSubscriptionHandler(stack)
-	suspendableSubscriptionHandler.AddEventSource(awslambdaeventsources.NewSqsEventSource(queue, &eventSourceProps))
-	queue.GrantConsumeMessages(suspendableSubscriptionHandler)
+	suspendableSubHandler := NewSuspendableSubHandler(stack)
+	suspendableSubHandler.AddEventSource(awslambdaeventsources.NewSqsEventSource(queue, &eventSourceProps))
+	queue.GrantConsumeMessages(suspendableSubHandler)
 
 	// gateway...
 	NewAPIGateway(stack, publicationHandler)
 
 	// table...
 	table := NewMessageTable(stack, tableId, tableName)
-	table.GrantReadWriteData(continuousSubscriptionHandler)
-	table.GrantReadWriteData(suspendableSubscriptionHandler)
+	table.GrantReadWriteData(continuousSubHandler)
+	table.GrantReadWriteData(suspendableSubHandler)
 
 	return stack
 }

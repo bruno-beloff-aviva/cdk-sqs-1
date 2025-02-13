@@ -1,4 +1,4 @@
-package subscriptionhandler
+package subhandler
 
 import (
 	"context"
@@ -10,19 +10,19 @@ import (
 	"go.uber.org/zap"
 )
 
-type SubscriptionHandler struct {
+type SubHandler struct {
 	logger              *zapray.Logger
-	subscriptionService service.SubscriptionService
+	subscriptionService service.SubService
 }
 
-func NewSubscriptionHandler(logger *zapray.Logger, subscriptionService service.SubscriptionService) SubscriptionHandler {
-	return SubscriptionHandler{
+func NewSubHandler(logger *zapray.Logger, subscriptionService service.SubService) SubHandler {
+	return SubHandler{
 		logger:              logger,
 		subscriptionService: subscriptionService,
 	}
 }
 
-func (h SubscriptionHandler) Handle(ctx context.Context, event events.SQSEvent) (err error) {
+func (h SubHandler) Handle(ctx context.Context, event events.SQSEvent) (err error) {
 	h.logger.Debug("Handle: ", zap.String("ctx", fmt.Sprintf("%v", ctx)), zap.String("event", fmt.Sprintf("%v", event)))
 	h.logger.Debug("Handle: ", zap.Int("records", len(event.Records)))
 

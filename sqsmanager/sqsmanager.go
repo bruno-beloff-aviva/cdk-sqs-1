@@ -20,8 +20,8 @@ func NewSQSManager(logger *zapray.Logger, cfg aws.Config) SQSManager {
 	return SQSManager{logger: logger, sqsClient: sqsClient}
 }
 
-func (m SQSManager) Publish(ctx context.Context, queueUrl string, message string) error {
-	m.logger.Debug("Publish", zap.String("queueUrl", queueUrl))
+func (m SQSManager) Pub(ctx context.Context, queueUrl string, message string) error {
+	m.logger.Debug("Pub", zap.String("queueUrl", queueUrl))
 
 	m.sqsClient.SendMessage(ctx, &sqs.SendMessageInput{
 		MessageBody: &message,

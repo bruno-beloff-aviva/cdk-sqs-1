@@ -7,7 +7,7 @@ package main
 import (
 	"context"
 	"os"
-	"sqstest/lambda/publicationhandler"
+	"sqstest/lambda/pubhandler"
 	"sqstest/service"
 
 	"github.com/aws/aws-lambda-go/lambda"
@@ -39,10 +39,10 @@ func main() {
 	logger.Info("queueUrl: " + queueUrl)
 
 	//	service...
-	publishService := service.NewPublishService(logger, cfg, queueUrl)
+	pubService := service.NewPubService(logger, cfg, queueUrl)
 
 	//	lambda...
-	publishHandler := publicationhandler.NewPublicationHandler(logger, publishService)
+	publishHandler := pubhandler.NewPubHandler(logger, pubService)
 
 	lambda.StartWithOptions(publishHandler.Handle, lambda.WithEnableSIGTERM(func() {
 		logger.Info("<<< Lambda container shutting down.")
