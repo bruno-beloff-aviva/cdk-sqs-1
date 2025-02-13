@@ -21,13 +21,14 @@ const sleepSeconds = 20
 type SuspendableService struct {
 	logger    *zapray.Logger
 	dbManager dynamomanager.DynamoManager
+	id        string
 }
 
-func NewSuspendableService(logger *zapray.Logger, cfg aws.Config, dbManager dynamomanager.DynamoManager) *SuspendableService {
-	return &SuspendableService{logger: logger, dbManager: dbManager}
+func NewSuspendableService(logger *zapray.Logger, cfg aws.Config, dbManager dynamomanager.DynamoManager, id string) SuspendableService {
+	return SuspendableService{logger: logger, dbManager: dbManager, id: id}
 }
 
-func (m *SuspendableService) Receive(ctx context.Context, record events.SQSMessage) (err error) {
+func (m SuspendableService) Receive(ctx context.Context, record events.SQSMessage) (err error) {
 	m.logger.Debug("Receive", zap.String("record body", record.Body))
 
 	var message testmessage.TestMessage
@@ -53,7 +54,7 @@ func (m *SuspendableService) Receive(ctx context.Context, record events.SQSMessa
 	}
 
 	// dbManager.Put...
-	reception = testmessage.NewTestReception(message)
+	reception = testmessage.NewTestReception(m.id, message)
 	m.logger.Info("Receive: ", zap.Any("reception", reception))
 
 	err = m.dbManager.Put(ctx, &reception)
@@ -64,7 +65,7 @@ func (m *SuspendableService) Receive(ctx context.Context, record events.SQSMessa
 	return nil
 }
 
-func (m *SuspendableService) operation(path string) (err error) {
+func (m SuspendableService) operation(path string) (err error) {
 	switch {
 	case strings.Contains(path, "suspend"):
 		m.logger.Warn("DO SUSPEND", zap.Any("Path", path))

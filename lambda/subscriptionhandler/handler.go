@@ -11,14 +11,14 @@ import (
 )
 
 type SubscriptionHandler struct {
-	logger           *zapray.Logger
-	subscribeService service.SuspendableService
+	logger              *zapray.Logger
+	subscriptionService service.SubscriptionService
 }
 
-func NewSubscriptionHandler(logger *zapray.Logger, subscribeService service.SuspendableService) SubscriptionHandler {
+func NewSubscriptionHandler(logger *zapray.Logger, subscriptionService service.SubscriptionService) SubscriptionHandler {
 	return SubscriptionHandler{
-		logger:           logger,
-		subscribeService: subscribeService,
+		logger:              logger,
+		subscriptionService: subscriptionService,
 	}
 }
 
@@ -27,7 +27,7 @@ func (h SubscriptionHandler) Handle(ctx context.Context, event events.SQSEvent) 
 	h.logger.Debug("Handle: ", zap.Int("records", len(event.Records)))
 
 	for _, record := range event.Records {
-		err = h.subscribeService.Receive(ctx, record)
+		err = h.subscriptionService.Receive(ctx, record)
 		if err != nil {
 			h.logger.Info("Handle: ", zap.String("err", err.Error()))
 			return err

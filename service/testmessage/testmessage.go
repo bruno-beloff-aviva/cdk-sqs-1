@@ -22,18 +22,19 @@ func (m *TestMessage) String() string {
 }
 
 type TestReception struct {
-	Received string
+	Received   string
+	Subscriber string
 	TestMessage
 }
 
-func NewTestReception(message TestMessage) TestReception {
+func NewTestReception(subscriber string, message TestMessage) TestReception {
 	now := time.Now().UTC().Format(time.RFC3339Nano)
 
 	return TestReception{Received: now, TestMessage: message}
 }
 
 func (r *TestReception) String() string {
-	return fmt.Sprintf("TestReception:{Received:%s Sent:%s Path:%s Client:%s}", r.Received, r.Sent, r.Path, r.Client)
+	return fmt.Sprintf("TestReception:{Received:%s Subscriber:%s Sent:%s Path:%s Client:%s}", r.Received, r.Subscriber, r.Sent, r.Path, r.Client)
 }
 
 func (r *TestReception) GetKey() map[string]any {

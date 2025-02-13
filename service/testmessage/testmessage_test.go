@@ -45,7 +45,7 @@ func TestNewMessageJSON(t *testing.T) {
 
 func TestNewReception(t *testing.T) {
 	message := NewTestMessage("client", "path")
-	reception := NewTestReception(message)
+	reception := NewTestReception("sub1", message)
 
 	fmt.Println(reception.String())
 
@@ -62,7 +62,7 @@ func TestNewReceptionJSON(t *testing.T) {
 	message = NewTestMessage("client", "path")
 	time.Sleep(1 * time.Second)
 
-	reception = NewTestReception(message)
+	reception = NewTestReception("sub1", message)
 
 	jmsg, err = json.Marshal(reception)
 	strmsg := string(jmsg)

@@ -52,10 +52,10 @@ func main() {
 	}
 
 	//	service...
-	subscribeService := service.NewSuspendableService(logger, cfg, dbManager)
+	subscriptionservice := service.NewSuspendableService(logger, cfg, dbManager, "suspendable")
 
 	//	lambda...
-	subscribeHandler := subscriptionhandler.NewSubscriptionHandler(logger, *subscribeService)
+	subscribeHandler := subscriptionhandler.NewSubscriptionHandler(logger, subscriptionservice)
 
 	lambda.StartWithOptions(subscribeHandler.Handle, lambda.WithEnableSIGTERM(func() {
 		logger.Info("<<< Lambda container shutting down.")
