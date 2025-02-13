@@ -34,6 +34,7 @@ const tableId = project + tableName
 const publishHandlerId = project + "PublishHandler"
 const publishEndpointId = project + "PublishEndpoint"
 
+const continuousSubscriptionHandlerId = project + "ContinuousHandler"
 const suspendableSubscriptionHandlerId = project + "SudspendableHandler"
 
 const stackId = project + "Stack"
@@ -74,7 +75,7 @@ func NewTestQueue(stack awscdk.Stack) awssqs.IQueue {
 	return sqs.NewSqsQueueWithDLQ(queueProps)
 }
 
-func NewPublishHandler(stack awscdk.Stack, queue awssqs.IQueue) awslambdago.GoFunction {
+func NewPublicationHandler(stack awscdk.Stack, queue awssqs.IQueue) awslambdago.GoFunction {
 	lambdaEnv := map[string]*string{
 		"VERSION":   aws.String(version),
 		"QUEUE_URL": queue.QueueUrl(),
@@ -92,6 +93,26 @@ func NewPublishHandler(stack awscdk.Stack, queue awssqs.IQueue) awslambdago.GoFu
 	}
 
 	return awslambdago.NewGoFunction(stack, aws.String(publishHandlerId), &handlerProps)
+}
+
+func NewContinuousSubscriptionHandler(stack awscdk.Stack) awslambdago.GoFunction {
+	lambdaEnv := map[string]*string{
+		"VERSION":            aws.String(version),
+		"MESSAGE_TABLE_NAME": aws.String(tableName),
+	}
+
+	handlerProps := awslambdago.GoFunctionProps{
+		Runtime:       awslambda.Runtime_PROVIDED_AL2(),
+		Architecture:  awslambda.Architecture_ARM_64(),
+		Entry:         aws.String("lambda/subscribecontinuous/"),
+		Timeout:       awscdk.Duration_Seconds(aws.Float64(28)),
+		LoggingFormat: awslambda.LoggingFormat_JSON,
+		LogRetention:  awslogs.RetentionDays_FIVE_DAYS,
+		Tracing:       awslambda.Tracing_ACTIVE,
+		Environment:   &lambdaEnv,
+	}
+
+	return awslambdago.NewGoFunction(stack, aws.String(continuousSubscriptionHandlerId), &handlerProps)
 }
 
 func NewSuspendableSubscriptionHandler(stack awscdk.Stack) awslambdago.GoFunction {
@@ -146,20 +167,26 @@ func NewSQSWorkshopStack(scope constructs.Construct, id string, props *CdkWorksh
 	queue := NewTestQueue(stack)
 
 	// lambdas...
-	publishHandler := NewPublishHandler(stack, queue)
-	queue.GrantSendMessages(publishHandler)
+	publicationHandler := NewPublicationHandler(stack, queue)
+	queue.GrantSendMessages(publicationHandler)
 
-	subscribeHandler := NewSuspendableSubscriptionHandler(stack)
 	eventSourceProps := awslambdaeventsources.SqsEventSourceProps{}
-	subscribeHandler.AddEventSource(awslambdaeventsources.NewSqsEventSource(queue, &eventSourceProps))
-	queue.GrantConsumeMessages(subscribeHandler)
+
+	continuousSubscriptionHandler := NewSuspendableSubscriptionHandler(stack)
+	continuousSubscriptionHandler.AddEventSource(awslambdaeventsources.NewSqsEventSource(queue, &eventSourceProps))
+	queue.GrantConsumeMessages(continuousSubscriptionHandler)
+
+	suspendableSubscriptionHandler := NewSuspendableSubscriptionHandler(stack)
+	suspendableSubscriptionHandler.AddEventSource(awslambdaeventsources.NewSqsEventSource(queue, &eventSourceProps))
+	queue.GrantConsumeMessages(suspendableSubscriptionHandler)
 
 	// gateway...
-	NewAPIGateway(stack, publishHandler)
+	NewAPIGateway(stack, publicationHandler)
 
 	// table...
 	table := NewMessageTable(stack, tableId, tableName)
-	table.GrantReadWriteData(subscribeHandler)
+	table.GrantReadWriteData(continuousSubscriptionHandler)
+	table.GrantReadWriteData(suspendableSubscriptionHandler)
 
 	return stack
 }
