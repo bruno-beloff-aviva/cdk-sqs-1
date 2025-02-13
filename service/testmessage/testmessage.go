@@ -30,7 +30,7 @@ type TestReception struct {
 func NewTestReception(subscriber string, message TestMessage) TestReception {
 	now := time.Now().UTC().Format(time.RFC3339Nano)
 
-	return TestReception{Received: now, TestMessage: message}
+	return TestReception{Received: now, Subscriber: subscriber, TestMessage: message}
 }
 
 func (r *TestReception) String() string {
