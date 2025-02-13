@@ -1,8 +1,8 @@
+package main
+
 // https://docs.aws.amazon.com/lambda/latest/dg/golang-handler.html#golang-handler-signatures
 // https://stackoverflow.com/questions/37365009/how-to-invoke-an-aws-lambda-function-asynchronously
 // proper logging: https://github.com/awsdocs/aws-lambda-developer-guide/blob/main/sample-apps/blank-go/function/main.go
-
-package main
 
 import (
 	"context"

@@ -1,13 +1,9 @@
+package dbmanager
+
 // https://stackoverflow.com/questions/45405434/dynamodb-dynamic-atomic-update-of-mapped-values-with-aws-lambda-nodejs-runtime
 // https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/WorkingWithItems.html#WorkingWithItems.ConditionalUpdate
 // https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.ConditionExpressions.html
-
-// To test with a live DynamoDB table, use:
-// assume "bb"
-
 // https://www.youtube.com/watch?v=bLY7-kTsQBM
-
-package dbmanager
 
 import (
 	"context"

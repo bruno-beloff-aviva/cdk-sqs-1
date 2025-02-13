@@ -1,6 +1,6 @@
-// https://docs.aws.amazon.com/sdk-for-go/v2/developer-guide/go_sns_code_examples.html
-
 package snsmanager
+
+// https://docs.aws.amazon.com/sdk-for-go/v2/developer-guide/go_sns_code_examples.html
 
 import (
 	"context"

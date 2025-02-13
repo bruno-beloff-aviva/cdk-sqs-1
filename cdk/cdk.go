@@ -1,9 +1,9 @@
+package main
+
 // https://github.com/aviva-verde/cdk-standards.git
 // https://docs.aws.amazon.com/cdk/v2/guide/resources.html
 // https://docs.aws.amazon.com/code-library/latest/ug/go_2_sqs_code_examples.html
 // https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_lambda_event_sources.SqsEventSource.html
-
-package main
 
 import (
 	sqs "sqstest/aviva/sqs"
@@ -23,8 +23,6 @@ import (
 	"github.com/aws/constructs-go/constructs/v10"
 	"github.com/aws/jsii-runtime-go"
 )
-
-// the aws-cdk-lib/aws-sns-subscriptions package:
 
 const project = "SQS1"
 const version = "0.1.4"
@@ -173,7 +171,7 @@ func NewSQSWorkshopStack(scope constructs.Construct, id string, props *CdkWorksh
 
 	// lambdas...
 	pubHandler := NewPubHandler(stack, queue)
-	queue.GrantSendMessages(pubHandler)
+	queue.GrantSendMessages(pubHandler) // TODO: remove - sns instead
 
 	eventSourceProps := awslambdaeventsources.SqsEventSourceProps{}
 
