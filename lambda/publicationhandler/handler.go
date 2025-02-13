@@ -1,4 +1,4 @@
-package publisher
+package publicationhandler
 
 import (
 	"fmt"
@@ -13,19 +13,19 @@ import (
 	"go.uber.org/zap"
 )
 
-type PublishHandler struct {
+type PublicationHandler struct {
 	logger         *zapray.Logger
 	publishService service.PublishService
 }
 
-func NewPublishHandler(logger *zapray.Logger, publishService service.PublishService) PublishHandler {
-	return PublishHandler{
+func NewPublicationHandler(logger *zapray.Logger, publishService service.PublishService) PublicationHandler {
+	return PublicationHandler{
 		logger:         logger,
 		publishService: publishService,
 	}
 }
 
-func (h PublishHandler) Handle(ctx context.Context, request events.APIGatewayProxyRequest) (apiResponse events.APIGatewayProxyResponse, err error) {
+func (h PublicationHandler) Handle(ctx context.Context, request events.APIGatewayProxyRequest) (apiResponse events.APIGatewayProxyResponse, err error) {
 	h.logger.Debug("Handle: ", zap.String("request", fmt.Sprintf("%v", request)))
 
 	var message testmessage.TestMessage

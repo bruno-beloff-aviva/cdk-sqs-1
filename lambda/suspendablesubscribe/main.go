@@ -8,7 +8,7 @@ import (
 	"context"
 	"os"
 	"sqstest/dynamomanager"
-	"sqstest/lambda/subscriber"
+	"sqstest/lambda/subscriptionhandler"
 	"sqstest/service"
 	"strconv"
 
@@ -55,7 +55,7 @@ func main() {
 	subscribeService := service.NewSuspendableService(logger, cfg, dbManager)
 
 	//	lambda...
-	subscribeHandler := subscriber.NewSubscribeHandler(logger, *subscribeService)
+	subscribeHandler := subscriptionhandler.NewSubscriptionHandler(logger, *subscribeService)
 
 	lambda.StartWithOptions(subscribeHandler.Handle, lambda.WithEnableSIGTERM(func() {
 		logger.Info("<<< Lambda container shutting down.")

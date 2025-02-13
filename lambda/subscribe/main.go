@@ -7,7 +7,8 @@ package main
 import (
 	"context"
 	"os"
-	"sqstest/lambda/publicationhandler"
+	"sqstest/dynamomanager"
+	"sqstest/lambda/subscriptionhandler"
 	"sqstest/service"
 
 	"github.com/aws/aws-lambda-go/lambda"
@@ -21,7 +22,7 @@ func main() {
 	if err1 != nil {
 		panic("failed to create logger: " + err1.Error())
 	}
-	logger.Info(">>> publish main")
+	logger.Info(">>> subscribe main")
 
 	//	context...
 	ctx := context.Background()
@@ -35,16 +36,24 @@ func main() {
 	version := os.Getenv("VERSION")
 	logger.Info("version: " + version)
 
-	queueUrl := os.Getenv("QUEUE_URL")
-	logger.Info("queueUrl: " + queueUrl)
+	tableName := os.Getenv("MESSAGE_TABLE_NAME")
+	logger.Info("tableName: " + tableName)
+
+	//	managers...
+	dbManager := dynamomanager.NewDynamoManager(logger, cfg, tableName)
+	tableIsAvailable := dbManager.TableIsAvailable(ctx)
+
+	if !tableIsAvailable {
+		panic("Table not available: " + tableName)
+	}
 
 	//	service...
-	publishService := service.NewPublishService(logger, cfg, queueUrl)
+	subscribeService := service.NewSuspendableService(logger, cfg, dbManager)
 
 	//	lambda...
-	publishHandler := publicationhandler.NewPublicationHandler(logger, publishService)
+	subscribeHandler := subscriptionhandler.NewSubscriptionHandler(logger, *subscribeService)
 
-	lambda.StartWithOptions(publishHandler.Handle, lambda.WithEnableSIGTERM(func() {
+	lambda.StartWithOptions(subscribeHandler.Handle, lambda.WithEnableSIGTERM(func() {
 		logger.Info("<<< Lambda container shutting down.")
 	}))
 }

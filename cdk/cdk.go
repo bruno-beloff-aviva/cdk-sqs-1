@@ -23,10 +23,10 @@ import (
 )
 
 const project = "SQS1"
-const version = "0.1.2"
+const version = "0.1.4"
 
 const queueName = "TestQueue"
-const queueMaxRetries = 5
+const queueMaxRetries = 3
 
 const tableName = "TestMessageTableV1"
 const tableId = project + tableName
@@ -34,7 +34,7 @@ const tableId = project + tableName
 const publishHandlerId = project + "PublishHandler"
 const publishEndpointId = project + "PublishEndpoint"
 
-const subscribeHandlerId = project + "SubscribeHandler"
+const suspendableSubscriptionHandlerId = project + "SudspendableHandler"
 
 const stackId = project + "Stack"
 
@@ -94,7 +94,7 @@ func NewPublishHandler(stack awscdk.Stack, queue awssqs.IQueue) awslambdago.GoFu
 	return awslambdago.NewGoFunction(stack, aws.String(publishHandlerId), &handlerProps)
 }
 
-func NewSubscribeHandler(stack awscdk.Stack) awslambdago.GoFunction {
+func NewSuspendableSubscriptionHandler(stack awscdk.Stack) awslambdago.GoFunction {
 	lambdaEnv := map[string]*string{
 		"VERSION":            aws.String(version),
 		"MESSAGE_TABLE_NAME": aws.String(tableName),
@@ -112,7 +112,7 @@ func NewSubscribeHandler(stack awscdk.Stack) awslambdago.GoFunction {
 		Environment:   &lambdaEnv,
 	}
 
-	return awslambdago.NewGoFunction(stack, aws.String(subscribeHandlerId), &handlerProps)
+	return awslambdago.NewGoFunction(stack, aws.String(suspendableSubscriptionHandlerId), &handlerProps)
 }
 
 func NewAPIGateway(stack awscdk.Stack, handler awslambdago.GoFunction) awsapigateway.LambdaRestApi {
@@ -149,7 +149,7 @@ func NewSQSWorkshopStack(scope constructs.Construct, id string, props *CdkWorksh
 	publishHandler := NewPublishHandler(stack, queue)
 	queue.GrantSendMessages(publishHandler)
 
-	subscribeHandler := NewSubscribeHandler(stack)
+	subscribeHandler := NewSuspendableSubscriptionHandler(stack)
 	eventSourceProps := awslambdaeventsources.SqsEventSourceProps{}
 	subscribeHandler.AddEventSource(awslambdaeventsources.NewSqsEventSource(queue, &eventSourceProps))
 	queue.GrantConsumeMessages(subscribeHandler)
