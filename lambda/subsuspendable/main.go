@@ -18,7 +18,7 @@ import (
 )
 
 func main() {
-	logger, err1 := zapray.NewDevelopment() // log level is set using this: NewProduction(), NewDevelopment(), NewExample()
+	logger, err1 := zapray.NewProduction() // log level is set using this: NewProduction(), NewDevelopment(), NewExample()
 
 	if err1 != nil {
 		panic("failed to create logger: " + err1.Error())
