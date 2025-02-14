@@ -68,10 +68,12 @@ func NewTopic(stack awscdk.Stack, id string, name string) awssns.Topic {
 }
 
 func NewQueue(stack awscdk.Stack, name string) awssqs.IQueue {
-	queueKey := awskms.NewKey(stack, aws.String("queueKey"), &awskms.KeyProps{
-		Alias:             aws.String("testQueueKey"),
+	keyProps := awskms.KeyProps{
+		Alias:             aws.String(name + "QueueKey"),
 		EnableKeyRotation: aws.Bool(true),
-	})
+	}
+
+	queueKey := awskms.NewKey(stack, aws.String(name+"Key"), &keyProps)
 
 	queueProps := sqs.SqsQueueWithDLQProps{
 		Stack:                    stack,
