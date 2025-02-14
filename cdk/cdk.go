@@ -184,7 +184,7 @@ func NewSQSWorkshopStack(scope constructs.Construct, id string, props *CdkWorksh
 	topic := NewTopic(stack)
 
 	subProps := awssnssubscriptions.SqsSubscriptionProps{
-		RawMessageDelivery: aws.Bool(false),
+		// RawMessageDelivery: aws.Bool(false),
 	}
 	topic.AddSubscription(awssnssubscriptions.NewSqsSubscription(queue, &subProps))
 
