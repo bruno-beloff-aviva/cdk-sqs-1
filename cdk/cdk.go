@@ -25,7 +25,7 @@ import (
 )
 
 const project = "SQS1"
-const version = "0.1.4"
+const version = "0.1.5"
 
 const queue1Name = "TestQueue1"
 const queue2Name = "TestQueue2"
@@ -34,7 +34,7 @@ const queueMaxRetries = 3
 const tableName = "TestMessageTableV1"
 const tableId = project + tableName
 
-const topicName = project + "TestTopic"
+const topicName = "TestTopic"
 const topicId = project + topicName
 
 const pubHandlerId = project + "PubHandler"

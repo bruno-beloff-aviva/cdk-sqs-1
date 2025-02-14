@@ -42,5 +42,5 @@ func (r *TestReception) String() string {
 }
 
 func (r *TestReception) GetKey() map[string]any {
-	return map[string]any{"Path": r.Path}
+	return map[string]any{"Path": r.Path, "Subscriber": r.Subscriber}
 }
