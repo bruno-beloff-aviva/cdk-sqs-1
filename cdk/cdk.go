@@ -183,7 +183,9 @@ func NewSQSWorkshopStack(scope constructs.Construct, id string, props *CdkWorksh
 	// topic...
 	topic := NewTopic(stack)
 
-	subProps := awssnssubscriptions.SqsSubscriptionProps{}
+	subProps := awssnssubscriptions.SqsSubscriptionProps{
+		RawMessageDelivery: aws.Bool(false),
+	}
 	topic.AddSubscription(awssnssubscriptions.NewSqsSubscription(queue, &subProps))
 
 	// lambdas...
@@ -192,9 +194,9 @@ func NewSQSWorkshopStack(scope constructs.Construct, id string, props *CdkWorksh
 
 	eventSourceProps := awslambdaeventsources.SqsEventSourceProps{}
 
-	continuousSubHandler := NewContinuousSubHandler(stack)
-	continuousSubHandler.AddEventSource(awslambdaeventsources.NewSqsEventSource(queue, &eventSourceProps))
-	queue.GrantConsumeMessages(continuousSubHandler)
+	// continuousSubHandler := NewContinuousSubHandler(stack)
+	// continuousSubHandler.AddEventSource(awslambdaeventsources.NewSqsEventSource(queue, &eventSourceProps))
+	// queue.GrantConsumeMessages(continuousSubHandler)
 
 	suspendableSubHandler := NewSuspendableSubHandler(stack)
 	suspendableSubHandler.AddEventSource(awslambdaeventsources.NewSqsEventSource(queue, &eventSourceProps))
@@ -208,7 +210,7 @@ func NewSQSWorkshopStack(scope constructs.Construct, id string, props *CdkWorksh
 
 	// table...
 	table := NewMessageTable(stack, tableId, tableName)
-	table.GrantReadWriteData(continuousSubHandler)
+	// table.GrantReadWriteData(continuousSubHandler)
 	table.GrantReadWriteData(suspendableSubHandler)
 
 	return stack
