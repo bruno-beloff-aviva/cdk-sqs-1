@@ -33,6 +33,9 @@ const queueMaxRetries = 3
 const tableName = "TestMessageTableV1"
 const tableId = project + tableName
 
+const topicName = project + "TestTopic"
+const topicId = project + topicName
+
 const pubHandlerId = project + "PubHandler"
 const pubEndpointId = project + "PubEndpoint"
 
@@ -55,6 +58,14 @@ func NewMessageTable(scope constructs.Construct, id string, name string) awsdyna
 	return awsdynamodb.NewTable(scope, aws.String(id), &tableProps)
 }
 
+func NewTopic(stack awscdk.Stack) awssns.Topic {
+	topicProps := awssns.TopicProps{
+		DisplayName: aws.String(topicName),
+	}
+
+	return awssns.NewTopic(stack, aws.String(topicId), &topicProps)
+}
+
 // TODO: each lambda must have its own queue
 func NewTestQueue(stack awscdk.Stack) awssqs.IQueue {
 	queueKey := awskms.NewKey(stack, aws.String("queueKey"), &awskms.KeyProps{
@@ -65,7 +76,7 @@ func NewTestQueue(stack awscdk.Stack) awssqs.IQueue {
 	queueProps := sqs.SqsQueueWithDLQProps{
 		Stack:                    stack,
 		QueueName:                queueName,
-		SQSKey:                   queueKey,
+		SQSKey:                   queueKey, //	TODO: attempt to remove this
 		QMaxReceiveCount:         queueMaxRetries,
 		QAlarmPeriod:             1,
 		QAlarmThreshold:          1,
@@ -78,10 +89,10 @@ func NewTestQueue(stack awscdk.Stack) awssqs.IQueue {
 	return sqs.NewSqsQueueWithDLQ(queueProps)
 }
 
-func NewPubHandler(stack awscdk.Stack, queue awssqs.IQueue) awslambdago.GoFunction {
+func NewPubHandler(stack awscdk.Stack, topic awssns.Topic) awslambdago.GoFunction {
 	lambdaEnv := map[string]*string{
 		"VERSION":   aws.String(version),
-		"QUEUE_URL": queue.QueueUrl(),
+		"TOPIC_ARN": topic.TopicArn(),
 	}
 
 	handlerProps := awslambdago.GoFunctionProps{
@@ -167,11 +178,17 @@ func NewSQSWorkshopStack(scope constructs.Construct, id string, props *CdkWorksh
 	stack = awscdk.NewStack(scope, &id, &stackProps)
 
 	// queue...
-	queue := NewTestQueue(stack)
+	queue := NewTestQueue(stack) //	we need two queues
+
+	// topic...
+	topic := NewTopic(stack)
+
+	subProps := awssnssubscriptions.SqsSubscriptionProps{}
+	topic.AddSubscription(awssnssubscriptions.NewSqsSubscription(queue, &subProps))
 
 	// lambdas...
-	pubHandler := NewPubHandler(stack, queue)
-	queue.GrantSendMessages(pubHandler) // TODO: remove - sns instead
+	pubHandler := NewPubHandler(stack, topic)
+	topic.GrantPublish(pubHandler)
 
 	eventSourceProps := awslambdaeventsources.SqsEventSourceProps{}
 
@@ -187,13 +204,7 @@ func NewSQSWorkshopStack(scope constructs.Construct, id string, props *CdkWorksh
 	NewAPIGateway(stack, pubHandler)
 
 	// topic...
-	snsTopic := awssns.NewTopic(stack, jsii.String("sns-topic"), nil)
-
-	subProps := awssnssubscriptions.SqsSubscriptionProps{}
-	snsTopic.AddSubscription(awssnssubscriptions.NewSqsSubscription(queue, &subProps))
-	snsTopic.GrantPublish(pubHandler)
-
-	// snsTopic.TopicArn()
+	topic.GrantPublish(pubHandler)
 
 	// table...
 	table := NewMessageTable(stack, tableId, tableName)

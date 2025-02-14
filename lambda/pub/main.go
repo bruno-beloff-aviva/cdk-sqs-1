@@ -35,11 +35,11 @@ func main() {
 	version := os.Getenv("VERSION")
 	logger.Info("version: " + version)
 
-	queueUrl := os.Getenv("QUEUE_URL")
-	logger.Info("queueUrl: " + queueUrl)
+	topicArn := os.Getenv("TOPIC_ARN")
+	logger.Info("topicArn: " + topicArn)
 
 	//	service...
-	pubService := pub.NewSQSPubService(logger, cfg, queueUrl)
+	pubService := pub.NewSNSPubService(logger, cfg, topicArn)
 
 	//	lambda...
 	publishHandler := pubhandler.NewPubHandler(logger, pubService)
