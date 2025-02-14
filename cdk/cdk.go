@@ -51,7 +51,7 @@ type CdkWorkshopStackProps struct {
 
 func NewMessageTable(scope constructs.Construct, id string, name string) awsdynamodb.ITable {
 	tableProps := awsdynamodb.TableProps{
-		PartitionKey: &awsdynamodb.Attribute{Name: aws.String("Sent"), Type: awsdynamodb.AttributeType_STRING},
+		PartitionKey: &awsdynamodb.Attribute{Name: aws.String("PK"), Type: awsdynamodb.AttributeType_STRING},
 		SortKey:      &awsdynamodb.Attribute{Name: aws.String("Path"), Type: awsdynamodb.AttributeType_STRING},
 		TableName:    aws.String(name),
 	}

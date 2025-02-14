@@ -26,6 +26,7 @@ func (m *TestMessage) String() string {
 // --------------------------------------------------------------------------------------------------------------------
 
 type TestReception struct {
+	PK         string
 	Received   string
 	Subscriber string
 	TestMessage
@@ -33,8 +34,9 @@ type TestReception struct {
 
 func NewTestReception(subscriber string, message TestMessage) TestReception {
 	now := time.Now().UTC().Format(time.RFC3339Nano)
+	pk := message.Sent + "/" + subscriber
 
-	return TestReception{Received: now, Subscriber: subscriber, TestMessage: message}
+	return TestReception{PK: pk, Received: now, Subscriber: subscriber, TestMessage: message}
 }
 
 func (r *TestReception) String() string {
@@ -42,5 +44,5 @@ func (r *TestReception) String() string {
 }
 
 func (r *TestReception) GetKey() map[string]any {
-	return map[string]any{"Path": r.Path, "Subscriber": r.Subscriber}
+	return map[string]any{"PK": r.PK}
 }

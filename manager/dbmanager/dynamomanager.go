@@ -69,7 +69,7 @@ func (m DynamoManager) Get(ctx context.Context, object DynamoAble) error {
 }
 
 func (m DynamoManager) Put(ctx context.Context, object DynamoAble) error {
-	m.logger.Debug("Put: ", zap.Any("object", object), zap.Any("key", object.GetKey()))
+	m.logger.Debug("Put: ", zap.Any("object", object))
 
 	item, err := attributevalue.MarshalMap(object)
 	if err != nil {
@@ -90,7 +90,7 @@ func (m DynamoManager) Put(ctx context.Context, object DynamoAble) error {
 }
 
 func (m DynamoManager) Increment(ctx context.Context, object DynamoAble, field string) (err error) {
-	m.logger.Debug("Increment: ", zap.Any("object", object), zap.Any("key", object.GetKey()))
+	m.logger.Debug("Increment: ", zap.Any("object", object), zap.String("field", field))
 
 	defer func() {
 		if err != nil && strings.Contains(err.Error(), "does not exist") {
