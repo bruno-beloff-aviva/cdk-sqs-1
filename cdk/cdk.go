@@ -27,7 +27,8 @@ import (
 const project = "SQS1"
 const version = "0.1.4"
 
-const queueName = "TestQueue"
+const queue1Name = "TestQueue1"
+const queue2Name = "TestQueue2"
 const queueMaxRetries = 3
 
 const tableName = "TestMessageTableV1"
@@ -58,24 +59,23 @@ func NewMessageTable(scope constructs.Construct, id string, name string) awsdyna
 	return awsdynamodb.NewTable(scope, aws.String(id), &tableProps)
 }
 
-func NewTopic(stack awscdk.Stack) awssns.Topic {
+func NewTopic(stack awscdk.Stack, id string, name string) awssns.Topic {
 	topicProps := awssns.TopicProps{
-		DisplayName: aws.String(topicName),
+		DisplayName: aws.String(name),
 	}
 
-	return awssns.NewTopic(stack, aws.String(topicId), &topicProps)
+	return awssns.NewTopic(stack, aws.String(id), &topicProps)
 }
 
-// TODO: each lambda must have its own queue
-func NewTestQueue(stack awscdk.Stack) awssqs.IQueue {
+func NewQueue(stack awscdk.Stack, name string) awssqs.IQueue {
 	queueKey := awskms.NewKey(stack, aws.String("queueKey"), &awskms.KeyProps{
-		Alias:             jsii.String("testQueueKey"),
-		EnableKeyRotation: jsii.Bool(true),
+		Alias:             aws.String("testQueueKey"),
+		EnableKeyRotation: aws.Bool(true),
 	})
 
 	queueProps := sqs.SqsQueueWithDLQProps{
 		Stack:                    stack,
-		QueueName:                queueName,
+		QueueName:                name,
 		SQSKey:                   queueKey, //	TODO: attempt to remove this
 		QMaxReceiveCount:         queueMaxRetries,
 		QAlarmPeriod:             1,
@@ -89,7 +89,7 @@ func NewTestQueue(stack awscdk.Stack) awssqs.IQueue {
 	return sqs.NewSqsQueueWithDLQ(queueProps)
 }
 
-func NewPubHandler(stack awscdk.Stack, topic awssns.Topic) awslambdago.GoFunction {
+func NewPubHandler(stack awscdk.Stack, id string, topic awssns.Topic) awslambdago.GoFunction {
 	lambdaEnv := map[string]*string{
 		"VERSION":   aws.String(version),
 		"TOPIC_ARN": topic.TopicArn(),
@@ -106,10 +106,10 @@ func NewPubHandler(stack awscdk.Stack, topic awssns.Topic) awslambdago.GoFunctio
 		Environment:   &lambdaEnv,
 	}
 
-	return awslambdago.NewGoFunction(stack, aws.String(pubHandlerId), &handlerProps)
+	return awslambdago.NewGoFunction(stack, aws.String(id), &handlerProps)
 }
 
-func NewContinuousSubHandler(stack awscdk.Stack) awslambdago.GoFunction {
+func NewContinuousSubHandler(stack awscdk.Stack, id string) awslambdago.GoFunction {
 	lambdaEnv := map[string]*string{
 		"VERSION":            aws.String(version),
 		"MESSAGE_TABLE_NAME": aws.String(tableName),
@@ -126,10 +126,10 @@ func NewContinuousSubHandler(stack awscdk.Stack) awslambdago.GoFunction {
 		Environment:   &lambdaEnv,
 	}
 
-	return awslambdago.NewGoFunction(stack, aws.String(continuousSubHandlerId), &handlerProps)
+	return awslambdago.NewGoFunction(stack, aws.String(id), &handlerProps)
 }
 
-func NewSuspendableSubHandler(stack awscdk.Stack) awslambdago.GoFunction {
+func NewSuspendableSubHandler(stack awscdk.Stack, id string) awslambdago.GoFunction {
 	lambdaEnv := map[string]*string{
 		"VERSION":            aws.String(version),
 		"MESSAGE_TABLE_NAME": aws.String(tableName),
@@ -147,7 +147,7 @@ func NewSuspendableSubHandler(stack awscdk.Stack) awslambdago.GoFunction {
 		Environment:   &lambdaEnv,
 	}
 
-	return awslambdago.NewGoFunction(stack, aws.String(suspendableSubHandlerId), &handlerProps)
+	return awslambdago.NewGoFunction(stack, aws.String(id), &handlerProps)
 }
 
 func NewAPIGateway(stack awscdk.Stack, handler awslambdago.GoFunction) awsapigateway.LambdaRestApi {
@@ -178,29 +178,31 @@ func NewSQSWorkshopStack(scope constructs.Construct, id string, props *CdkWorksh
 	stack = awscdk.NewStack(scope, &id, &stackProps)
 
 	// queue...
-	queue := NewTestQueue(stack) //	we need two queues
+	queue1 := NewQueue(stack, queue1Name)
+	queue2 := NewQueue(stack, queue2Name)
 
 	// topic...
-	topic := NewTopic(stack)
+	topic := NewTopic(stack, topicId, topicName)
 
 	subProps := awssnssubscriptions.SqsSubscriptionProps{
 		RawMessageDelivery: aws.Bool(true),
 	}
-	topic.AddSubscription(awssnssubscriptions.NewSqsSubscription(queue, &subProps))
+	topic.AddSubscription(awssnssubscriptions.NewSqsSubscription(queue1, &subProps))
+	topic.AddSubscription(awssnssubscriptions.NewSqsSubscription(queue2, &subProps))
 
 	// lambdas...
-	pubHandler := NewPubHandler(stack, topic)
+	pubHandler := NewPubHandler(stack, pubHandlerId, topic)
 	topic.GrantPublish(pubHandler)
 
 	eventSourceProps := awslambdaeventsources.SqsEventSourceProps{}
 
-	// continuousSubHandler := NewContinuousSubHandler(stack)
-	// continuousSubHandler.AddEventSource(awslambdaeventsources.NewSqsEventSource(queue, &eventSourceProps))
-	// queue.GrantConsumeMessages(continuousSubHandler)
+	continuousSubHandler := NewContinuousSubHandler(stack, continuousSubHandlerId)
+	continuousSubHandler.AddEventSource(awslambdaeventsources.NewSqsEventSource(queue1, &eventSourceProps))
+	queue1.GrantConsumeMessages(continuousSubHandler)
 
-	suspendableSubHandler := NewSuspendableSubHandler(stack)
-	suspendableSubHandler.AddEventSource(awslambdaeventsources.NewSqsEventSource(queue, &eventSourceProps))
-	queue.GrantConsumeMessages(suspendableSubHandler)
+	suspendableSubHandler := NewSuspendableSubHandler(stack, suspendableSubHandlerId)
+	suspendableSubHandler.AddEventSource(awslambdaeventsources.NewSqsEventSource(queue2, &eventSourceProps))
+	queue2.GrantConsumeMessages(suspendableSubHandler)
 
 	// gateway...
 	NewAPIGateway(stack, pubHandler)
@@ -210,7 +212,7 @@ func NewSQSWorkshopStack(scope constructs.Construct, id string, props *CdkWorksh
 
 	// table...
 	table := NewMessageTable(stack, tableId, tableName)
-	// table.GrantReadWriteData(continuousSubHandler)
+	table.GrantReadWriteData(continuousSubHandler)
 	table.GrantReadWriteData(suspendableSubHandler)
 
 	return stack
