@@ -21,11 +21,11 @@ type GatewayCommonProps struct {
 
 // specific to an Gateway handler
 type GatewayBuilder struct {
-	EndpointId        string
-	HandlerId         string
-	SubscriptionTopic awssns.Topic
-	Entry             string
-	Environment       map[string]*string
+	EndpointId       string
+	HandlerId        string
+	PublicationTopic awssns.Topic
+	Entry            string
+	Environment      map[string]*string
 }
 
 type GatewayConstruct struct {
@@ -41,8 +41,8 @@ func (h GatewayBuilder) Setup(stack awscdk.Stack, props GatewayCommonProps) Gate
 	c.Builder = h
 	c.Dashboard = props.Dashboard
 	c.Handler = h.setupPubHandler(stack)
-	h.SubscriptionTopic.GrantPublish(c.Handler)
 
+	h.PublicationTopic.GrantPublish(c.Handler)
 	h.setupGateway(stack, c.Handler)
 
 	return c
@@ -82,12 +82,12 @@ func (h GatewayBuilder) setupGateway(stack awscdk.Stack, handler awslambdago.GoF
 	return awsapigateway.NewLambdaRestApi(stack, aws.String(h.EndpointId), &restApiProps)
 }
 
-func (c GatewayConstruct) MetricsGraphWidget(stack awscdk.Stack) awscloudwatch.GraphWidget {
-	region := *stack.Region()
+func (c GatewayConstruct) MetricsGraphWidget() awscloudwatch.GraphWidget {
+	region := c.Handler.Stack().Region()
 
-	invocationsMetric := c.Dashboard.CreateLambdaMetric(region, "Invocations", c.Handler.FunctionName(), "Sum")
-	errorsMetric := c.Dashboard.CreateLambdaMetric(region, "Errors", c.Handler.FunctionName(), "Sum")
+	invocationsMetric := c.Dashboard.CreateLambdaMetric(*region, "Invocations", c.Handler.FunctionName(), "Sum")
+	errorsMetric := c.Dashboard.CreateLambdaMetric(*region, "Errors", c.Handler.FunctionName(), "Sum")
 	metrics := []awscloudwatch.IMetric{invocationsMetric, errorsMetric}
 
-	return c.Dashboard.CreateGraphWidget(region, fmt.Sprintf("%s - Invocations and Errors", c.Builder.HandlerId), metrics)
+	return c.Dashboard.CreateGraphWidget(*region, fmt.Sprintf("%s - Invocations and Errors", c.Builder.HandlerId), metrics)
 }

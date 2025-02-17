@@ -87,11 +87,11 @@ func setupPubHandler(stack awscdk.Stack, props gatewayhandler.GatewayCommonProps
 	}
 
 	builder := gatewayhandler.GatewayBuilder{
-		EndpointId:        pubEndpointId,
-		HandlerId:         pubHandlerId,
-		SubscriptionTopic: topic,
-		Entry:             "lambda/pub/",
-		Environment:       environment,
+		EndpointId:       pubEndpointId,
+		HandlerId:        pubHandlerId,
+		PublicationTopic: topic,
+		Entry:            "lambda/pub/",
+		Environment:      environment,
 	}
 
 	return builder.Setup(stack, props)
@@ -182,7 +182,10 @@ func NewSQSWorkshopStack(scope constructs.Construct, id string, props *CdkWorksh
 	c2 := setupSuspendableSubHandler(stack, subProps, topic)
 	setupEmptySubHandler(stack, subProps, topic)
 
-	dash.AddWidgetsRow(c0.MetricsGraphWidget(stack), c1.MetricsGraphWidget(stack), c2.MetricsGraphWidget(stack))
+	// dashboard widgets...
+	dash.AddWidgetsRow(c0.MetricsGraphWidget(), c1.MetricsGraphWidget(), c2.MetricsGraphWidget())
+
+	// TODO: queue and DLQ widgets
 
 	return stack
 }
