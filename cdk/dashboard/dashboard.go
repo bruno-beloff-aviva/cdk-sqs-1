@@ -33,6 +33,11 @@ func NewDashboard(stack awscdk.Stack, name string) Dashboard {
 // 	d.Dashboard.AddWidgets(row)
 // }
 
+func (d *Dashboard) AddWidgetsRow(widgets ...awscloudwatch.IWidget) {
+	row := awscloudwatch.NewRow(widgets...)
+	d.Dashboard.AddWidgets(row)
+}
+
 func (d *Dashboard) AddLambdaMetrics(region string, handler awslambdago.GoFunction, handlerId string) {
 	if handler == nil {
 		return

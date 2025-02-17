@@ -1,10 +1,12 @@
 package snshandler
 
 import (
+	"fmt"
 	"sqstest/aviva/sqs"
 	"sqstest/cdk/dashboard"
 
 	"github.com/aws/aws-cdk-go/awscdk/v2"
+	"github.com/aws/aws-cdk-go/awscdk/v2/awscloudwatch"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awsdynamodb"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awskms"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awslambda"
@@ -97,4 +99,14 @@ func (h SNSBuilder) setupSubHandler(stack awscdk.Stack, queue awssqs.IQueue) aws
 	handler.AddEventSource(awslambdaeventsources.NewSqsEventSource(queue, &eventSourceProps))
 
 	return handler
+}
+
+func (c SNSConstruct) MetricsGraphWidget(stack awscdk.Stack) awscloudwatch.GraphWidget {
+	region := *stack.Region()
+
+	invocationsMetric := c.Dashboard.CreateLambdaMetric(region, "Invocations", c.Handler.FunctionName(), "Sum")
+	errorsMetric := c.Dashboard.CreateLambdaMetric(region, "Errors", c.Handler.FunctionName(), "Sum")
+	metrics := []awscloudwatch.IMetric{invocationsMetric, errorsMetric}
+
+	return c.Dashboard.CreateGraphWidget(region, fmt.Sprintf("%s Invocations and Errors", c.Build.HandlerId), metrics)
 }
