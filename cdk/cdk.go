@@ -197,7 +197,7 @@ func NewSQSWorkshopStack(scope constructs.Construct, id string, props *CdkWorksh
 	// queue...
 	queue1 := NewQueue(stack, queue1Name) // continuous sub
 	queue2 := NewQueue(stack, queue2Name) // suspendable sub
-	NewQueue(stack, queue3Name)           // no sub
+	queue3 := NewQueue(stack, queue3Name) // no sub
 
 	// topic...
 	topic := NewTopic(stack, topicId, topicName)
@@ -207,6 +207,7 @@ func NewSQSWorkshopStack(scope constructs.Construct, id string, props *CdkWorksh
 	}
 	topic.AddSubscription(awssnssubscriptions.NewSqsSubscription(queue1, &subProps))
 	topic.AddSubscription(awssnssubscriptions.NewSqsSubscription(queue2, &subProps))
+	topic.AddSubscription(awssnssubscriptions.NewSqsSubscription(queue3, &subProps))
 
 	// pub lambda...
 	pubHandler := NewPubHandler(stack, pubHandlerId, topic)
