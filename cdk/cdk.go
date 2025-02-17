@@ -7,6 +7,7 @@ package main
 
 import (
 	sqs "sqstest/aviva/sqs"
+	"sqstest/cdk/eventhandler"
 
 	"github.com/aws/aws-cdk-go/awscdk/v2"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awsapigateway"
@@ -17,7 +18,6 @@ import (
 	"github.com/aws/aws-cdk-go/awscdk/v2/awslambdaeventsources"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awslogs"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awssns"
-	"github.com/aws/aws-cdk-go/awscdk/v2/awssnssubscriptions"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awssqs"
 	awslambdago "github.com/aws/aws-cdk-go/awscdklambdagoalpha/v2"
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -28,7 +28,7 @@ import (
 // TODO: build a dashboard
 
 const project = "SQS1"
-const version = "0.1.8"
+const version = "0.2.0"
 
 const queue1Name = "TestQueue1"
 const queue2Name = "TestQueue2"
@@ -194,38 +194,89 @@ func NewSQSWorkshopStack(scope constructs.Construct, id string, props *CdkWorksh
 	stack = awscdk.NewStack(scope, &id, &stackProps)
 
 	// queue...
-	queue1 := NewQueue(stack, queue1Name) // continuous sub
-	queue2 := NewQueue(stack, queue2Name) // suspendable sub
-	queue3 := NewQueue(stack, queue3Name) // no sub
+	// queue1 := NewQueue(stack, queue1Name) // continuous sub
+	// queue2 := NewQueue(stack, queue2Name) // suspendable sub
+	// queue3 := NewQueue(stack, queue3Name) // no sub
 
 	// topic...
 	topic := NewTopic(stack, topicId, topicName)
 
-	subProps := awssnssubscriptions.SqsSubscriptionProps{
-		RawMessageDelivery: aws.Bool(true),
-	}
-	topic.AddSubscription(awssnssubscriptions.NewSqsSubscription(queue1, &subProps))
-	topic.AddSubscription(awssnssubscriptions.NewSqsSubscription(queue2, &subProps))
-	topic.AddSubscription(awssnssubscriptions.NewSqsSubscription(queue3, &subProps))
+	// subProps := awssnssubscriptions.SqsSubscriptionProps{
+	// 	RawMessageDelivery: aws.Bool(true),
+	// }
+	// topic.AddSubscription(awssnssubscriptions.NewSqsSubscription(queue1, &subProps))
+	// topic.AddSubscription(awssnssubscriptions.NewSqsSubscription(queue2, &subProps))
+	// topic.AddSubscription(awssnssubscriptions.NewSqsSubscription(queue3, &subProps))
 
 	// pub lambda...
 	pubHandler := NewPubHandler(stack, pubHandlerId, topic)
 	topic.GrantPublish(pubHandler)
 
 	// sub lambdas...
-	continuousSubHandler := NewContinuousSubHandler(stack, continuousSubHandlerId, queue1)
-	queue1.GrantConsumeMessages(continuousSubHandler)
+	// continuousSubHandler := NewContinuousSubHandler(stack, continuousSubHandlerId, queue1)
+	// queue1.GrantConsumeMessages(continuousSubHandler)
 
-	suspendableSubHandler := NewSuspendableSubHandler(stack, suspendableSubHandlerId, queue2)
-	queue2.GrantConsumeMessages(suspendableSubHandler)
+	// suspendableSubHandler := NewSuspendableSubHandler(stack, suspendableSubHandlerId, queue2)
+	// queue2.GrantConsumeMessages(suspendableSubHandler)
 
 	// gateway...
 	NewAPIGateway(stack, pubHandler)
 
 	// table...
 	table := NewMessageTable(stack, tableId, tableName)
-	table.GrantReadWriteData(continuousSubHandler)
-	table.GrantReadWriteData(suspendableSubHandler)
+	// table.GrantReadWriteData(continuousSubHandler)
+	// table.GrantReadWriteData(suspendableSubHandler)
+
+	keyProps := awskms.KeyProps{
+		Alias:             aws.String("QueueKey"),
+		EnableKeyRotation: aws.Bool(true),
+	}
+
+	queueKey := awskms.NewKey(stack, aws.String("Key"), &keyProps)
+
+	dashboard := NewCloudwatchDashboard(stack)
+
+	handlerProps := eventhandler.EventHandlerProps{
+		SubscriptionTopic:   topic,
+		QueueKey:            queueKey,
+		QueueMaxRetries:     queueMaxRetries,
+		MessageTable:        table,
+		CloudwatchDashboard: dashboard,
+	}
+
+	continuousHandler := eventhandler.EventHandler{
+		EventName: topicName,
+		QueueName: queue1Name,
+		HandlerId: continuousSubHandlerId,
+		Entry:     "lambda/subcontinuous/",
+		Environment: map[string]*string{
+			"VERSION":            aws.String(version),
+			"MESSAGE_TABLE_NAME": aws.String(tableName),
+		},
+	}
+
+	continuousHandler.Setup(stack, handlerProps)
+
+	suspendableHandler := eventhandler.EventHandler{
+		EventName: topicName,
+		QueueName: queue2Name,
+		HandlerId: suspendableSubHandlerId,
+		Entry:     "lambda/subsuspendable/",
+		Environment: map[string]*string{
+			"VERSION":            aws.String(version),
+			"MESSAGE_TABLE_NAME": aws.String(tableName),
+			"SUSPENDED":          aws.String("false"),
+		},
+	}
+
+	suspendableHandler.Setup(stack, handlerProps)
+
+	emptyHandler := eventhandler.EventHandler{
+		EventName: topicName,
+		QueueName: queue3Name,
+	}
+
+	emptyHandler.Setup(stack, handlerProps)
 
 	return stack
 }
