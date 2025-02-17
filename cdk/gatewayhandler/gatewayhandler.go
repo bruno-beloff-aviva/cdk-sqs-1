@@ -1,8 +1,10 @@
 package gatewayhandler
 
 import (
+	"fmt"
 	"sqstest/cdk/dashboard"
 
+	"github.com/aws/aws-cdk-go/awscdk/awscloudwatch"
 	"github.com/aws/aws-cdk-go/awscdk/v2"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awsapigateway"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awslambda"
@@ -27,6 +29,7 @@ type GatewayBuilder struct {
 }
 
 type GatewayConstruct struct {
+	Builder   GatewayBuilder
 	Gateway   awsapigateway.LambdaRestApi
 	Handler   awslambdago.GoFunction
 	Dashboard dashboard.Dashboard
@@ -35,6 +38,7 @@ type GatewayConstruct struct {
 func (h GatewayBuilder) Setup(stack awscdk.Stack, props GatewayCommonProps) GatewayConstruct {
 	var c GatewayConstruct
 
+	c.Builder = h
 	c.Dashboard = props.Dashboard
 	c.Handler = h.setupPubHandler(stack)
 	h.SubscriptionTopic.GrantPublish(c.Handler)
@@ -76,4 +80,14 @@ func (h GatewayBuilder) setupGateway(stack awscdk.Stack, handler awslambdago.GoF
 	}
 
 	return awsapigateway.NewLambdaRestApi(stack, aws.String(h.EndpointId), &restApiProps)
+}
+
+func (c GatewayConstruct) MetricsGraphWidget(stack awscdk.Stack) awscloudwatch.GraphWidget {
+	region := *stack.Region()
+
+	invocationsMetric := c.Dashboard.CreateLambdaMetric(region, "Invocations", c.Handler.FunctionName(), "Sum")
+	errorsMetric := c.Dashboard.CreateLambdaMetric(region, "Errors", c.Handler.FunctionName(), "Sum")
+	metrics := []awscloudwatch.IMetric{invocationsMetric, errorsMetric}
+
+	return c.Dashboard.CreateGraphWidget(region, fmt.Sprintf("%s Invocations and Errors", c.Builder.HandlerId), metrics)
 }

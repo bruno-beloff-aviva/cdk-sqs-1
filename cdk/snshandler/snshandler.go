@@ -35,7 +35,7 @@ type SNSBuilder struct {
 }
 
 type SNSConstruct struct {
-	Build     SNSBuilder
+	Builder   SNSBuilder
 	Queue     awssqs.IQueue
 	Handler   awslambdago.GoFunction
 	Dashboard dashboard.Dashboard
@@ -44,7 +44,7 @@ type SNSConstruct struct {
 func (h SNSBuilder) Setup(stack awscdk.Stack, props SNSCommonProps) SNSConstruct {
 	var c SNSConstruct
 
-	c.Build = h
+	c.Builder = h
 	c.Dashboard = props.Dashboard
 	c.Queue = h.setupQueue(stack, props)
 
@@ -108,5 +108,5 @@ func (c SNSConstruct) MetricsGraphWidget(stack awscdk.Stack) awscloudwatch.Graph
 	errorsMetric := c.Dashboard.CreateLambdaMetric(region, "Errors", c.Handler.FunctionName(), "Sum")
 	metrics := []awscloudwatch.IMetric{invocationsMetric, errorsMetric}
 
-	return c.Dashboard.CreateGraphWidget(region, fmt.Sprintf("%s Invocations and Errors", c.Build.HandlerId), metrics)
+	return c.Dashboard.CreateGraphWidget(region, fmt.Sprintf("%s Invocations and Errors", c.Builder.HandlerId), metrics)
 }

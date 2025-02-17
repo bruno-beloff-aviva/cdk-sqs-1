@@ -168,7 +168,7 @@ func NewSQSWorkshopStack(scope constructs.Construct, id string, props *CdkWorksh
 		Dashboard: dash,
 	}
 
-	setupPubHandler(stack, pubProps, topic)
+	c0 := setupPubHandler(stack, pubProps, topic)
 
 	// sub lambdas...
 	subProps := snshandler.SNSCommonProps{
@@ -182,11 +182,7 @@ func NewSQSWorkshopStack(scope constructs.Construct, id string, props *CdkWorksh
 	c2 := setupSuspendableSubHandler(stack, subProps, topic)
 	setupEmptySubHandler(stack, subProps, topic)
 
-	// dash.AddLambdaMetrics(*stack.Region(), c1.Handler, c1.Build.HandlerId) // TODO: put on construct
-	// dash.AddLambdaMetrics(*stack.Region(), c2.Handler, c2.Build.HandlerId) // TODO: put on construct
-	// dash.AddLambdaMetrics(*stack.Region(), c3.Handler, c3.Build.HandlerId) // TODO: put on construct
-
-	dash.AddWidgetsRow(c1.MetricsGraphWidget(stack), c2.MetricsGraphWidget(stack))
+	dash.AddWidgetsRow(c0.MetricsGraphWidget(stack), c1.MetricsGraphWidget(stack), c2.MetricsGraphWidget(stack))
 
 	return stack
 }
