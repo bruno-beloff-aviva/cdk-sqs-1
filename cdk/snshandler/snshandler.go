@@ -2,9 +2,9 @@ package snshandler
 
 import (
 	"sqstest/aviva/sqs"
+	"sqstest/cdk/dashboard"
 
 	"github.com/aws/aws-cdk-go/awscdk/v2"
-	"github.com/aws/aws-cdk-go/awscdk/v2/awscloudwatch"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awsdynamodb"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awskms"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awslambda"
@@ -22,7 +22,7 @@ type SNSHandlerProps struct {
 	QueueKey            awskms.IKey
 	QueueMaxRetries     int
 	MessageTable        awsdynamodb.ITable
-	CloudwatchDashboard awscloudwatch.Dashboard
+	CloudwatchDashboard dashboard.Dashboard
 }
 
 // specific to an SNS handler
@@ -34,7 +34,7 @@ type SNSHandler struct {
 	Environment       map[string]*string
 }
 
-func (h SNSHandler) Setup(stack awscdk.Stack, props SNSHandlerProps) {
+func (h SNSHandler) Setup(stack awscdk.Stack, props SNSHandlerProps) awslambdago.GoFunction {
 	queue := h.setupQueue(stack, props)
 
 	subProps := awssnssubscriptions.SqsSubscriptionProps{
@@ -43,12 +43,14 @@ func (h SNSHandler) Setup(stack awscdk.Stack, props SNSHandlerProps) {
 	h.SubscriptionTopic.AddSubscription(awssnssubscriptions.NewSqsSubscription(queue, &subProps))
 
 	if h.HandlerId == "" {
-		return
+		return nil
 	}
 
 	handler := h.setupSubHandler(stack, queue)
 	queue.GrantConsumeMessages(handler)
 	props.MessageTable.GrantReadWriteData(handler)
+
+	return handler
 }
 
 func (h SNSHandler) setupQueue(stack awscdk.Stack, props SNSHandlerProps) awssqs.IQueue {
@@ -87,60 +89,3 @@ func (h SNSHandler) setupSubHandler(stack awscdk.Stack, queue awssqs.IQueue) aws
 
 	return handler
 }
-
-// func (e *SNSHandler) AddCloudwatchDashboardMetrics(region string, props SNSHandlerProps, handler awslambdago.GoFunction) {
-// 	invocationsMetric := e.CreateLambdaMetric(region, "Invocations", handler.FunctionName(), "Sum")
-// 	errorsMetric := e.CreateLambdaMetric(region, "Errors", handler.FunctionName(), "Sum")
-
-// 	invocationsAndErrors := e.CreateGraphWidget(region, fmt.Sprintf("%s Invocations and Errors", e.SNSName), []awscloudwatch.IMetric{invocationsMetric, errorsMetric})
-
-// 	row := awscloudwatch.NewRow(invocationsAndErrors)
-// 	props.CloudwatchDashboard.AddWidgets(row)
-// }
-
-// func (e *SNSHandler) CreateLambdaMetric(region string, metricName string, functionName *string, statistic string) awscloudwatch.IMetric {
-// 	return awscloudwatch.NewMetric(&awscloudwatch.MetricProps{
-// 		Region:     jsii.String(region),
-// 		Namespace:  jsii.String("AWS/Lambda"),
-// 		MetricName: jsii.String(metricName),
-// 		DimensionsMap: &map[string]*string{
-// 			"FunctionName": functionName,
-// 		},
-// 		Period:    awscdk.Duration_Minutes(jsii.Number(5)),
-// 		Statistic: jsii.String(statistic),
-// 	})
-// }
-
-// func (e *SNSHandler) CreateCustomMetric(region string, namespace, metricName, SNSName, statistic string) awscloudwatch.IMetric {
-// 	return awscloudwatch.NewMetric(&awscloudwatch.MetricProps{
-// 		Region:     jsii.String(region),
-// 		Namespace:  jsii.String(namespace),
-// 		MetricName: jsii.String(metricName),
-// 		DimensionsMap: &map[string]*string{
-// 			"SNS": jsii.String(SNSName),
-// 		},
-// 		Period:    awscdk.Duration_Minutes(jsii.Number(5)),
-// 		Statistic: jsii.String(statistic),
-// 	})
-// }
-
-// func (e *SNSHandler) CreateGraphWidget(region string, title string, metrics []awscloudwatch.IMetric) awscloudwatch.GraphWidget {
-// 	return awscloudwatch.NewGraphWidget(&awscloudwatch.GraphWidgetProps{
-// 		Region: jsii.String(region),
-// 		Title:  jsii.String(title),
-// 		Left:   &metrics,
-// 		Height: jsii.Number(6),
-// 		Width:  jsii.Number(6),
-// 	})
-// }
-
-// func (e *SNSHandler) CreateSingleValueWidget(region string, title string, metrics []awscloudwatch.IMetric) awscloudwatch.SingleValueWidget {
-// 	return awscloudwatch.NewSingleValueWidget(&awscloudwatch.SingleValueWidgetProps{
-// 		Region:               jsii.String(region),
-// 		Title:                jsii.String(title),
-// 		Metrics:              &metrics,
-// 		SetPeriodToTimeRange: jsii.Bool(true),
-// 		Height:               jsii.Number(6),
-// 		Width:                jsii.Number(4),
-// 	})
-// }

@@ -1,9 +1,10 @@
 package gatewayhandler
 
 import (
+	"sqstest/cdk/dashboard"
+
 	"github.com/aws/aws-cdk-go/awscdk/v2"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awsapigateway"
-	"github.com/aws/aws-cdk-go/awscdk/v2/awscloudwatch"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awslambda"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awslogs"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awssns"
@@ -13,7 +14,7 @@ import (
 
 // common to all Gateway handlers
 type GatewayHandlerProps struct {
-	CloudwatchDashboard awscloudwatch.Dashboard
+	CloudwatchDashboard dashboard.Dashboard
 }
 
 // specific to an Gateway handler
