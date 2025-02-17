@@ -10,6 +10,7 @@ import (
 
 	"github.com/aws/aws-cdk-go/awscdk/v2"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awsapigateway"
+	"github.com/aws/aws-cdk-go/awscdk/v2/awscloudwatch"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awsdynamodb"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awskms"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awslambda"
@@ -227,6 +228,13 @@ func NewSQSWorkshopStack(scope constructs.Construct, id string, props *CdkWorksh
 	table.GrantReadWriteData(suspendableSubHandler)
 
 	return stack
+}
+
+func NewCloudwatchDashboard(stack awscdk.Stack) awscloudwatch.Dashboard {
+	return awscloudwatch.NewDashboard(stack, aws.String("eventsDashboard"), &awscloudwatch.DashboardProps{
+		DashboardName:   aws.String("SQS1-" + *stack.Region()),
+		DefaultInterval: awscdk.Duration_Hours(aws.Float64(24)),
+	})
 }
 
 func main() {
