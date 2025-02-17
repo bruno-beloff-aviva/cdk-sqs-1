@@ -23,19 +23,19 @@ func NewDashboard(stack awscdk.Stack, name string) Dashboard {
 	return Dashboard{Dashboard: dashboard}
 }
 
-func (d *Dashboard) AddCloudwatchDashboardMetrics(region string, handler awslambdago.GoFunction) {
+// func (d *Dashboard) AddCloudwatchDashboardMetrics(region string, handler awslambdago.GoFunction) {
+// 	invocationsMetric := d.CreateLambdaMetric(region, "Invocations", handler.FunctionName(), "Sum")
+// 	errorsMetric := d.CreateLambdaMetric(region, "Errors", handler.FunctionName(), "Sum")
+
+// 	invocationsAndErrors := d.CreateGraphWidget(region, fmt.Sprintf("%s Invocations and Errors", *handler.FunctionName()), []awscloudwatch.IMetric{invocationsMetric, errorsMetric})
+
+// 	row := awscloudwatch.NewRow(invocationsAndErrors)
+// 	d.Dashboard.AddWidgets(row)
+// }
+
+func (d *Dashboard) AddLambdaMetrics(region string, handler awslambdago.GoFunction, handlerId string) {
 	invocationsMetric := d.CreateLambdaMetric(region, "Invocations", handler.FunctionName(), "Sum")
 	errorsMetric := d.CreateLambdaMetric(region, "Errors", handler.FunctionName(), "Sum")
-
-	invocationsAndErrors := d.CreateGraphWidget(region, fmt.Sprintf("%s Invocations and Errors", *handler.FunctionName()), []awscloudwatch.IMetric{invocationsMetric, errorsMetric})
-
-	row := awscloudwatch.NewRow(invocationsAndErrors)
-	d.Dashboard.AddWidgets(row)
-}
-
-func (d *Dashboard) AddLambdaMetrics(region string, handlerId string) {
-	invocationsMetric := d.CreateLambdaMetric(region, "Invocations", jsii.String(handlerId), "Sum")
-	errorsMetric := d.CreateLambdaMetric(region, "Errors", jsii.String(handlerId), "Sum")
 
 	invocationsAndErrors := d.CreateGraphWidget(region, fmt.Sprintf("%s Invocations and Errors", handlerId), []awscloudwatch.IMetric{invocationsMetric, errorsMetric})
 

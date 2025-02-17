@@ -81,46 +81,52 @@ func setupQueueKey(stack awscdk.Stack) awskms.IKey {
 }
 
 func setupPubHandler(stack awscdk.Stack, props gatewayhandler.GatewayCommonProps, topic awssns.Topic) gatewayhandler.GatewayConstruct {
+	environment := map[string]*string{
+		"VERSION":   aws.String(version),
+		"TOPIC_ARN": topic.TopicArn(),
+	}
+
 	builder := gatewayhandler.GatewayBuilder{
 		EndpointId:        pubEndpointId,
 		HandlerId:         pubHandlerId,
 		SubscriptionTopic: topic,
 		Entry:             "lambda/pub/",
-		Environment: map[string]*string{
-			"VERSION":   aws.String(version),
-			"TOPIC_ARN": topic.TopicArn(),
-		},
+		Environment:       environment,
 	}
 
 	return builder.Setup(stack, props)
 }
 
 func setupContinuousSubHandler(stack awscdk.Stack, props snshandler.SNSCommonProps, topic awssns.Topic) snshandler.SNSConstruct {
+	environment := map[string]*string{
+		"VERSION":            aws.String(version),
+		"MESSAGE_TABLE_NAME": aws.String(tableName),
+	}
+
 	builder := snshandler.SNSBuilder{
 		SubscriptionTopic: topic,
 		QueueName:         queue1Name,
 		HandlerId:         continuousSubHandlerId,
 		Entry:             "lambda/subcontinuous/",
-		Environment: map[string]*string{
-			"VERSION":            aws.String(version),
-			"MESSAGE_TABLE_NAME": aws.String(tableName),
-		},
+		Environment:       environment,
 	}
 
 	return builder.Setup(stack, props)
 }
 
 func setupSuspendableSubHandler(stack awscdk.Stack, props snshandler.SNSCommonProps, topic awssns.Topic) snshandler.SNSConstruct {
+	environment := map[string]*string{
+		"VERSION":            aws.String(version),
+		"MESSAGE_TABLE_NAME": aws.String(tableName),
+		"SUSPENDED":          aws.String("false"),
+	}
+
 	builder := snshandler.SNSBuilder{
 		SubscriptionTopic: topic,
 		QueueName:         queue2Name,
 		HandlerId:         suspendableSubHandlerId,
 		Entry:             "lambda/subsuspendable/",
-		Environment: map[string]*string{
-			"VERSION":            aws.String(version),
-			"MESSAGE_TABLE_NAME": aws.String(tableName),
-			"SUSPENDED":          aws.String("false"),
-		},
+		Environment:       environment,
 	}
 
 	return builder.Setup(stack, props)
@@ -172,11 +178,13 @@ func NewSQSWorkshopStack(scope constructs.Construct, id string, props *CdkWorksh
 		Dashboard:       dash,
 	}
 
-	c := setupContinuousSubHandler(stack, subProps, topic)
-	setupSuspendableSubHandler(stack, subProps, topic)
-	setupEmptySubHandler(stack, subProps, topic)
+	c1 := setupContinuousSubHandler(stack, subProps, topic)
+	c2 := setupSuspendableSubHandler(stack, subProps, topic)
+	c3 := setupEmptySubHandler(stack, subProps, topic)
 
-	dash.AddLambdaMetrics(*stack.Region(), c.Build.HandlerId) // TODO: put on construct
+	dash.AddLambdaMetrics(*stack.Region(), c1.Handler, c1.Build.HandlerId) // TODO: put on construct
+	dash.AddLambdaMetrics(*stack.Region(), c2.Handler, c2.Build.HandlerId) // TODO: put on construct
+	dash.AddLambdaMetrics(*stack.Region(), c3.Handler, c3.Build.HandlerId) // TODO: put on construct
 
 	return stack
 }
