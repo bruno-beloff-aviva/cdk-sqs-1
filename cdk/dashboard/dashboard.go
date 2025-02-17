@@ -34,6 +34,10 @@ func NewDashboard(stack awscdk.Stack, name string) Dashboard {
 // }
 
 func (d *Dashboard) AddLambdaMetrics(region string, handler awslambdago.GoFunction, handlerId string) {
+	if handler == nil {
+		return
+	}
+
 	invocationsMetric := d.CreateLambdaMetric(region, "Invocations", handler.FunctionName(), "Sum")
 	errorsMetric := d.CreateLambdaMetric(region, "Errors", handler.FunctionName(), "Sum")
 
