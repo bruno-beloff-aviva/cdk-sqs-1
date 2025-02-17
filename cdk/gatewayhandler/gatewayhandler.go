@@ -13,12 +13,12 @@ import (
 )
 
 // common to all Gateway handlers
-type GatewayHandlerProps struct {
-	CloudwatchDashboard dashboard.Dashboard
+type GatewayCommonProps struct {
+	Dashboard dashboard.Dashboard
 }
 
 // specific to an Gateway handler
-type GatewayHandler struct {
+type GatewayBuilder struct {
 	EndpointId        string
 	HandlerId         string
 	SubscriptionTopic awssns.Topic
@@ -26,14 +26,25 @@ type GatewayHandler struct {
 	Environment       map[string]*string
 }
 
-func (h GatewayHandler) Setup(stack awscdk.Stack, props GatewayHandlerProps) {
-	handler := h.setupPubHandler(stack)
-	h.SubscriptionTopic.GrantPublish(handler)
-
-	h.setupGateway(stack, handler)
+type GatewayConstruct struct {
+	Gateway   awsapigateway.LambdaRestApi
+	Handler   awslambdago.GoFunction
+	Dashboard dashboard.Dashboard
 }
 
-func (h GatewayHandler) setupPubHandler(stack awscdk.Stack) awslambdago.GoFunction {
+func (h GatewayBuilder) Setup(stack awscdk.Stack, props GatewayCommonProps) GatewayConstruct {
+	var c GatewayConstruct
+
+	c.Dashboard = props.Dashboard
+	c.Handler = h.setupPubHandler(stack)
+	h.SubscriptionTopic.GrantPublish(c.Handler)
+
+	h.setupGateway(stack, c.Handler)
+
+	return c
+}
+
+func (h GatewayBuilder) setupPubHandler(stack awscdk.Stack) awslambdago.GoFunction {
 	handlerProps := awslambdago.GoFunctionProps{
 		Runtime:       awslambda.Runtime_PROVIDED_AL2(),
 		Architecture:  awslambda.Architecture_ARM_64(),
@@ -50,7 +61,7 @@ func (h GatewayHandler) setupPubHandler(stack awscdk.Stack) awslambdago.GoFuncti
 	return handler
 }
 
-func (h GatewayHandler) setupGateway(stack awscdk.Stack, handler awslambdago.GoFunction) awsapigateway.LambdaRestApi {
+func (h GatewayBuilder) setupGateway(stack awscdk.Stack, handler awslambdago.GoFunction) awsapigateway.LambdaRestApi {
 	stageOptions := awsapigateway.StageOptions{
 		StageName:        aws.String("prod"),
 		LoggingLevel:     awsapigateway.MethodLoggingLevel_ERROR,

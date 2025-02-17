@@ -17,16 +17,14 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 )
 
-// common to all SNS handlers
-type SNSHandlerProps struct {
-	QueueKey            awskms.IKey
-	QueueMaxRetries     int
-	MessageTable        awsdynamodb.ITable
-	CloudwatchDashboard dashboard.Dashboard
+type SNSCommonProps struct {
+	QueueKey        awskms.IKey
+	QueueMaxRetries int
+	MessageTable    awsdynamodb.ITable
+	Dashboard       dashboard.Dashboard
 }
 
-// specific to an SNS handler
-type SNSHandler struct {
+type SNSBuilder struct {
 	SubscriptionTopic awssns.Topic
 	QueueName         string
 	HandlerId         string
@@ -34,26 +32,37 @@ type SNSHandler struct {
 	Environment       map[string]*string
 }
 
-func (h SNSHandler) Setup(stack awscdk.Stack, props SNSHandlerProps) awslambdago.GoFunction {
-	queue := h.setupQueue(stack, props)
+type SNSConstruct struct {
+	Build     SNSBuilder
+	Queue     awssqs.IQueue
+	Handler   awslambdago.GoFunction
+	Dashboard dashboard.Dashboard
+}
+
+func (h SNSBuilder) Setup(stack awscdk.Stack, props SNSCommonProps) SNSConstruct {
+	var c SNSConstruct
+
+	c.Build = h
+	c.Dashboard = props.Dashboard
+	c.Queue = h.setupQueue(stack, props)
 
 	subProps := awssnssubscriptions.SqsSubscriptionProps{
 		RawMessageDelivery: aws.Bool(true),
 	}
-	h.SubscriptionTopic.AddSubscription(awssnssubscriptions.NewSqsSubscription(queue, &subProps))
+	h.SubscriptionTopic.AddSubscription(awssnssubscriptions.NewSqsSubscription(c.Queue, &subProps))
 
 	if h.HandlerId == "" {
-		return nil
+		return c
 	}
 
-	handler := h.setupSubHandler(stack, queue)
-	queue.GrantConsumeMessages(handler)
-	props.MessageTable.GrantReadWriteData(handler)
+	c.Handler = h.setupSubHandler(stack, c.Queue)
+	c.Queue.GrantConsumeMessages(c.Handler)
+	props.MessageTable.GrantReadWriteData(c.Handler)
 
-	return handler
+	return c
 }
 
-func (h SNSHandler) setupQueue(stack awscdk.Stack, props SNSHandlerProps) awssqs.IQueue {
+func (h SNSBuilder) setupQueue(stack awscdk.Stack, props SNSCommonProps) awssqs.IQueue {
 	queueProps := sqs.SqsQueueWithDLQProps{
 		Stack:                    stack,
 		QueueName:                h.QueueName,
@@ -70,7 +79,7 @@ func (h SNSHandler) setupQueue(stack awscdk.Stack, props SNSHandlerProps) awssqs
 	return sqs.NewSqsQueueWithDLQ(queueProps)
 }
 
-func (h SNSHandler) setupSubHandler(stack awscdk.Stack, queue awssqs.IQueue) awslambdago.GoFunction {
+func (h SNSBuilder) setupSubHandler(stack awscdk.Stack, queue awssqs.IQueue) awslambdago.GoFunction {
 	handlerProps := awslambdago.GoFunctionProps{
 		Runtime:       awslambda.Runtime_PROVIDED_AL2(),
 		Architecture:  awslambda.Architecture_ARM_64(),

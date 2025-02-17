@@ -14,11 +14,12 @@ import (
 	"github.com/aws/aws-cdk-go/awscdk/v2/awsdynamodb"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awskms"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awssns"
-	awslambdago "github.com/aws/aws-cdk-go/awscdklambdagoalpha/v2"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/constructs-go/constructs/v10"
 	"github.com/aws/jsii-runtime-go"
 )
+
+// TODO: AddAlias for lambdas
 
 const project = "SQS1"
 const version = "0.2.1"
@@ -79,8 +80,8 @@ func setupQueueKey(stack awscdk.Stack) awskms.IKey {
 	return awskms.NewKey(stack, aws.String("Key"), &keyProps)
 }
 
-func setupPubHandler(stack awscdk.Stack, props gatewayhandler.GatewayHandlerProps, topic awssns.Topic) {
-	handler := gatewayhandler.GatewayHandler{
+func setupPubHandler(stack awscdk.Stack, props gatewayhandler.GatewayCommonProps, topic awssns.Topic) gatewayhandler.GatewayConstruct {
+	builder := gatewayhandler.GatewayBuilder{
 		EndpointId:        pubEndpointId,
 		HandlerId:         pubHandlerId,
 		SubscriptionTopic: topic,
@@ -91,11 +92,11 @@ func setupPubHandler(stack awscdk.Stack, props gatewayhandler.GatewayHandlerProp
 		},
 	}
 
-	handler.Setup(stack, props)
+	return builder.Setup(stack, props)
 }
 
-func setupContinuousSubHandler(stack awscdk.Stack, props snshandler.SNSHandlerProps, topic awssns.Topic) awslambdago.GoFunction {
-	handler := snshandler.SNSHandler{
+func setupContinuousSubHandler(stack awscdk.Stack, props snshandler.SNSCommonProps, topic awssns.Topic) snshandler.SNSConstruct {
+	builder := snshandler.SNSBuilder{
 		SubscriptionTopic: topic,
 		QueueName:         queue1Name,
 		HandlerId:         continuousSubHandlerId,
@@ -106,11 +107,11 @@ func setupContinuousSubHandler(stack awscdk.Stack, props snshandler.SNSHandlerPr
 		},
 	}
 
-	return handler.Setup(stack, props)
+	return builder.Setup(stack, props)
 }
 
-func setupSuspendableSubHandler(stack awscdk.Stack, props snshandler.SNSHandlerProps, topic awssns.Topic) {
-	handler := snshandler.SNSHandler{
+func setupSuspendableSubHandler(stack awscdk.Stack, props snshandler.SNSCommonProps, topic awssns.Topic) snshandler.SNSConstruct {
+	builder := snshandler.SNSBuilder{
 		SubscriptionTopic: topic,
 		QueueName:         queue2Name,
 		HandlerId:         suspendableSubHandlerId,
@@ -122,16 +123,16 @@ func setupSuspendableSubHandler(stack awscdk.Stack, props snshandler.SNSHandlerP
 		},
 	}
 
-	handler.Setup(stack, props)
+	return builder.Setup(stack, props)
 }
 
-func setupEmptySubHandler(stack awscdk.Stack, props snshandler.SNSHandlerProps, topic awssns.Topic) {
-	handler := snshandler.SNSHandler{
+func setupEmptySubHandler(stack awscdk.Stack, props snshandler.SNSCommonProps, topic awssns.Topic) snshandler.SNSConstruct {
+	builder := snshandler.SNSBuilder{
 		SubscriptionTopic: topic,
 		QueueName:         queue3Name,
 	}
 
-	handler.Setup(stack, props)
+	return builder.Setup(stack, props)
 }
 
 func NewSQSWorkshopStack(scope constructs.Construct, id string, props *CdkWorkshopStackProps) (stack awscdk.Stack) {
@@ -157,25 +158,25 @@ func NewSQSWorkshopStack(scope constructs.Construct, id string, props *CdkWorksh
 	queueKey := setupQueueKey(stack)
 
 	// pub lambda...
-	pubProps := gatewayhandler.GatewayHandlerProps{
-		CloudwatchDashboard: dash,
+	pubProps := gatewayhandler.GatewayCommonProps{
+		Dashboard: dash,
 	}
 
 	setupPubHandler(stack, pubProps, topic)
 
 	// sub lambdas...
-	subProps := snshandler.SNSHandlerProps{
-		QueueKey:            queueKey,
-		QueueMaxRetries:     queueMaxRetries,
-		MessageTable:        table,
-		CloudwatchDashboard: dash,
+	subProps := snshandler.SNSCommonProps{
+		QueueKey:        queueKey,
+		QueueMaxRetries: queueMaxRetries,
+		MessageTable:    table,
+		Dashboard:       dash,
 	}
 
-	handler := setupContinuousSubHandler(stack, subProps, topic)
+	c := setupContinuousSubHandler(stack, subProps, topic)
 	setupSuspendableSubHandler(stack, subProps, topic)
 	setupEmptySubHandler(stack, subProps, topic)
 
-	dash.AddCloudwatchDashboardMetrics(*stack.Region(), handler)
+	dash.AddLambdaMetrics(*stack.Region(), c.Build.HandlerId) // TODO: put on construct
 
 	return stack
 }
