@@ -108,5 +108,5 @@ func (c SNSConstruct) MetricsGraphWidget(stack awscdk.Stack) awscloudwatch.Graph
 	errorsMetric := c.Dashboard.CreateLambdaMetric(region, "Errors", c.Handler.FunctionName(), "Sum")
 	metrics := []awscloudwatch.IMetric{invocationsMetric, errorsMetric}
 
-	return c.Dashboard.CreateGraphWidget(region, fmt.Sprintf("%s Invocations and Errors", c.Builder.HandlerId), metrics)
+	return c.Dashboard.CreateGraphWidget(region, fmt.Sprintf("%s - Invocations and Errors", c.Builder.HandlerId), metrics)
 }

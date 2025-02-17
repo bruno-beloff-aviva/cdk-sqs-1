@@ -1,11 +1,8 @@
 package dashboard
 
 import (
-	"fmt"
-
 	"github.com/aws/aws-cdk-go/awscdk/v2"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awscloudwatch"
-	awslambdago "github.com/aws/aws-cdk-go/awscdklambdagoalpha/v2"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/jsii-runtime-go"
 )
@@ -17,7 +14,7 @@ type Dashboard struct {
 func NewDashboard(stack awscdk.Stack, name string) Dashboard {
 	dashboard := awscloudwatch.NewDashboard(stack, jsii.String("eventsDashboard"), &awscloudwatch.DashboardProps{
 		DashboardName:   aws.String(name + "-" + *stack.Region()),
-		DefaultInterval: awscdk.Duration_Hours(aws.Float64(24)),
+		DefaultInterval: awscdk.Duration_Hours(aws.Float64(1)),
 	})
 
 	return Dashboard{Dashboard: dashboard}
@@ -35,20 +32,6 @@ func NewDashboard(stack awscdk.Stack, name string) Dashboard {
 
 func (d *Dashboard) AddWidgetsRow(widgets ...awscloudwatch.IWidget) {
 	row := awscloudwatch.NewRow(widgets...)
-	d.Dashboard.AddWidgets(row)
-}
-
-func (d *Dashboard) AddLambdaMetrics(region string, handler awslambdago.GoFunction, handlerId string) {
-	if handler == nil {
-		return
-	}
-
-	invocationsMetric := d.CreateLambdaMetric(region, "Invocations", handler.FunctionName(), "Sum")
-	errorsMetric := d.CreateLambdaMetric(region, "Errors", handler.FunctionName(), "Sum")
-
-	invocationsAndErrors := d.CreateGraphWidget(region, fmt.Sprintf("%s Invocations and Errors", handlerId), []awscloudwatch.IMetric{invocationsMetric, errorsMetric})
-
-	row := awscloudwatch.NewRow(invocationsAndErrors)
 	d.Dashboard.AddWidgets(row)
 }
 
