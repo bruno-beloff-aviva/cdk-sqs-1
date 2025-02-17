@@ -24,8 +24,6 @@ import (
 	"github.com/aws/jsii-runtime-go"
 )
 
-// TODO: what happens when a queue is attached to nothing?
-// TODO: can a queue have is own log?
 // TODO: build a dashboard
 
 const project = "SQS1"
@@ -50,7 +48,7 @@ const suspendableSubHandlerId = project + "SudspendableHandler"
 
 const stackId = project + "Stack"
 
-type CdkWorkshopStackProps struct { //	TODO: make use of this - make New... functions as methods
+type CdkWorkshopStackProps struct { //	TODO: make use of this - make New... functions as methods?
 	awscdk.StackProps
 }
 
