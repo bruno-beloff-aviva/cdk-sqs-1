@@ -24,11 +24,16 @@ import (
 	"github.com/aws/jsii-runtime-go"
 )
 
+// TODO: what happens when a queue is attached to nothing?
+// TODO: can a queue have is own log?
+// TODO: build a dashboard
+
 const project = "SQS1"
 const version = "0.1.8"
 
 const queue1Name = "TestQueue1"
 const queue2Name = "TestQueue2"
+const queue3Name = "TestQueue3"
 const queueMaxRetries = 3
 
 const tableName = "TestMessageTableV1"
@@ -45,18 +50,18 @@ const suspendableSubHandlerId = project + "SudspendableHandler"
 
 const stackId = project + "Stack"
 
-type CdkWorkshopStackProps struct {
+type CdkWorkshopStackProps struct { //	TODO: make use of this - make New... functions as methods
 	awscdk.StackProps
 }
 
-func NewMessageTable(scope constructs.Construct, id string, name string) awsdynamodb.ITable {
+func NewMessageTable(stack awscdk.Stack, id string, name string) awsdynamodb.ITable {
 	tableProps := awsdynamodb.TableProps{
 		PartitionKey: &awsdynamodb.Attribute{Name: aws.String("PK"), Type: awsdynamodb.AttributeType_STRING},
 		SortKey:      &awsdynamodb.Attribute{Name: aws.String("Path"), Type: awsdynamodb.AttributeType_STRING},
 		TableName:    aws.String(name),
 	}
 
-	return awsdynamodb.NewTable(scope, aws.String(id), &tableProps)
+	return awsdynamodb.NewTable(stack, aws.String(id), &tableProps)
 }
 
 func NewTopic(stack awscdk.Stack, id string, name string) awssns.Topic {
@@ -190,8 +195,9 @@ func NewSQSWorkshopStack(scope constructs.Construct, id string, props *CdkWorksh
 	stack = awscdk.NewStack(scope, &id, &stackProps)
 
 	// queue...
-	queue1 := NewQueue(stack, queue1Name)
-	queue2 := NewQueue(stack, queue2Name)
+	queue1 := NewQueue(stack, queue1Name) // continuous sub
+	queue2 := NewQueue(stack, queue2Name) // suspendable sub
+	NewQueue(stack, queue3Name)           // no sub
 
 	// topic...
 	topic := NewTopic(stack, topicId, topicName)

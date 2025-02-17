@@ -2,6 +2,7 @@ package response
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/aws/aws-lambda-go/events"
@@ -27,6 +28,10 @@ func NewErrorResponse(err error, body string) Response {
 		ErrorMessage: err.Error(),
 		Body:         body,
 	}
+}
+
+func (r Response) String() string {
+	return fmt.Sprintf("Response:{StatusCode:%d ErrorMessage:%s Body:%s}", r.StatusCode, r.ErrorMessage, r.Body)
 }
 
 func (r Response) APIResponse() (apiResponse events.APIGatewayProxyResponse, marshalErr error) {
