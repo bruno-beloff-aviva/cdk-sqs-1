@@ -6,20 +6,14 @@ package main
 // https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_lambda_event_sources.SqsEventSource.html
 
 import (
-	sqs "sqstest/aviva/sqs"
-	"sqstest/cdk/eventhandler"
+	"sqstest/cdk/gatewayhandler"
+	"sqstest/cdk/snshandler"
 
 	"github.com/aws/aws-cdk-go/awscdk/v2"
-	"github.com/aws/aws-cdk-go/awscdk/v2/awsapigateway"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awscloudwatch"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awsdynamodb"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awskms"
-	"github.com/aws/aws-cdk-go/awscdk/v2/awslambda"
-	"github.com/aws/aws-cdk-go/awscdk/v2/awslambdaeventsources"
-	"github.com/aws/aws-cdk-go/awscdk/v2/awslogs"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awssns"
-	"github.com/aws/aws-cdk-go/awscdk/v2/awssqs"
-	awslambdago "github.com/aws/aws-cdk-go/awscdklambdagoalpha/v2"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/constructs-go/constructs/v10"
 	"github.com/aws/jsii-runtime-go"
@@ -49,7 +43,7 @@ const suspendableSubHandlerId = project + "SudspendableHandler"
 
 const stackId = project + "Stack"
 
-type CdkWorkshopStackProps struct { //	TODO: make use of this - make New... functions as methods?
+type CdkWorkshopStackProps struct {
 	awscdk.StackProps
 }
 
@@ -71,116 +65,59 @@ func NewTopic(stack awscdk.Stack, id string, name string) awssns.Topic {
 	return awssns.NewTopic(stack, aws.String(id), &topicProps)
 }
 
-func NewQueue(stack awscdk.Stack, name string) awssqs.IQueue {
-	keyProps := awskms.KeyProps{
-		Alias:             aws.String(name + "QueueKey"),
-		EnableKeyRotation: aws.Bool(true),
+func setupPubHandler(stack awscdk.Stack, props gatewayhandler.GatewayHandlerProps, topic awssns.Topic) {
+	handler := gatewayhandler.GatewayHandler{
+		EndpointId:        pubEndpointId,
+		HandlerId:         pubHandlerId,
+		SubscriptionTopic: topic,
+		Entry:             "lambda/pub/",
+		Environment: map[string]*string{
+			"VERSION":   aws.String(version),
+			"TOPIC_ARN": topic.TopicArn(),
+		},
 	}
 
-	queueKey := awskms.NewKey(stack, aws.String(name+"Key"), &keyProps)
-
-	queueProps := sqs.SqsQueueWithDLQProps{
-		Stack:                    stack,
-		QueueName:                name,
-		SQSKey:                   queueKey, //	TODO: attempt to remove this
-		QMaxReceiveCount:         queueMaxRetries,
-		QAlarmPeriod:             1,
-		QAlarmThreshold:          1,
-		QAlarmEvaluationPeriod:   1,
-		DLQAlarmPeriod:           1,
-		DLQAlarmThreshold:        1,
-		DLQAlarmEvaluationPeriod: 1,
-	}
-
-	return sqs.NewSqsQueueWithDLQ(queueProps)
+	handler.Setup(stack, props)
 }
 
-func NewPubHandler(stack awscdk.Stack, id string, topic awssns.Topic) awslambdago.GoFunction {
-	lambdaEnv := map[string]*string{
-		"VERSION":   aws.String(version),
-		"TOPIC_ARN": topic.TopicArn(),
+func setupContinuousSubHandler(stack awscdk.Stack, props snshandler.SNSHandlerProps, topic awssns.Topic) {
+	handler := snshandler.SNSHandler{
+		SubscriptionTopic: topic,
+		QueueName:         queue1Name,
+		HandlerId:         continuousSubHandlerId,
+		Entry:             "lambda/subcontinuous/",
+		Environment: map[string]*string{
+			"VERSION":            aws.String(version),
+			"MESSAGE_TABLE_NAME": aws.String(tableName),
+		},
 	}
 
-	handlerProps := awslambdago.GoFunctionProps{
-		Runtime:       awslambda.Runtime_PROVIDED_AL2(),
-		Architecture:  awslambda.Architecture_ARM_64(),
-		Entry:         aws.String("lambda/pub/"),
-		Timeout:       awscdk.Duration_Seconds(aws.Float64(28)),
-		LoggingFormat: awslambda.LoggingFormat_JSON,
-		LogRetention:  awslogs.RetentionDays_FIVE_DAYS,
-		Tracing:       awslambda.Tracing_ACTIVE,
-		Environment:   &lambdaEnv,
-	}
-
-	return awslambdago.NewGoFunction(stack, aws.String(id), &handlerProps)
+	handler.Setup(stack, props)
 }
 
-func NewContinuousSubHandler(stack awscdk.Stack, id string, queue awssqs.IQueue) awslambdago.GoFunction {
-	lambdaEnv := map[string]*string{
-		"VERSION":            aws.String(version),
-		"MESSAGE_TABLE_NAME": aws.String(tableName),
+func setupSuspendableSubHandler(stack awscdk.Stack, props snshandler.SNSHandlerProps, topic awssns.Topic) {
+	handler := snshandler.SNSHandler{
+		SubscriptionTopic: topic,
+		QueueName:         queue2Name,
+		HandlerId:         suspendableSubHandlerId,
+		Entry:             "lambda/subsuspendable/",
+		Environment: map[string]*string{
+			"VERSION":            aws.String(version),
+			"MESSAGE_TABLE_NAME": aws.String(tableName),
+			"SUSPENDED":          aws.String("false"),
+		},
 	}
 
-	handlerProps := awslambdago.GoFunctionProps{
-		Runtime:       awslambda.Runtime_PROVIDED_AL2(),
-		Architecture:  awslambda.Architecture_ARM_64(),
-		Entry:         aws.String("lambda/subcontinuous/"),
-		Timeout:       awscdk.Duration_Seconds(aws.Float64(28)),
-		LoggingFormat: awslambda.LoggingFormat_JSON,
-		LogRetention:  awslogs.RetentionDays_FIVE_DAYS,
-		Tracing:       awslambda.Tracing_ACTIVE,
-		Environment:   &lambdaEnv,
-	}
-
-	handler := awslambdago.NewGoFunction(stack, aws.String(id), &handlerProps)
-
-	eventSourceProps := awslambdaeventsources.SqsEventSourceProps{}
-	handler.AddEventSource(awslambdaeventsources.NewSqsEventSource(queue, &eventSourceProps))
-
-	return handler
+	handler.Setup(stack, props)
 }
 
-func NewSuspendableSubHandler(stack awscdk.Stack, id string, queue awssqs.IQueue) awslambdago.GoFunction {
-	lambdaEnv := map[string]*string{
-		"VERSION":            aws.String(version),
-		"MESSAGE_TABLE_NAME": aws.String(tableName),
-		"SUSPENDED":          aws.String("false"),
+func setupEmptySubHandler(stack awscdk.Stack, props snshandler.SNSHandlerProps, topic awssns.Topic) {
+	handler := snshandler.SNSHandler{
+		SubscriptionTopic: topic,
+		QueueName:         queue3Name,
 	}
 
-	handlerProps := awslambdago.GoFunctionProps{
-		Runtime:       awslambda.Runtime_PROVIDED_AL2(),
-		Architecture:  awslambda.Architecture_ARM_64(),
-		Entry:         aws.String("lambda/subsuspendable/"),
-		Timeout:       awscdk.Duration_Seconds(aws.Float64(28)),
-		LoggingFormat: awslambda.LoggingFormat_JSON,
-		LogRetention:  awslogs.RetentionDays_FIVE_DAYS,
-		Tracing:       awslambda.Tracing_ACTIVE,
-		Environment:   &lambdaEnv,
-	}
-
-	handler := awslambdago.NewGoFunction(stack, aws.String(id), &handlerProps)
-
-	eventSourceProps := awslambdaeventsources.SqsEventSourceProps{}
-	handler.AddEventSource(awslambdaeventsources.NewSqsEventSource(queue, &eventSourceProps))
-
-	return handler
-}
-
-func NewAPIGateway(stack awscdk.Stack, handler awslambdago.GoFunction) awsapigateway.LambdaRestApi {
-	stageOptions := awsapigateway.StageOptions{
-		StageName:        aws.String("prod"),
-		LoggingLevel:     awsapigateway.MethodLoggingLevel_ERROR,
-		TracingEnabled:   aws.Bool(true),
-		MetricsEnabled:   aws.Bool(true),
-		DataTraceEnabled: aws.Bool(true),
-	}
-
-	restApiProps := awsapigateway.LambdaRestApiProps{
-		Handler:       handler,
-		DeployOptions: &stageOptions,
-	}
-
-	return awsapigateway.NewLambdaRestApi(stack, aws.String(pubEndpointId), &restApiProps)
+	handler.Setup(stack, props)
 }
 
 func NewSQSWorkshopStack(scope constructs.Construct, id string, props *CdkWorkshopStackProps) (stack awscdk.Stack) {
@@ -193,40 +130,13 @@ func NewSQSWorkshopStack(scope constructs.Construct, id string, props *CdkWorksh
 
 	stack = awscdk.NewStack(scope, &id, &stackProps)
 
-	// queue...
-	// queue1 := NewQueue(stack, queue1Name) // continuous sub
-	// queue2 := NewQueue(stack, queue2Name) // suspendable sub
-	// queue3 := NewQueue(stack, queue3Name) // no sub
-
 	// topic...
 	topic := NewTopic(stack, topicId, topicName)
 
-	// subProps := awssnssubscriptions.SqsSubscriptionProps{
-	// 	RawMessageDelivery: aws.Bool(true),
-	// }
-	// topic.AddSubscription(awssnssubscriptions.NewSqsSubscription(queue1, &subProps))
-	// topic.AddSubscription(awssnssubscriptions.NewSqsSubscription(queue2, &subProps))
-	// topic.AddSubscription(awssnssubscriptions.NewSqsSubscription(queue3, &subProps))
-
-	// pub lambda...
-	pubHandler := NewPubHandler(stack, pubHandlerId, topic)
-	topic.GrantPublish(pubHandler)
-
-	// sub lambdas...
-	// continuousSubHandler := NewContinuousSubHandler(stack, continuousSubHandlerId, queue1)
-	// queue1.GrantConsumeMessages(continuousSubHandler)
-
-	// suspendableSubHandler := NewSuspendableSubHandler(stack, suspendableSubHandlerId, queue2)
-	// queue2.GrantConsumeMessages(suspendableSubHandler)
-
-	// gateway...
-	NewAPIGateway(stack, pubHandler)
-
 	// table...
 	table := NewMessageTable(stack, tableId, tableName)
-	// table.GrantReadWriteData(continuousSubHandler)
-	// table.GrantReadWriteData(suspendableSubHandler)
 
+	// key...
 	keyProps := awskms.KeyProps{
 		Alias:             aws.String("QueueKey"),
 		EnableKeyRotation: aws.Bool(true),
@@ -234,49 +144,27 @@ func NewSQSWorkshopStack(scope constructs.Construct, id string, props *CdkWorksh
 
 	queueKey := awskms.NewKey(stack, aws.String("Key"), &keyProps)
 
+	// dashboard...
 	dashboard := NewCloudwatchDashboard(stack)
 
-	handlerProps := eventhandler.EventHandlerProps{
-		SubscriptionTopic:   topic,
+	// pub lambda...
+	pubProps := gatewayhandler.GatewayHandlerProps{
+		CloudwatchDashboard: dashboard,
+	}
+
+	setupPubHandler(stack, pubProps, topic)
+
+	// sub lambdas...
+	subProps := snshandler.SNSHandlerProps{
 		QueueKey:            queueKey,
 		QueueMaxRetries:     queueMaxRetries,
 		MessageTable:        table,
 		CloudwatchDashboard: dashboard,
 	}
 
-	continuousHandler := eventhandler.EventHandler{
-		EventName: topicName,
-		QueueName: queue1Name,
-		HandlerId: continuousSubHandlerId,
-		Entry:     "lambda/subcontinuous/",
-		Environment: map[string]*string{
-			"VERSION":            aws.String(version),
-			"MESSAGE_TABLE_NAME": aws.String(tableName),
-		},
-	}
-
-	continuousHandler.Setup(stack, handlerProps)
-
-	suspendableHandler := eventhandler.EventHandler{
-		EventName: topicName,
-		QueueName: queue2Name,
-		HandlerId: suspendableSubHandlerId,
-		Entry:     "lambda/subsuspendable/",
-		Environment: map[string]*string{
-			"VERSION":            aws.String(version),
-			"MESSAGE_TABLE_NAME": aws.String(tableName),
-			"SUSPENDED":          aws.String("false"),
-		},
-	}
-
-	suspendableHandler.Setup(stack, handlerProps)
-
-	emptyHandler := eventhandler.EventHandler{
-		EventName: topicName,
-		QueueName: queue3Name,
-	}
-
-	emptyHandler.Setup(stack, handlerProps)
+	setupContinuousSubHandler(stack, subProps, topic)
+	setupSuspendableSubHandler(stack, subProps, topic)
+	setupEmptySubHandler(stack, subProps, topic)
 
 	return stack
 }
