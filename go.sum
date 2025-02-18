@@ -56,6 +56,8 @@ github.com/aws/jsii-runtime-go v1.106.0 h1:wClD7enF+FOGR6l2TQ6STcE1nEIVKdODbipl5
 github.com/aws/jsii-runtime-go v1.106.0/go.mod h1:HMdZwwcI8gpwetrneEa/RUkefS194IeCeh8eJQP3xSk=
 github.com/aws/smithy-go v1.22.2 h1:6D9hW43xKFrRx/tXXfAlIZc4JI+yQe6snnWcQyxSyLQ=
 github.com/aws/smithy-go v1.22.2/go.mod h1:irrKGvNn1InZwb2d7fkIRNucdfwR8R+Ts3wxYa/cJHg=
+github.com/b4b4r07/go-pipe v0.0.0-20191010045404-84b446f57366 h1:FVAkDbBxovi2ID0vaxY7vCGvdKASt9r0TGPM1u4YQyg=
+github.com/b4b4r07/go-pipe v0.0.0-20191010045404-84b446f57366/go.mod h1:1ymsiQNa3qebVEEVtuIdhtAXRfjO4qFCFq1bBUOT2HE=
 github.com/cdklabs/awscdk-asset-awscli-go/awscliv1/v2 v2.2.220 h1:8sOILP+wb2RZtn3QG/2PGljR9SXPUTBdwkO4cXqTgWI=
 github.com/cdklabs/awscdk-asset-awscli-go/awscliv1/v2 v2.2.220/go.mod h1:UbBr6nzti67wv3GWNg5R6RhxHLOEq3JI04tq/5u2+dQ=
 github.com/cdklabs/awscdk-asset-kubectl-go/kubectlv20/v2 v2.1.3 h1:u63i5K09xASBNGEM0hpD2z0JwO+iNLVzG74VG85OjDo=

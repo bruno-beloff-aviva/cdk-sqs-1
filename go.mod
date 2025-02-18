@@ -45,6 +45,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/sts v1.33.14 // indirect
 	github.com/aws/aws-xray-sdk-go v1.8.4 // indirect
 	github.com/aws/smithy-go v1.22.2 // indirect
+	github.com/b4b4r07/go-pipe v0.0.0-20191010045404-84b446f57366
 	github.com/cdklabs/awscdk-asset-awscli-go/awscliv1/v2 v2.2.220 // indirect
 	github.com/cdklabs/awscdk-asset-kubectl-go/kubectlv20/v2 v2.1.3 // indirect
 	github.com/cdklabs/awscdk-asset-node-proxy-agent-go/nodeproxyagentv6/v2 v2.1.0 // indirect
