@@ -6,6 +6,8 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+
+	"github.com/tidwall/gjson"
 )
 
 func listTables() []string {
@@ -28,7 +30,7 @@ func listTables() []string {
 
 func getKeys(tableName string) []map[string]string {
 	var out []byte
-	var listing map[string]any
+	// var listing map[string]any
 	var err error
 
 	out, err = exec.Command("aws", "dynamodb", "scan", "--table-name", tableName, "--attributes-to-get", "PK", "Path").Output()
@@ -36,38 +38,45 @@ func getKeys(tableName string) []map[string]string {
 		panic(err)
 	}
 
-	err = json.Unmarshal(out, &listing)
-	if err != nil {
-		panic(err)
-	}
+	items := gjson.Get(string(out), "items")
+	fmt.Println(items)
 
-	items := listing["Items"].([]interface{})
+	// err = json.Unmarshal(out, &listing)
+	// if err != nil {
+	// 	panic(err)
+	// }
+
+	// items := listing["Items"].([]interface{})
 	var keys []map[string]string
 
-	for _, item := range items {
-		pk := item.(map[string]interface{})["PK"]
-		pkValue := pk.(map[string]interface{})["S"]
+	// for _, item := range items {
+	// 	value := gjson.Get(listing, "name.last")
 
-		path := item.(map[string]interface{})["Path"]
-		pathValue := path.(map[string]interface{})["S"]
+	// 	pk := item.(map[string]interface{})["PK"]
+	// 	pkValue := pk.(map[string]interface{})["S"]
 
-		keys = append(keys, map[string]string{"PK": pkValue.(string), "Path": pathValue.(string)})
-	}
+	// 	path := item.(map[string]interface{})["Path"]
+	// 	pathValue := path.(map[string]interface{})["S"]
+
+	// 	keys = append(keys, map[string]string{"PK": pkValue.(string), "Path": pathValue.(string)})
+	// }
 	return keys
 }
 
 func purgeTable(tableName string, keys []map[string]string) {
-	for _, key := range keys {
-		keySpec := map[string]string{"PK": key["PK"], "Path": key["Path"]}
-		keyJson, _ := json.Marshal(keySpec)
+	// for _, key := range keys {
+	// 	// keySpec := fmt.Sprintf("{\"PK\": {\"S\": \"%s\"}, \"Path\": {\"S\": \"%s\"}}", key["PK"], key["Path"])
 
-		fmt.Printf("deleting %s\n", keySpec)
+	// 	// keySpec := map[string]string{"PK": key["PK"], "Path": key["Path"]}
+	// 	// keyJson, _ := json.Marshal(keySpec)
 
-		_, err := exec.Command("aws", "dynamodb", "delete-item", "--table-name", tableName, "--key", string(keyJson)).Output()
-		if err != nil {
-			panic(err)
-		}
-	}
+	// 	fmt.Printf("deleting %s\n", keySpec)
+
+	// 	// _, err := exec.Command("aws", "dynamodb", "delete-item", "--table-name", tableName, "--key", keySpec).Output()
+	// 	// if err != nil {
+	// 	// 	panic(err)
+	// 	// }
+	// }
 }
 
 func main() {
@@ -76,11 +85,11 @@ func main() {
 		os.Exit(1)
 	}
 
-	queueIdentifier := os.Args[1]
+	tableIdentifier := os.Args[1]
 	names := listTables()
 
 	for _, name := range names {
-		if strings.Contains(name, queueIdentifier) {
+		if strings.Contains(name, tableIdentifier) {
 			fmt.Printf("Purging %s\n", name)
 			keys := getKeys(name)
 
