@@ -12,7 +12,7 @@ type Dashboard struct {
 }
 
 func NewDashboard(stack awscdk.Stack, name string) Dashboard {
-	dashboard := awscloudwatch.NewDashboard(stack, jsii.String("eventsDashboard"), &awscloudwatch.DashboardProps{
+	dashboard := awscloudwatch.NewDashboard(stack, aws.String(name), &awscloudwatch.DashboardProps{
 		DashboardName:   aws.String(name + "-" + *stack.Region()),
 		DefaultInterval: awscdk.Duration_Hours(aws.Float64(1)),
 	})
@@ -45,6 +45,19 @@ func (d *Dashboard) CreateLambdaMetric(region string, metricName string, functio
 		},
 		Period:    awscdk.Duration_Minutes(jsii.Number(5)),
 		Statistic: jsii.String(statistic),
+	})
+}
+
+func (d *Dashboard) CreateGatewayMetric(region string, metricName string, apiName string, stage string) awscloudwatch.IMetric {
+	return awscloudwatch.NewMetric(&awscloudwatch.MetricProps{
+		Region:     jsii.String(region),
+		Namespace:  jsii.String("AWS/ApiGateway"),
+		MetricName: jsii.String(metricName),
+		DimensionsMap: &map[string]*string{
+			"ApiName": &apiName,
+			"Stage":   &stage,
+		},
+		Period: awscdk.Duration_Minutes(jsii.Number(5)),
 	})
 }
 

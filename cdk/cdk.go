@@ -43,12 +43,14 @@ const suspendableSubHandlerId = project + "SudspendableHandler"
 
 const stackId = project + "Stack"
 
+const dashboardId = project + "Dashboard"
+
 type CdkWorkshopStackProps struct {
 	awscdk.StackProps
 }
 
 func setupDashboard(stack awscdk.Stack) dashboard.Dashboard {
-	dash := dashboard.NewDashboard(stack, "SQS1")
+	dash := dashboard.NewDashboard(stack, dashboardId)
 
 	return dash
 }
@@ -183,7 +185,7 @@ func NewSQSWorkshopStack(scope constructs.Construct, id string, props *CdkWorksh
 	setupEmptySubHandler(stack, subProps, topic)
 
 	// dashboard widgets...
-	dash.AddWidgetsRow(c0.MetricsGraphWidget(), c1.MetricsGraphWidget(), c2.MetricsGraphWidget())
+	dash.AddWidgetsRow(c0.GatewayMetricsGraphWidget(), c0.LambdaMetricsGraphWidget(), c1.LambdaMetricsGraphWidget(), c2.LambdaMetricsGraphWidget())
 
 	// TODO: queue and DLQ widgets
 

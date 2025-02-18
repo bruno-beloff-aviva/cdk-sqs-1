@@ -101,7 +101,7 @@ func (h SNSBuilder) setupSubHandler(stack awscdk.Stack, queue awssqs.IQueue) aws
 	return handler
 }
 
-func (c SNSConstruct) MetricsGraphWidget() awscloudwatch.GraphWidget {
+func (c SNSConstruct) LambdaMetricsGraphWidget() awscloudwatch.GraphWidget {
 	region := c.Handler.Stack().Region()
 
 	invocationsMetric := c.Dashboard.CreateLambdaMetric(*region, "Invocations", c.Handler.FunctionName(), "Sum")

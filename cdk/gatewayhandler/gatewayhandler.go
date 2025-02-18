@@ -82,7 +82,7 @@ func (h GatewayBuilder) setupGateway(stack awscdk.Stack, handler awslambdago.GoF
 	return awsapigateway.NewLambdaRestApi(stack, aws.String(h.EndpointId), &restApiProps)
 }
 
-func (c GatewayConstruct) MetricsGraphWidget() awscloudwatch.GraphWidget {
+func (c GatewayConstruct) LambdaMetricsGraphWidget() awscloudwatch.GraphWidget {
 	region := c.Handler.Stack().Region()
 
 	invocationsMetric := c.Dashboard.CreateLambdaMetric(*region, "Invocations", c.Handler.FunctionName(), "Sum")
@@ -90,4 +90,13 @@ func (c GatewayConstruct) MetricsGraphWidget() awscloudwatch.GraphWidget {
 	metrics := []awscloudwatch.IMetric{invocationsMetric, errorsMetric}
 
 	return c.Dashboard.CreateGraphWidget(*region, fmt.Sprintf("%s - Invocations and Errors", c.Builder.HandlerId), metrics)
+}
+
+func (c GatewayConstruct) GatewayMetricsGraphWidget() awscloudwatch.GraphWidget {
+	region := c.Handler.Stack().Region()
+
+	invocationsMetric := c.Dashboard.CreateGatewayMetric(*region, "Count", c.Builder.EndpointId, "prod")
+	metrics := []awscloudwatch.IMetric{invocationsMetric}
+
+	return c.Dashboard.CreateGraphWidget(*region, fmt.Sprintf("%s - Invocations", c.Builder.EndpointId), metrics)
 }
