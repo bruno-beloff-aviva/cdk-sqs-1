@@ -62,6 +62,19 @@ func (d *Dashboard) CreateGatewayMetric(region string, metricName string, apiNam
 	})
 }
 
+func (d *Dashboard) CreateTopicMetric(region string, metricName string, topicName *string, statistic string) awscloudwatch.IMetric {
+	return awscloudwatch.NewMetric(&awscloudwatch.MetricProps{
+		Region:     jsii.String(region),
+		Namespace:  jsii.String("AWS/SNS"),
+		MetricName: jsii.String(metricName),
+		DimensionsMap: &map[string]*string{
+			"TopicName": topicName,
+		},
+		Period:    awscdk.Duration_Minutes(jsii.Number(5)),
+		Statistic: jsii.String(statistic),
+	})
+}
+
 // func (d *Dashboard) CreateCustomMetric(region string, namespace, metricName, SNSName, statistic string) awscloudwatch.IMetric {
 // 	return awscloudwatch.NewMetric(&awscloudwatch.MetricProps{
 // 		Region:     jsii.String(region),
