@@ -1,17 +1,22 @@
 package main
 
 import (
-	"fmt"
 	"sqstest/apiclient"
 )
 
+const baseUrl = "https://j7zugt2z5d.execute-api.eu-west-2.amazonaws.com/prod/"
+const interval = 2
+
 func main() {
-	client := apiclient.NewClient("https://j7zugt2z5d.execute-api.eu-west-2.amazonaws.com/prod/")
+	client := apiclient.NewClient(baseUrl, interval)
 
-	test := "1"
-	function := "ok" // TODO: enum
+	tape := apiclient.NewTape()
 
-	response := client.Get(test, function)
+	tape.Add("1", "ok1", 10)
+	tape.Add("1", "suspend", 1)
+	tape.Add("1", "ok2", 10)
+	tape.Add("1", "resume", 1)
+	tape.Add("1", "ok3", 10)
 
-	fmt.Printf("response: %s\n", response)
+	client.Run(tape)
 }
