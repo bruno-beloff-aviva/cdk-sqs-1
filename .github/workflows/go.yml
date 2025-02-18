@@ -58,4 +58,4 @@ jobs:
       run: cdk deploy --all --require-approval never
 
     - name: Purge Queues
-      run: go run purgequeues/purgequeues.go
+      run: go run ./cli/purgequeues/purgequeues.go

@@ -39,7 +39,7 @@ func main() {
 	urls := listQueues()
 
 	for _, url := range urls {
-		if strings.Contains(url, "SQS1Stack-TestQueue") {
+		if strings.Contains(url, "SQS1Stack-TestQueue") { //	TODO: use cmd parameter
 			fmt.Printf("Purging %s\n", url)
 			purgeQueue(url)
 		}
