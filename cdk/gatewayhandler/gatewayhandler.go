@@ -97,8 +97,8 @@ func (c GatewayConstruct) LambdaMetricsGraphWidget() awscloudwatch.GraphWidget {
 func (c GatewayConstruct) GatewayMetricsGraphWidget() awscloudwatch.GraphWidget {
 	region := c.Handler.Stack().Region()
 
-	invocationsMetric := c.Dashboard.CreateGatewayMetric(*region, "Count", c.Builder.EndpointId, stage, "Average")
-	errorsMetric := c.Dashboard.CreateGatewayMetric(*region, "5XXError", c.Builder.EndpointId, stage, "Average")
+	invocationsMetric := c.Dashboard.CreateGatewayMetric(*region, "Count", c.Builder.EndpointId, stage, "Sum")
+	errorsMetric := c.Dashboard.CreateGatewayMetric(*region, "5XXError", c.Builder.EndpointId, stage, "Sum")
 	metrics := []awscloudwatch.IMetric{invocationsMetric, errorsMetric}
 
 	return c.Dashboard.CreateGraphWidget(*region, fmt.Sprintf("%s - Invocations and Errors", c.Builder.EndpointId), metrics)
