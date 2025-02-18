@@ -112,7 +112,7 @@ func (c SNSConstruct) LambdaMetricsGraphWidget() awscloudwatch.GraphWidget {
 }
 
 func (c SNSConstruct) QueueMetricsGraphWidget() awscloudwatch.GraphWidget {
-	region := c.Handler.Stack().Region()
+	region := c.Queue.Stack().Region()
 	queueName := c.Queue.QueueName()
 
 	sentMetric := c.Dashboard.CreateQueueMetric(*region, "NumberOfMessagesSent", queueName, "Sum")
@@ -123,7 +123,7 @@ func (c SNSConstruct) QueueMetricsGraphWidget() awscloudwatch.GraphWidget {
 }
 
 func (c SNSConstruct) DLQMetricsGraphWidget() awscloudwatch.GraphWidget {
-	region := c.Handler.Stack().Region()
+	region := c.Queue.Stack().Region()
 	queueName := c.Queue.DeadLetterQueue().Queue.QueueName()
 
 	visibleMetric := c.Dashboard.CreateQueueMetric(*region, "ApproximateNumberOfMessagesVisible", queueName, "Sum")

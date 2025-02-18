@@ -182,12 +182,12 @@ func NewSQSWorkshopStack(scope constructs.Construct, id string, props *CdkWorksh
 
 	c1 := setupContinuousSubHandler(stack, subProps, topic)
 	c2 := setupSuspendableSubHandler(stack, subProps, topic)
-	setupEmptySubHandler(stack, subProps, topic)
+	c3 := setupEmptySubHandler(stack, subProps, topic)
 
 	// dashboard widgets...
 	dash.AddWidgetsRow(c0.GatewayMetricsGraphWidget(), c0.LambdaMetricsGraphWidget(), c1.LambdaMetricsGraphWidget(), c2.LambdaMetricsGraphWidget())
 	dash.AddWidgetsRow(c1.QueueMetricsGraphWidget(), c1.DLQMetricsGraphWidget(), c2.QueueMetricsGraphWidget(), c2.DLQMetricsGraphWidget())
-	dash.AddWidgetsRow(c0.TopicMetricsGraphWidget(topicName))
+	dash.AddWidgetsRow(c0.TopicMetricsGraphWidget(topicName), c3.QueueMetricsGraphWidget(), c3.DLQMetricsGraphWidget())
 
 	return stack
 }
