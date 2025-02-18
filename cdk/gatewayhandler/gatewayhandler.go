@@ -91,7 +91,7 @@ func (c GatewayConstruct) LambdaMetricsGraphWidget() awscloudwatch.GraphWidget {
 	errorsMetric := c.Dashboard.CreateLambdaMetric(*region, "Errors", c.Handler.FunctionName(), "Sum")
 	metrics := []awscloudwatch.IMetric{invocationsMetric, errorsMetric}
 
-	return c.Dashboard.CreateGraphWidget(*region, fmt.Sprintf("%s - Invocations and Errors", c.Builder.HandlerId), metrics)
+	return c.Dashboard.CreateGraphWidget(*region, fmt.Sprintf("%s - Invocations & Errors", c.Builder.HandlerId), metrics)
 }
 
 func (c GatewayConstruct) GatewayMetricsGraphWidget() awscloudwatch.GraphWidget {
@@ -101,7 +101,7 @@ func (c GatewayConstruct) GatewayMetricsGraphWidget() awscloudwatch.GraphWidget 
 	errorsMetric := c.Dashboard.CreateGatewayMetric(*region, "5XXError", c.Builder.EndpointId, stage, "Sum")
 	metrics := []awscloudwatch.IMetric{invocationsMetric, errorsMetric}
 
-	return c.Dashboard.CreateGraphWidget(*region, fmt.Sprintf("%s - Invocations and Errors", c.Builder.EndpointId), metrics)
+	return c.Dashboard.CreateGraphWidget(*region, fmt.Sprintf("%s - Invocations & Errors", c.Builder.EndpointId), metrics)
 }
 
 func (c GatewayConstruct) TopicMetricsGraphWidget(topicName string) awscloudwatch.GraphWidget {
@@ -111,5 +111,5 @@ func (c GatewayConstruct) TopicMetricsGraphWidget(topicName string) awscloudwatc
 	failsMetric := c.Dashboard.CreateTopicMetric(*region, "NumberOfNotificationsFailed", c.Builder.PublicationTopic.TopicName(), "Sum")
 	metrics := []awscloudwatch.IMetric{publicationsMetric, failsMetric}
 
-	return c.Dashboard.CreateGraphWidget(*region, fmt.Sprintf("%s - Publications and Failures", topicName), metrics)
+	return c.Dashboard.CreateGraphWidget(*region, fmt.Sprintf("%s - Publications & Failures", topicName), metrics)
 }

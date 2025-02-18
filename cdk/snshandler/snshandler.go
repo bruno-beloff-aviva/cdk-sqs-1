@@ -108,5 +108,15 @@ func (c SNSConstruct) LambdaMetricsGraphWidget() awscloudwatch.GraphWidget {
 	errorsMetric := c.Dashboard.CreateLambdaMetric(*region, "Errors", c.Handler.FunctionName(), "Sum")
 	metrics := []awscloudwatch.IMetric{invocationsMetric, errorsMetric}
 
-	return c.Dashboard.CreateGraphWidget(*region, fmt.Sprintf("%s - Invocations and Errors", c.Builder.HandlerId), metrics)
+	return c.Dashboard.CreateGraphWidget(*region, fmt.Sprintf("%s - Invocations & Errors", c.Builder.HandlerId), metrics)
+}
+
+func (c SNSConstruct) QueueMetricsGraphWidget(queueName string) awscloudwatch.GraphWidget {
+	region := c.Handler.Stack().Region()
+
+	publicationsMetric := c.Dashboard.CreateQueueMetric(*region, "NumberOfMessagesSent", c.Queue.QueueName(), "Sum")
+	failsMetric := c.Dashboard.CreateQueueMetric(*region, "ApproximateNumberOfMessagesVisible", c.Queue.QueueName(), "Sum")
+	metrics := []awscloudwatch.IMetric{publicationsMetric, failsMetric}
+
+	return c.Dashboard.CreateGraphWidget(*region, fmt.Sprintf("%s - Sent & Visible", queueName), metrics)
 }

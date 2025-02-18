@@ -75,6 +75,19 @@ func (d *Dashboard) CreateTopicMetric(region string, metricName string, topicNam
 	})
 }
 
+func (d *Dashboard) CreateQueueMetric(region string, metricName string, queueName *string, statistic string) awscloudwatch.IMetric {
+	return awscloudwatch.NewMetric(&awscloudwatch.MetricProps{
+		Region:     jsii.String(region),
+		Namespace:  jsii.String("AWS/SQS"),
+		MetricName: jsii.String(metricName),
+		DimensionsMap: &map[string]*string{
+			"QueueName": queueName,
+		},
+		Period:    awscdk.Duration_Minutes(jsii.Number(5)),
+		Statistic: jsii.String(statistic),
+	})
+}
+
 // func (d *Dashboard) CreateCustomMetric(region string, namespace, metricName, SNSName, statistic string) awscloudwatch.IMetric {
 // 	return awscloudwatch.NewMetric(&awscloudwatch.MetricProps{
 // 		Region:     jsii.String(region),
