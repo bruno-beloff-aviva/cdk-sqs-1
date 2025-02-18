@@ -191,8 +191,8 @@ func NewSQSWorkshopStack(scope constructs.Construct, id string, props *CdkWorksh
 
 	// dashboard widgets...
 	dash.AddWidgetsRow(c0.GatewayMetricsGraphWidget(), c0.LambdaMetricsGraphWidget(), c1.LambdaMetricsGraphWidget(), c2.LambdaMetricsGraphWidget())
-	dash.AddWidgetsRow(c0.TopicMetricsGraphWidget(), c1.QueueMetricsGraphWidget(), c1.DLQMetricsGraphWidget())
-	dash.AddWidgetsRow(c2.QueueMetricsGraphWidget(), c2.DLQMetricsGraphWidget(), c3.QueueMetricsGraphWidget(), c3.DLQMetricsGraphWidget())
+	dash.AddWidgetsRow(c1.QueueMetricsGraphWidget(), c1.DLQMetricsGraphWidget(), c2.QueueMetricsGraphWidget(), c2.DLQMetricsGraphWidget())
+	dash.AddWidgetsRow(c0.TopicMetricsGraphWidget(), c3.QueueMetricsGraphWidget(), c3.DLQMetricsGraphWidget())
 
 	return stack
 }

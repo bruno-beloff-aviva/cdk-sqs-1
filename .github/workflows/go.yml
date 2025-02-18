@@ -56,3 +56,6 @@ jobs:
   
     - name: CDK Deploy
       run: cdk deploy --all --require-approval never
+
+    - name: Purge Queues
+      run: go run purgequeues/purgequeues.go
