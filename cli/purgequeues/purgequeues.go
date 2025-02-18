@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"os"
 	"os/exec"
 	"strings"
 )
@@ -36,10 +37,16 @@ func purgeQueue(queueUrl string) {
 }
 
 func main() {
+	if len(os.Args) != 2 {
+		fmt.Println("Usage: purgequeues QUEUE_IDENTIFIER")
+		os.Exit(1)
+	}
+
+	queueIdentifier := os.Args[1]
 	urls := listQueues()
 
 	for _, url := range urls {
-		if strings.Contains(url, "SQS1Stack-TestQueue") { //	TODO: use cmd parameter
+		if strings.Contains(url, queueIdentifier) {
 			fmt.Printf("Purging %s\n", url)
 			purgeQueue(url)
 		}
