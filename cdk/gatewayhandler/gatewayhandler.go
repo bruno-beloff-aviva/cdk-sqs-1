@@ -16,6 +16,11 @@ import (
 
 const stage = "prod"
 
+type NamedTopic struct {
+	awssns.Topic
+	Name string
+}
+
 // common to all Gateway handlers
 type GatewayCommonProps struct {
 	Dashboard dashboard.Dashboard
@@ -25,7 +30,7 @@ type GatewayCommonProps struct {
 type GatewayBuilder struct {
 	EndpointId       string
 	HandlerId        string
-	PublicationTopic awssns.Topic
+	PublicationTopic NamedTopic
 	Entry            string
 	Environment      map[string]*string
 }
@@ -104,12 +109,12 @@ func (c GatewayConstruct) GatewayMetricsGraphWidget() awscloudwatch.GraphWidget 
 	return c.Dashboard.CreateGraphWidget(*region, fmt.Sprintf("%s - Invocations & Errors", c.Builder.EndpointId), metrics)
 }
 
-func (c GatewayConstruct) TopicMetricsGraphWidget(topicName string) awscloudwatch.GraphWidget {
+func (c GatewayConstruct) TopicMetricsGraphWidget() awscloudwatch.GraphWidget {
 	region := c.Handler.Stack().Region()
 
 	publicationsMetric := c.Dashboard.CreateTopicMetric(*region, "NumberOfMessagesPublished", c.Builder.PublicationTopic.TopicName(), "Sum")
 	failsMetric := c.Dashboard.CreateTopicMetric(*region, "NumberOfNotificationsFailed", c.Builder.PublicationTopic.TopicName(), "Sum")
 	metrics := []awscloudwatch.IMetric{publicationsMetric, failsMetric}
 
-	return c.Dashboard.CreateGraphWidget(*region, fmt.Sprintf("%s - Publications & Failures", topicName), metrics)
+	return c.Dashboard.CreateGraphWidget(*region, fmt.Sprintf("%s - Publications & Failures", c.Builder.PublicationTopic.Name), metrics)
 }

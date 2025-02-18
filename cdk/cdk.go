@@ -65,12 +65,17 @@ func setupMessageTable(stack awscdk.Stack, id string, name string) awsdynamodb.I
 	return awsdynamodb.NewTable(stack, aws.String(id), &tableProps)
 }
 
-func setupTopic(stack awscdk.Stack, id string, name string) awssns.Topic {
+func setupTopic(stack awscdk.Stack, id string, name string) gatewayhandler.NamedTopic {
 	topicProps := awssns.TopicProps{
 		DisplayName: aws.String(name),
 	}
 
-	return awssns.NewTopic(stack, aws.String(id), &topicProps)
+	topic := gatewayhandler.NamedTopic{
+		Topic: awssns.NewTopic(stack, aws.String(id), &topicProps),
+		Name:  name,
+	}
+
+	return topic
 }
 
 func setupQueueKey(stack awscdk.Stack) awskms.IKey {
@@ -82,7 +87,7 @@ func setupQueueKey(stack awscdk.Stack) awskms.IKey {
 	return awskms.NewKey(stack, aws.String("Key"), &keyProps)
 }
 
-func setupPubHandler(stack awscdk.Stack, props gatewayhandler.GatewayCommonProps, topic awssns.Topic) gatewayhandler.GatewayConstruct {
+func setupPubHandler(stack awscdk.Stack, props gatewayhandler.GatewayCommonProps, topic gatewayhandler.NamedTopic) gatewayhandler.GatewayConstruct {
 	environment := map[string]*string{
 		"VERSION":   aws.String(version),
 		"TOPIC_ARN": topic.TopicArn(),
@@ -187,7 +192,7 @@ func NewSQSWorkshopStack(scope constructs.Construct, id string, props *CdkWorksh
 	// dashboard widgets...
 	dash.AddWidgetsRow(c0.GatewayMetricsGraphWidget(), c0.LambdaMetricsGraphWidget(), c1.LambdaMetricsGraphWidget(), c2.LambdaMetricsGraphWidget())
 	dash.AddWidgetsRow(c1.QueueMetricsGraphWidget(), c1.DLQMetricsGraphWidget(), c2.QueueMetricsGraphWidget(), c2.DLQMetricsGraphWidget())
-	dash.AddWidgetsRow(c0.TopicMetricsGraphWidget(topicName), c3.QueueMetricsGraphWidget(), c3.DLQMetricsGraphWidget())
+	dash.AddWidgetsRow(c0.TopicMetricsGraphWidget(), c3.QueueMetricsGraphWidget(), c3.DLQMetricsGraphWidget())
 
 	return stack
 }
