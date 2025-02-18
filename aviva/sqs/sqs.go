@@ -45,7 +45,7 @@ type SqsQueueWithDLQProps struct {
 
 // NewSqsQueueWithDLQ creates a new SQS queue with a dead-letter queue and
 // alarms for both the queue and the dead-letter queue.
-func NewSqsQueueWithDLQ(props SqsQueueWithDLQProps) awssqs.IQueue {
+func NewSqsQueueWithDLQ(props SqsQueueWithDLQProps) awssqs.Queue { // BB: was IQueue
 	// Set default value for DLQRetentionPeriodDays if not provided
 	var dlqRetentionPeriodDays awscdk.Duration
 	if props.DLQRetentionPeriodDays != nil {

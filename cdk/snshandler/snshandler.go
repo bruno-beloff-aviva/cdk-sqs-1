@@ -36,38 +36,38 @@ type SNSBuilder struct {
 
 type SNSConstruct struct {
 	Builder   SNSBuilder
-	Queue     awssqs.IQueue
+	Queue     awssqs.Queue
 	Handler   awslambdago.GoFunction
 	Dashboard dashboard.Dashboard
 }
 
-func (h SNSBuilder) Setup(stack awscdk.Stack, props SNSCommonProps) SNSConstruct {
+func (b SNSBuilder) Setup(stack awscdk.Stack, props SNSCommonProps) SNSConstruct {
 	var c SNSConstruct
 
-	c.Builder = h
+	c.Builder = b
 	c.Dashboard = props.Dashboard
-	c.Queue = h.setupQueue(stack, props)
+	c.Queue = b.setupQueue(stack, props)
 
 	subProps := awssnssubscriptions.SqsSubscriptionProps{
 		RawMessageDelivery: aws.Bool(true),
 	}
-	h.SubscriptionTopic.AddSubscription(awssnssubscriptions.NewSqsSubscription(c.Queue, &subProps))
+	b.SubscriptionTopic.AddSubscription(awssnssubscriptions.NewSqsSubscription(c.Queue, &subProps))
 
-	if h.HandlerId == "" {
+	if b.HandlerId == "" {
 		return c
 	}
 
-	c.Handler = h.setupSubHandler(stack, c.Queue)
+	c.Handler = b.setupSubHandler(stack, c.Queue)
 	c.Queue.GrantConsumeMessages(c.Handler)
 	props.MessageTable.GrantReadWriteData(c.Handler)
 
 	return c
 }
 
-func (h SNSBuilder) setupQueue(stack awscdk.Stack, props SNSCommonProps) awssqs.IQueue {
+func (b SNSBuilder) setupQueue(stack awscdk.Stack, props SNSCommonProps) awssqs.Queue {
 	queueProps := sqs.SqsQueueWithDLQProps{
 		Stack:                    stack,
-		QueueName:                h.QueueName,
+		QueueName:                b.QueueName,
 		SQSKey:                   props.QueueKey,
 		QMaxReceiveCount:         props.QueueMaxRetries,
 		QAlarmPeriod:             1,
@@ -81,19 +81,19 @@ func (h SNSBuilder) setupQueue(stack awscdk.Stack, props SNSCommonProps) awssqs.
 	return sqs.NewSqsQueueWithDLQ(queueProps)
 }
 
-func (h SNSBuilder) setupSubHandler(stack awscdk.Stack, queue awssqs.IQueue) awslambdago.GoFunction {
+func (b SNSBuilder) setupSubHandler(stack awscdk.Stack, queue awssqs.IQueue) awslambdago.GoFunction {
 	handlerProps := awslambdago.GoFunctionProps{
 		Runtime:       awslambda.Runtime_PROVIDED_AL2(),
 		Architecture:  awslambda.Architecture_ARM_64(),
-		Entry:         aws.String(h.Entry),
+		Entry:         aws.String(b.Entry),
 		Timeout:       awscdk.Duration_Seconds(aws.Float64(28)),
 		LoggingFormat: awslambda.LoggingFormat_JSON,
 		LogRetention:  awslogs.RetentionDays_FIVE_DAYS,
 		Tracing:       awslambda.Tracing_ACTIVE,
-		Environment:   &h.Environment,
+		Environment:   &b.Environment,
 	}
 
-	handler := awslambdago.NewGoFunction(stack, aws.String(h.HandlerId), &handlerProps)
+	handler := awslambdago.NewGoFunction(stack, aws.String(b.HandlerId), &handlerProps)
 
 	eventSourceProps := awslambdaeventsources.SqsEventSourceProps{}
 	handler.AddEventSource(awslambdaeventsources.NewSqsEventSource(queue, &eventSourceProps))
@@ -111,12 +111,24 @@ func (c SNSConstruct) LambdaMetricsGraphWidget() awscloudwatch.GraphWidget {
 	return c.Dashboard.CreateGraphWidget(*region, fmt.Sprintf("%s - Invocations & Errors", c.Builder.HandlerId), metrics)
 }
 
-func (c SNSConstruct) QueueMetricsGraphWidget(queueName string) awscloudwatch.GraphWidget {
+func (c SNSConstruct) QueueMetricsGraphWidget() awscloudwatch.GraphWidget {
 	region := c.Handler.Stack().Region()
+	queueName := c.Queue.QueueName()
 
-	publicationsMetric := c.Dashboard.CreateQueueMetric(*region, "NumberOfMessagesSent", c.Queue.QueueName(), "Sum")
-	failsMetric := c.Dashboard.CreateQueueMetric(*region, "ApproximateNumberOfMessagesVisible", c.Queue.QueueName(), "Sum")
-	metrics := []awscloudwatch.IMetric{publicationsMetric, failsMetric}
+	sentMetric := c.Dashboard.CreateQueueMetric(*region, "NumberOfMessagesSent", queueName, "Sum")
+	visibleMetric := c.Dashboard.CreateQueueMetric(*region, "ApproximateNumberOfMessagesVisible", queueName, "Sum")
+	metrics := []awscloudwatch.IMetric{sentMetric, visibleMetric}
 
-	return c.Dashboard.CreateGraphWidget(*region, fmt.Sprintf("%s - Sent & Visible", queueName), metrics)
+	return c.Dashboard.CreateGraphWidget(*region, fmt.Sprintf("%s - Sent & Visible", c.Builder.QueueName), metrics)
+}
+
+func (c SNSConstruct) DLQMetricsGraphWidget() awscloudwatch.GraphWidget {
+	region := c.Handler.Stack().Region()
+	queueName := c.Queue.DeadLetterQueue().Queue.QueueName()
+
+	visibleMetric := c.Dashboard.CreateQueueMetric(*region, "ApproximateNumberOfMessagesVisible", queueName, "Sum")
+	invisibleMetric := c.Dashboard.CreateQueueMetric(*region, "ApproximateNumberOfMessagesNotVisible", queueName, "Sum")
+	metrics := []awscloudwatch.IMetric{visibleMetric, invisibleMetric}
+
+	return c.Dashboard.CreateGraphWidget(*region, fmt.Sprintf("%sDLQ - Visible & Invisible", c.Builder.QueueName), metrics)
 }
