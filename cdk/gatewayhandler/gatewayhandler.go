@@ -111,5 +111,5 @@ func (c GatewayConstruct) TopicMetricsGraphWidget() awscloudwatch.GraphWidget {
 	failsMetric := c.Dashboard.CreateTopicMetric(*region, "NumberOfNotificationsFailed", c.Builder.PublicationTopic.TopicName(), "Sum")
 	metrics := []awscloudwatch.IMetric{publicationsMetric, failsMetric}
 
-	return c.Dashboard.CreateGraphWidget(*region, fmt.Sprintf("%s - Publications and Failures", c.Builder.PublicationTopic), metrics)
+	return c.Dashboard.CreateGraphWidget(*region, fmt.Sprintf("%s - Publications and Failures", *c.Builder.PublicationTopic.PhysicalName()), metrics)
 }
