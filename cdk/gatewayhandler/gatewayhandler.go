@@ -14,6 +14,8 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 )
 
+const stage = "prod"
+
 // common to all Gateway handlers
 type GatewayCommonProps struct {
 	Dashboard dashboard.Dashboard
@@ -67,7 +69,7 @@ func (h GatewayBuilder) setupPubHandler(stack awscdk.Stack) awslambdago.GoFuncti
 
 func (h GatewayBuilder) setupGateway(stack awscdk.Stack, handler awslambdago.GoFunction) awsapigateway.LambdaRestApi {
 	stageOptions := awsapigateway.StageOptions{
-		StageName:        aws.String("prod"),
+		StageName:        aws.String(stage),
 		LoggingLevel:     awsapigateway.MethodLoggingLevel_ERROR,
 		TracingEnabled:   aws.Bool(true),
 		MetricsEnabled:   aws.Bool(true),
@@ -95,8 +97,9 @@ func (c GatewayConstruct) LambdaMetricsGraphWidget() awscloudwatch.GraphWidget {
 func (c GatewayConstruct) GatewayMetricsGraphWidget() awscloudwatch.GraphWidget {
 	region := c.Handler.Stack().Region()
 
-	invocationsMetric := c.Dashboard.CreateGatewayMetric(*region, "Count", c.Builder.EndpointId, "prod")
-	metrics := []awscloudwatch.IMetric{invocationsMetric}
+	invocationsMetric := c.Dashboard.CreateGatewayMetric(*region, "Count", c.Builder.EndpointId, stage, "Average")
+	errorsMetric := c.Dashboard.CreateGatewayMetric(*region, "5XXError", c.Builder.EndpointId, stage, "Average")
+	metrics := []awscloudwatch.IMetric{invocationsMetric, errorsMetric}
 
-	return c.Dashboard.CreateGraphWidget(*region, fmt.Sprintf("%s - Invocations", c.Builder.EndpointId), metrics)
+	return c.Dashboard.CreateGraphWidget(*region, fmt.Sprintf("%s - Invocations and Errors", c.Builder.EndpointId), metrics)
 }

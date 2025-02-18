@@ -48,7 +48,7 @@ func (d *Dashboard) CreateLambdaMetric(region string, metricName string, functio
 	})
 }
 
-func (d *Dashboard) CreateGatewayMetric(region string, metricName string, apiName string, stage string) awscloudwatch.IMetric {
+func (d *Dashboard) CreateGatewayMetric(region string, metricName string, apiName string, stage string, statistic string) awscloudwatch.IMetric {
 	return awscloudwatch.NewMetric(&awscloudwatch.MetricProps{
 		Region:     jsii.String(region),
 		Namespace:  jsii.String("AWS/ApiGateway"),
@@ -57,22 +57,23 @@ func (d *Dashboard) CreateGatewayMetric(region string, metricName string, apiNam
 			"ApiName": &apiName,
 			"Stage":   &stage,
 		},
-		Period: awscdk.Duration_Minutes(jsii.Number(5)),
-	})
-}
-
-func (d *Dashboard) CreateCustomMetric(region string, namespace, metricName, SNSName, statistic string) awscloudwatch.IMetric {
-	return awscloudwatch.NewMetric(&awscloudwatch.MetricProps{
-		Region:     jsii.String(region),
-		Namespace:  jsii.String(namespace),
-		MetricName: jsii.String(metricName),
-		DimensionsMap: &map[string]*string{
-			"SNS": jsii.String(SNSName),
-		},
 		Period:    awscdk.Duration_Minutes(jsii.Number(5)),
 		Statistic: jsii.String(statistic),
 	})
 }
+
+// func (d *Dashboard) CreateCustomMetric(region string, namespace, metricName, SNSName, statistic string) awscloudwatch.IMetric {
+// 	return awscloudwatch.NewMetric(&awscloudwatch.MetricProps{
+// 		Region:     jsii.String(region),
+// 		Namespace:  jsii.String(namespace),
+// 		MetricName: jsii.String(metricName),
+// 		DimensionsMap: &map[string]*string{
+// 			"SNS": jsii.String(SNSName),
+// 		},
+// 		Period:    awscdk.Duration_Minutes(jsii.Number(5)),
+// 		Statistic: jsii.String(statistic),
+// 	})
+// }
 
 func (d *Dashboard) CreateGraphWidget(region string, title string, metrics []awscloudwatch.IMetric) awscloudwatch.GraphWidget {
 	return awscloudwatch.NewGraphWidget(&awscloudwatch.GraphWidgetProps{
