@@ -42,7 +42,7 @@ type GatewayBuilder struct {
 type GatewayConstruct struct {
 	Builder   GatewayBuilder
 	Gateway   awsapigateway.LambdaRestApi
-	Handler   awslambdago.GoFunction
+	Handler   awslambda.Alias
 	Dashboard dashboard.Dashboard
 }
 
@@ -110,6 +110,9 @@ func (h GatewayBuilder) setupPubHandler(stack awscdk.Stack) awslambda.Alias {
 
 	return alias
 }
+
+// Error: cdk/gatewayhandler/gatewayhandler.go:54:14: cannot use h.setupPubHandler(stack) (value of type awslambda.Alias) as awscdklambdagoalpha.GoFunction value in assignment: awslambda.Alias does not implement awscdklambdagoalpha.GoFunction (missing method AddAlias)
+// Error: cdk/gatewayhandler/gatewayhandler.go:57:24: cannot use c.Handler (variable of type awscdklambdagoalpha.GoFunction) as awslambda.Alias value in argument to h.setupGateway: awscdklambdagoalpha.GoFunction does not implement awslambda.Alias (missing method AddAutoScaling)
 
 func (h GatewayBuilder) setupGateway(stack awscdk.Stack, alias awslambda.Alias) awsapigateway.LambdaRestApi {
 	stageOptions := awsapigateway.StageOptions{
