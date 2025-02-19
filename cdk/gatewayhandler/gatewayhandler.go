@@ -59,7 +59,35 @@ func (h GatewayBuilder) Setup(stack awscdk.Stack, props GatewayCommonProps) Gate
 	return c
 }
 
-func (h GatewayBuilder) setupPubHandler(stack awscdk.Stack) awslambdago.GoFunction {
+// func (h GatewayBuilder) setupPubHandler(stack awscdk.Stack) awslambdago.GoFunction {
+// 	handlerProps := awslambdago.GoFunctionProps{
+// 		Runtime:       awslambda.Runtime_PROVIDED_AL2(),
+// 		Architecture:  awslambda.Architecture_ARM_64(),
+// 		Entry:         aws.String(h.Entry),
+// 		Timeout:       awscdk.Duration_Seconds(aws.Float64(27)),
+// 		LoggingFormat: awslambda.LoggingFormat_JSON,
+// 		LogRetention:  awslogs.RetentionDays_FIVE_DAYS,
+// 		Tracing:       awslambda.Tracing_ACTIVE,
+// 		Environment:   &h.Environment,
+// 	}
+
+// 	handler := awslambdago.NewGoFunction(stack, aws.String(h.HandlerId), &handlerProps)
+
+// 	version := handler.CurrentVersion()
+
+// 	awslambda.NewAlias(stack, aws.String(h.HandlerId+"Alias"), &awslambda.AliasProps{
+// 		AliasName: aws.String("Current"),
+// 		Version:   version,
+// 	})
+
+// 	// alias := handler.AddAlias("prod", &awslambda.AliasProps{
+// 	// 	Version: version,
+// 	// })
+
+// 	return handler
+// }
+
+func (h GatewayBuilder) setupPubHandler(stack awscdk.Stack) awslambda.Alias {
 	handlerProps := awslambdago.GoFunctionProps{
 		Runtime:       awslambda.Runtime_PROVIDED_AL2(),
 		Architecture:  awslambda.Architecture_ARM_64(),
@@ -75,19 +103,15 @@ func (h GatewayBuilder) setupPubHandler(stack awscdk.Stack) awslambdago.GoFuncti
 
 	version := handler.CurrentVersion()
 
-	awslambda.NewAlias(stack, aws.String(h.HandlerId+"Alias"), &awslambda.AliasProps{
+	alias := awslambda.NewAlias(stack, aws.String(h.HandlerId+"Alias"), &awslambda.AliasProps{
 		AliasName: aws.String("Current"),
 		Version:   version,
 	})
 
-	// alias := handler.AddAlias("prod", &awslambda.AliasProps{
-	// 	Version: version,
-	// })
-
-	return handler
+	return alias
 }
 
-func (h GatewayBuilder) setupGateway(stack awscdk.Stack, handler awslambdago.GoFunction) awsapigateway.LambdaRestApi {
+func (h GatewayBuilder) setupGateway(stack awscdk.Stack, alias awslambda.Alias) awsapigateway.LambdaRestApi {
 	stageOptions := awsapigateway.StageOptions{
 		StageName:        aws.String(stage),
 		LoggingLevel:     awsapigateway.MethodLoggingLevel_ERROR,
@@ -97,7 +121,7 @@ func (h GatewayBuilder) setupGateway(stack awscdk.Stack, handler awslambdago.GoF
 	}
 
 	restApiProps := awsapigateway.LambdaRestApiProps{
-		Handler:       handler,
+		Handler:       alias,
 		DeployOptions: &stageOptions,
 	}
 
