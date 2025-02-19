@@ -94,7 +94,7 @@ func (b GatewayBuilder) setupPubHandler(stack awscdk.Stack) awslambda.Alias {
 func (b GatewayBuilder) setupGateway(stack awscdk.Stack, alias awslambda.Alias) awsapigateway.LambdaRestApi {
 	stageOptions := awsapigateway.StageOptions{
 		StageName:        aws.String(stage),
-		LoggingLevel:     awsapigateway.MethodLoggingLevel_ERROR,
+		LoggingLevel:     awsapigateway.MethodLoggingLevel_INFO,
 		TracingEnabled:   aws.Bool(true),
 		MetricsEnabled:   aws.Bool(true),
 		DataTraceEnabled: aws.Bool(true),
