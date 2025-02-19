@@ -1,8 +1,9 @@
 package gatewayhandler
 
+// https://www.youtube.com/watch?v=5v3rW2fPbLs
 // https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_lambda.Alias.html
 // https://pkg.go.dev/github.com/aws/aws-sdk-go-v2/service/lambda#Client.CreateAlias
-// https://www.youtube.com/watch?v=5v3rW2fPbLs
+// https://stackoverflow.com/questions/63477633/how-do-you-point-api-gateway-to-a-lambda-alias-in-cdk
 
 import (
 	"fmt"
@@ -46,75 +47,51 @@ type GatewayConstruct struct {
 	Dashboard dashboard.Dashboard
 }
 
-func (h GatewayBuilder) Setup(stack awscdk.Stack, props GatewayCommonProps) GatewayConstruct {
+// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+func (b GatewayBuilder) Setup(stack awscdk.Stack, props GatewayCommonProps) GatewayConstruct {
 	var c GatewayConstruct
 
-	c.Builder = h
+	c.Builder = b
 	c.Dashboard = props.Dashboard
-	c.Handler = h.setupPubHandler(stack)
+	c.Handler = b.setupPubHandler(stack)
 
-	h.PublicationTopic.GrantPublish(c.Handler)
-	h.setupGateway(stack, c.Handler)
+	b.PublicationTopic.GrantPublish(c.Handler)
+	b.setupGateway(stack, c.Handler)
 
 	return c
 }
 
-// func (h GatewayBuilder) setupPubHandler(stack awscdk.Stack) awslambdago.GoFunction {
-// 	handlerProps := awslambdago.GoFunctionProps{
-// 		Runtime:       awslambda.Runtime_PROVIDED_AL2(),
-// 		Architecture:  awslambda.Architecture_ARM_64(),
-// 		Entry:         aws.String(h.Entry),
-// 		Timeout:       awscdk.Duration_Seconds(aws.Float64(27)),
-// 		LoggingFormat: awslambda.LoggingFormat_JSON,
-// 		LogRetention:  awslogs.RetentionDays_FIVE_DAYS,
-// 		Tracing:       awslambda.Tracing_ACTIVE,
-// 		Environment:   &h.Environment,
-// 	}
-
-// 	handler := awslambdago.NewGoFunction(stack, aws.String(h.HandlerId), &handlerProps)
-
-// 	version := handler.CurrentVersion()
-
-// 	awslambda.NewAlias(stack, aws.String(h.HandlerId+"Alias"), &awslambda.AliasProps{
-// 		AliasName: aws.String("Current"),
-// 		Version:   version,
-// 	})
-
-// 	// alias := handler.AddAlias("prod", &awslambda.AliasProps{
-// 	// 	Version: version,
-// 	// })
-
-// 	return handler
-// }
-
-func (h GatewayBuilder) setupPubHandler(stack awscdk.Stack) awslambda.Alias {
+func (b GatewayBuilder) setupPubHandler(stack awscdk.Stack) awslambda.Alias {
 	handlerProps := awslambdago.GoFunctionProps{
+		Description:   aws.String("SNS event-raising handler"),
 		Runtime:       awslambda.Runtime_PROVIDED_AL2(),
 		Architecture:  awslambda.Architecture_ARM_64(),
-		Entry:         aws.String(h.Entry),
+		Entry:         aws.String(b.Entry),
 		Timeout:       awscdk.Duration_Seconds(aws.Float64(27)),
 		LoggingFormat: awslambda.LoggingFormat_JSON,
 		LogRetention:  awslogs.RetentionDays_FIVE_DAYS,
 		Tracing:       awslambda.Tracing_ACTIVE,
-		Environment:   &h.Environment,
+		Environment:   &b.Environment,
 	}
 
-	handler := awslambdago.NewGoFunction(stack, aws.String(h.HandlerId), &handlerProps)
+	// TODO: keep the old version of the handler - add version ID to handler ID?
+	// TODO: move alias between versions?
+
+	handler := awslambdago.NewGoFunction(stack, aws.String(b.HandlerId), &handlerProps)
 
 	version := handler.CurrentVersion()
 
-	alias := awslambda.NewAlias(stack, aws.String(h.HandlerId+"Alias"), &awslambda.AliasProps{
-		AliasName: aws.String("Current"),
-		Version:   version,
+	alias := awslambda.NewAlias(stack, aws.String(b.HandlerId+"Alias"), &awslambda.AliasProps{
+		AliasName:   aws.String("Live"),
+		Description: aws.String("Live version of the PubHandler"),
+		Version:     version,
 	})
 
 	return alias
 }
 
-// Error: cdk/gatewayhandler/gatewayhandler.go:54:14: cannot use h.setupPubHandler(stack) (value of type awslambda.Alias) as awscdklambdagoalpha.GoFunction value in assignment: awslambda.Alias does not implement awscdklambdagoalpha.GoFunction (missing method AddAlias)
-// Error: cdk/gatewayhandler/gatewayhandler.go:57:24: cannot use c.Handler (variable of type awscdklambdagoalpha.GoFunction) as awslambda.Alias value in argument to h.setupGateway: awscdklambdagoalpha.GoFunction does not implement awslambda.Alias (missing method AddAutoScaling)
-
-func (h GatewayBuilder) setupGateway(stack awscdk.Stack, alias awslambda.Alias) awsapigateway.LambdaRestApi {
+func (b GatewayBuilder) setupGateway(stack awscdk.Stack, alias awslambda.Alias) awsapigateway.LambdaRestApi {
 	stageOptions := awsapigateway.StageOptions{
 		StageName:        aws.String(stage),
 		LoggingLevel:     awsapigateway.MethodLoggingLevel_ERROR,
@@ -128,8 +105,10 @@ func (h GatewayBuilder) setupGateway(stack awscdk.Stack, alias awslambda.Alias) 
 		DeployOptions: &stageOptions,
 	}
 
-	return awsapigateway.NewLambdaRestApi(stack, aws.String(h.EndpointId), &restApiProps)
+	return awsapigateway.NewLambdaRestApi(stack, aws.String(b.EndpointId), &restApiProps)
 }
+
+// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 func (c GatewayConstruct) LambdaMetricsGraphWidget() awscloudwatch.GraphWidget {
 	region := c.Handler.Stack().Region()

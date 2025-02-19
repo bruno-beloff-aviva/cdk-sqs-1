@@ -41,6 +41,8 @@ type SNSConstruct struct {
 	Dashboard dashboard.Dashboard
 }
 
+// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 func (b SNSBuilder) Setup(stack awscdk.Stack, props SNSCommonProps) SNSConstruct {
 	var c SNSConstruct
 
@@ -83,6 +85,7 @@ func (b SNSBuilder) setupQueue(stack awscdk.Stack, props SNSCommonProps) awssqs.
 
 func (b SNSBuilder) setupSubHandler(stack awscdk.Stack, queue awssqs.IQueue) awslambdago.GoFunction {
 	handlerProps := awslambdago.GoFunctionProps{
+		Description:   aws.String("Handler with queue listening to SNS events"),
 		Runtime:       awslambda.Runtime_PROVIDED_AL2(),
 		Architecture:  awslambda.Architecture_ARM_64(),
 		Entry:         aws.String(b.Entry),
@@ -95,11 +98,15 @@ func (b SNSBuilder) setupSubHandler(stack awscdk.Stack, queue awssqs.IQueue) aws
 
 	handler := awslambdago.NewGoFunction(stack, aws.String(b.HandlerId), &handlerProps)
 
+	// TODO: use alias AFTER the project has been split, and deployments with / without alias can be tested
+
 	eventSourceProps := awslambdaeventsources.SqsEventSourceProps{}
 	handler.AddEventSource(awslambdaeventsources.NewSqsEventSource(queue, &eventSourceProps))
 
 	return handler
 }
+
+// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 func (c SNSConstruct) LambdaMetricsGraphWidget() awscloudwatch.GraphWidget {
 	region := c.Handler.Stack().Region()
