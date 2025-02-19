@@ -64,7 +64,7 @@ func (h GatewayBuilder) setupPubHandler(stack awscdk.Stack) awslambdago.GoFuncti
 		Runtime:       awslambda.Runtime_PROVIDED_AL2(),
 		Architecture:  awslambda.Architecture_ARM_64(),
 		Entry:         aws.String(h.Entry),
-		Timeout:       awscdk.Duration_Seconds(aws.Float64(28)),
+		Timeout:       awscdk.Duration_Seconds(aws.Float64(27)),
 		LoggingFormat: awslambda.LoggingFormat_JSON,
 		LogRetention:  awslogs.RetentionDays_FIVE_DAYS,
 		Tracing:       awslambda.Tracing_ACTIVE,
