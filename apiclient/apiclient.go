@@ -20,25 +20,25 @@ func NewClient(baseURL string, requestInterval int) Client {
 
 func (c Client) Run(tape Tape) {
 	ticker := time.NewTicker(time.Duration(c.requestInterval) * time.Second)
+	totalCount := 0
 
-	for {
-		r := tape.NextRequest()
-		if r.TestId == "" {
-			ticker.Stop()
-			break
-		}
-
-		i := 0
+	for _, frame := range tape.Frames {
+		repeatCount := 0
 		for t := range ticker.C {
-			if i == r.Repeat {
+			if repeatCount == frame.Repeat {
 				break
 			}
-			i++
-			fmt.Printf("Tick at: %v\n", t.UTC())
-			response := c.Get(r.TestId, r.Function)
+
+			fmt.Println(t.UTC())
+			response := c.Get(frame.TestId, frame.Function)
 			fmt.Println(response.String())
+
+			repeatCount++
+			totalCount++
 		}
 	}
+
+	fmt.Printf("Executed %d requests\n", totalCount)
 }
 
 func (c Client) Get(testId string, function string) (response response.Response) {

@@ -32,6 +32,10 @@ type TestReception struct {
 	TestMessage
 }
 
+func GetDeletionKeys() []string {
+	return []string{"PK", "Path"}
+}
+
 func NewTestReception(subscriber string, message TestMessage) TestReception {
 	now := time.Now().UTC().Format(time.RFC3339Nano)
 	pk := message.Sent + "/" + subscriber

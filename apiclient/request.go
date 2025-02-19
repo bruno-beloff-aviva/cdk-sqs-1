@@ -1,34 +1,26 @@
 package apiclient
 
-type Request struct {
+type Frame struct {
 	TestId   string
 	Function string
 	Repeat   int
 }
 
+func (f Frame) Requests() {
+}
+
 type Tape struct {
-	Requests []Request
-	cursor   int
+	Frames []Frame
+	cursor int
 }
 
 func NewTape() Tape {
-	return Tape{Requests: []Request{}, cursor: 0}
+	return Tape{Frames: []Frame{}, cursor: 0}
 }
 
 func (t *Tape) Add(testId string, function string, repeat int) {
-	r := Request{TestId: testId, Function: function, Repeat: repeat}
-	t.Requests = append(t.Requests, r)
-}
-
-func (t *Tape) NextRequest() Request {
-	if t.cursor >= len(t.Requests) {
-		return Request{}
-	}
-
-	r := t.Requests[t.cursor]
-	t.cursor++
-
-	return r
+	r := Frame{TestId: testId, Function: function, Repeat: repeat}
+	t.Frames = append(t.Frames, r)
 }
 
 func (t *Tape) Reset() {

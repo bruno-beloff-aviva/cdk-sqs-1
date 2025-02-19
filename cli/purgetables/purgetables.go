@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"sqstest/service/testmessage"
 	"strings"
 
 	pipe "github.com/b4b4r07/go-pipe"
@@ -33,14 +34,17 @@ func listTables() []string {
 func getKeys(tableName string) gjson.Result {
 	var b bytes.Buffer
 
-	pipe.Command(&b,
-		exec.Command("aws", "dynamodb", "scan", "--table-name", tableName, "--attributes-to-get", "PK", "Path"),
+	getArgs := append([]string{"dynamodb", "scan", "--table-name", tableName, "--attributes-to-get"}, testmessage.GetDeletionKeys()...)
+
+	err := pipe.Command(&b,
+		exec.Command("aws", getArgs...),
 		exec.Command("jq", "-c"),
 	)
+	if err != nil {
+		panic(err)
+	}
 
-	keys := gjson.Get(b.String(), "Items")
-
-	return keys
+	return gjson.Get(b.String(), "Items")
 }
 
 func purgeTable(tableName string, keys gjson.Result) {
