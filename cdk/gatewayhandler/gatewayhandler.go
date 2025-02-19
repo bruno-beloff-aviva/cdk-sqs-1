@@ -1,5 +1,8 @@
 package gatewayhandler
 
+// https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_lambda.Alias.html
+// https://pkg.go.dev/github.com/aws/aws-sdk-go-v2/service/lambda#Client.CreateAlias
+
 import (
 	"fmt"
 	"sqstest/cdk/dashboard"
@@ -68,6 +71,17 @@ func (h GatewayBuilder) setupPubHandler(stack awscdk.Stack) awslambdago.GoFuncti
 	}
 
 	handler := awslambdago.NewGoFunction(stack, aws.String(h.HandlerId), &handlerProps)
+
+	version := handler.CurrentVersion()
+
+	awslambda.NewAlias(stack, aws.String(h.HandlerId+"Alias"), &awslambda.AliasProps{
+		AliasName: aws.String("prod"),
+		Version:   version,
+	})
+
+	// alias := handler.AddAlias("prod", &awslambda.AliasProps{
+	// 	Version: version,
+	// })
 
 	return handler
 }
