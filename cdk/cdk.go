@@ -28,7 +28,7 @@ const queue2Name = "TestQueue2"
 const queue3Name = "TestQueue3"
 const queueMaxRetries = 3
 
-const tableName = "TestMessageTableV1"
+const tableName = "TestMessageTableV2"
 const tableId = project + tableName
 
 const topicName = "TestTopic"
@@ -95,7 +95,7 @@ func setupDashboard(stack awscdk.Stack) dashboard.Dashboard {
 func setupMessageTable(stack awscdk.Stack, id string, name string) awsdynamodb.ITable {
 	tableProps := awsdynamodb.TableProps{
 		PartitionKey: &awsdynamodb.Attribute{Name: aws.String("PK"), Type: awsdynamodb.AttributeType_STRING},
-		SortKey:      &awsdynamodb.Attribute{Name: aws.String("Path"), Type: awsdynamodb.AttributeType_STRING},
+		SortKey:      &awsdynamodb.Attribute{Name: aws.String("Received"), Type: awsdynamodb.AttributeType_STRING},
 		TableName:    aws.String(name),
 	}
 
