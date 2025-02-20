@@ -57,7 +57,10 @@ func (b GatewayBuilder) Setup(stack awscdk.Stack, props GatewayCommonProps) Gate
 	c.Handler = b.setupPubHandler(stack)
 
 	b.PublicationTopic.GrantPublish(c.Handler)
-	b.setupGateway(stack, c.Handler)
+
+	c.Gateway = b.setupGateway(stack, c.Handler)
+
+	// c.Handler.GrantInvoke(c.Gateway)
 
 	return c
 }
@@ -101,9 +104,12 @@ func (b GatewayBuilder) setupGateway(stack awscdk.Stack, alias awslambda.Alias) 
 	}
 
 	restApiProps := awsapigateway.LambdaRestApiProps{
-		Handler:       alias,
-		DeployOptions: &stageOptions,
+		Handler:            alias,
+		DefaultIntegration: awsapigateway.NewLambdaIntegration(alias, &awsapigateway.LambdaIntegrationOptions{}),
+		DeployOptions:      &stageOptions,
 	}
+
+	alias.FunctionArn()
 
 	return awsapigateway.NewLambdaRestApi(stack, aws.String(b.EndpointId), &restApiProps)
 }
