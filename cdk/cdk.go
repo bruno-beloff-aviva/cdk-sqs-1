@@ -21,7 +21,7 @@ import (
 )
 
 const project = "SQS1"
-const version = "0.2.7"
+const version = "0.2.8"
 
 const queue1Name = "TestQueue1"
 const queue2Name = "TestQueue2"
@@ -141,7 +141,7 @@ func setupPubHandler(stack awscdk.Stack, stackProps stackprops.CdkStackProps, co
 	return builder.Setup(stack, stackProps, commonProps)
 }
 
-func setupContinuousSubHandler(stack awscdk.Stack, props snshandler.SNSCommonProps, topic awssns.Topic) snshandler.SNSConstruct {
+func setupContinuousSubHandler(stack awscdk.Stack, commonProps snshandler.SNSCommonProps, topic awssns.Topic) snshandler.SNSConstruct {
 	environment := map[string]*string{
 		"VERSION":            aws.String(version),
 		"MESSAGE_TABLE_NAME": aws.String(tableName),
@@ -155,10 +155,10 @@ func setupContinuousSubHandler(stack awscdk.Stack, props snshandler.SNSCommonPro
 		Environment:       environment,
 	}
 
-	return builder.Setup(stack, props)
+	return builder.Setup(stack, commonProps)
 }
 
-func setupSuspendableSubHandler(stack awscdk.Stack, props snshandler.SNSCommonProps, topic awssns.Topic) snshandler.SNSConstruct {
+func setupSuspendableSubHandler(stack awscdk.Stack, commonProps snshandler.SNSCommonProps, topic awssns.Topic) snshandler.SNSConstruct {
 	environment := map[string]*string{
 		"VERSION":            aws.String(version),
 		"MESSAGE_TABLE_NAME": aws.String(tableName),
@@ -173,16 +173,16 @@ func setupSuspendableSubHandler(stack awscdk.Stack, props snshandler.SNSCommonPr
 		Environment:       environment,
 	}
 
-	return builder.Setup(stack, props)
+	return builder.Setup(stack, commonProps)
 }
 
-func setupEmptySubHandler(stack awscdk.Stack, props snshandler.SNSCommonProps, topic awssns.Topic) snshandler.SNSConstruct {
+func setupEmptySubHandler(stack awscdk.Stack, commonProps snshandler.SNSCommonProps, topic awssns.Topic) snshandler.SNSConstruct {
 	builder := snshandler.SNSBuilder{
 		SubscriptionTopic: topic,
 		QueueName:         queue3Name,
 	}
 
-	return builder.Setup(stack, props)
+	return builder.Setup(stack, commonProps)
 }
 
 func main() {

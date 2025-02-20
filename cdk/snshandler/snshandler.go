@@ -43,12 +43,12 @@ type SNSConstruct struct {
 
 // ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-func (b SNSBuilder) Setup(stack awscdk.Stack, props SNSCommonProps) SNSConstruct {
+func (b SNSBuilder) Setup(stack awscdk.Stack, commonProps SNSCommonProps) SNSConstruct {
 	var c SNSConstruct
 
 	c.Builder = b
-	c.Dashboard = props.Dashboard
-	c.Queue = b.setupQueue(stack, props)
+	c.Dashboard = commonProps.Dashboard
+	c.Queue = b.setupQueue(stack, commonProps)
 
 	subProps := awssnssubscriptions.SqsSubscriptionProps{
 		RawMessageDelivery: aws.Bool(true),
@@ -61,17 +61,17 @@ func (b SNSBuilder) Setup(stack awscdk.Stack, props SNSCommonProps) SNSConstruct
 
 	c.Handler = b.setupSubHandler(stack, c.Queue)
 	c.Queue.GrantConsumeMessages(c.Handler)
-	props.MessageTable.GrantReadWriteData(c.Handler)
+	commonProps.MessageTable.GrantReadWriteData(c.Handler)
 
 	return c
 }
 
-func (b SNSBuilder) setupQueue(stack awscdk.Stack, props SNSCommonProps) awssqs.Queue {
+func (b SNSBuilder) setupQueue(stack awscdk.Stack, commonProps SNSCommonProps) awssqs.Queue {
 	queueProps := sqs.SqsQueueWithDLQProps{
 		Stack:                    stack,
 		QueueName:                b.QueueName,
-		SQSKey:                   props.QueueKey,
-		QMaxReceiveCount:         props.QueueMaxRetries,
+		SQSKey:                   commonProps.QueueKey,
+		QMaxReceiveCount:         commonProps.QueueMaxRetries,
 		QAlarmPeriod:             1,
 		QAlarmThreshold:          1,
 		QAlarmEvaluationPeriod:   1,
