@@ -22,7 +22,7 @@ import (
 // TODO: AddAlias for lambdas
 
 const project = "SQS1"
-const version = "0.2.1"
+const version = "0.2.2"
 
 const queue1Name = "TestQueue1"
 const queue2Name = "TestQueue2"
