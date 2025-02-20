@@ -19,7 +19,7 @@ import (
 )
 
 type DynamoAble interface {
-	GetKey() map[string]any
+	GetPartitionKey() map[string]any
 }
 
 type DynamoManager struct {
@@ -47,7 +47,7 @@ func (m DynamoManager) TableIsAvailable(ctx context.Context) bool {
 }
 
 func (m DynamoManager) Get(ctx context.Context, object DynamoAble) error {
-	m.logger.Debug("Get: ", zap.Any("key", object.GetKey()))
+	m.logger.Debug("Get: ", zap.Any("key", object.GetPartitionKey()))
 
 	params := dynamodb.GetItemInput{
 		Key:       getDBKey(object),
@@ -57,7 +57,7 @@ func (m DynamoManager) Get(ctx context.Context, object DynamoAble) error {
 	response, err := m.dBClient.GetItem(ctx, &params)
 
 	if err != nil {
-		m.logger.Error("GetItem: ", zap.Any("key", object.GetKey()), zap.Error(err))
+		m.logger.Error("GetItem: ", zap.Any("key", object.GetPartitionKey()), zap.Error(err))
 	} else {
 		err = attributevalue.UnmarshalMap(response.Item, &object)
 		if err != nil {
@@ -136,5 +136,5 @@ func dBKeyMarshal(objectValue any) types.AttributeValue {
 }
 
 func getDBKey(object DynamoAble) map[string]types.AttributeValue {
-	return dBKeyMap(object.GetKey(), dBKeyMarshal)
+	return dBKeyMap(object.GetPartitionKey(), dBKeyMarshal)
 }

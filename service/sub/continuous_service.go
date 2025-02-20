@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"sqstest/manager/dbmanager"
 	"sqstest/service/testmessage"
+	"sqstest/service/testreception"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -26,7 +27,7 @@ func (m ContinuousService) Receive(ctx context.Context, record events.SQSMessage
 	m.logger.Debug("Receive", zap.String("record body", record.Body))
 
 	var message testmessage.TestMessage
-	var reception testmessage.TestReception
+	var reception testreception.TestReception
 
 	err = json.Unmarshal([]byte(record.Body), &message)
 	if err != nil {
@@ -36,7 +37,7 @@ func (m ContinuousService) Receive(ctx context.Context, record events.SQSMessage
 	m.logger.Debug("Receive: ", zap.Any("message", message))
 
 	// dbManager.Put...
-	reception = testmessage.NewTestReception(m.id, message)
+	reception = testreception.NewTestReception(m.id, message)
 	m.logger.Info("Receive: ", zap.Any("reception", reception))
 
 	err = m.dbManager.Put(ctx, &reception)

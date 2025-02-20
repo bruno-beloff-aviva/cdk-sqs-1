@@ -7,6 +7,7 @@ import (
 	"os"
 	"sqstest/manager/dbmanager"
 	"sqstest/service/testmessage"
+	"sqstest/service/testreception"
 	"strings"
 	"time"
 
@@ -32,7 +33,7 @@ func (m SuspendableService) Receive(ctx context.Context, record events.SQSMessag
 	m.logger.Debug("Receive", zap.String("record body", record.Body))
 
 	var message testmessage.TestMessage
-	var reception testmessage.TestReception
+	var reception testreception.TestReception
 
 	suspended := os.Getenv("SUSPENDED") == "true"
 
@@ -54,7 +55,7 @@ func (m SuspendableService) Receive(ctx context.Context, record events.SQSMessag
 	}
 
 	// dbManager.Put...
-	reception = testmessage.NewTestReception(m.id, message)
+	reception = testreception.NewTestReception(m.id, message)
 	m.logger.Info("Receive: ", zap.Any("reception", reception))
 
 	err = m.dbManager.Put(ctx, &reception)

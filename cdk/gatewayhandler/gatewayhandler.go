@@ -10,6 +10,7 @@ package gatewayhandler
 import (
 	"fmt"
 	"sqstest/cdk/dashboard"
+	"sqstest/cdk/stackprops"
 
 	"github.com/aws/aws-cdk-go/awscdk/v2"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awsapigateway"
@@ -30,6 +31,7 @@ type NamedTopic struct {
 
 // common to all Gateway handlers
 type GatewayCommonProps struct {
+	Version   string
 	Dashboard dashboard.Dashboard
 }
 
@@ -51,23 +53,22 @@ type GatewayConstruct struct {
 
 // ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-func (b GatewayBuilder) Setup(stack awscdk.Stack, props GatewayCommonProps) GatewayConstruct {
+func (b GatewayBuilder) Setup(stack awscdk.Stack, stackProps stackprops.CdkStackProps, commonProps GatewayCommonProps) GatewayConstruct {
 	var c GatewayConstruct
 
 	c.Builder = b
-	c.Dashboard = props.Dashboard
-	c.HandlerAlias = b.setupPubHandler(stack)
+	c.Dashboard = commonProps.Dashboard
+	c.HandlerAlias = b.setupPubHandler(stack, stackProps)
+	c.Gateway = b.setupGateway(stack, c.HandlerAlias)
 
 	b.PublicationTopic.GrantPublish(c.HandlerAlias)
-
-	c.Gateway = b.setupGateway(stack, c.HandlerAlias)
 
 	return c
 }
 
-func (b GatewayBuilder) setupPubHandler(stack awscdk.Stack) awslambda.Alias {
+func (b GatewayBuilder) setupPubHandler(stack awscdk.Stack, stackProps stackprops.CdkStackProps) awslambda.Alias {
 	handlerProps := awslambdago.GoFunctionProps{
-		Description:   aws.String("SNS event-raising handler"),
+		Description:   aws.String("SNS event-raising handler " + stackProps.Version),
 		Runtime:       awslambda.Runtime_PROVIDED_AL2(),
 		Architecture:  awslambda.Architecture_ARM_64(),
 		Entry:         aws.String(b.Entry),

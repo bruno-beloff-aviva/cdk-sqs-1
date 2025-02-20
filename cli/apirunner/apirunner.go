@@ -4,7 +4,7 @@ import (
 	"sqstest/apiclient"
 )
 
-const baseUrl = "https://j7zugt2z5d.execute-api.eu-west-2.amazonaws.com/prod/"
+const baseUrl = "https://35w7b8eiuf.execute-api.eu-west-2.amazonaws.com/prod/"
 const interval = 2
 
 func main() {

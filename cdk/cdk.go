@@ -9,6 +9,7 @@ import (
 	"sqstest/cdk/dashboard"
 	"sqstest/cdk/gatewayhandler"
 	"sqstest/cdk/snshandler"
+	"sqstest/cdk/stackprops"
 
 	"github.com/aws/aws-cdk-go/awscdk/v2"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awsdynamodb"
@@ -20,7 +21,7 @@ import (
 )
 
 const project = "SQS1"
-const version = "0.2.4"
+const version = "0.2.7"
 
 const queue1Name = "TestQueue1"
 const queue2Name = "TestQueue2"
@@ -43,8 +44,46 @@ const stackId = project + "Stack"
 
 const dashboardId = project + "Dashboard"
 
-type CdkWorkshopStackProps struct {
-	awscdk.StackProps
+func NewSQSStack(scope constructs.Construct, id string, stackProps *stackprops.CdkStackProps) (stack awscdk.Stack) {
+	stack = stackProps.NewStack(scope, id)
+
+	// dashboard...
+	dash := setupDashboard(stack)
+
+	// topic...
+	topic := setupTopic(stack, topicId, topicName)
+
+	// table...
+	table := setupMessageTable(stack, tableId, tableName)
+
+	// key...
+	queueKey := setupQueueKey(stack)
+
+	// pub lambda...
+	pubProps := gatewayhandler.GatewayCommonProps{
+		Dashboard: dash,
+	}
+
+	c0 := setupPubHandler(stack, *stackProps, pubProps, topic)
+
+	// sub lambdas...
+	subProps := snshandler.SNSCommonProps{
+		QueueKey:        queueKey,
+		QueueMaxRetries: queueMaxRetries,
+		MessageTable:    table,
+		Dashboard:       dash,
+	}
+
+	c1 := setupContinuousSubHandler(stack, subProps, topic)
+	c2 := setupSuspendableSubHandler(stack, subProps, topic)
+	c3 := setupEmptySubHandler(stack, subProps, topic)
+
+	// dashboard widgets...
+	dash.AddWidgetsRow(c0.GatewayMetricsGraphWidget(), c0.LambdaMetricsGraphWidget(), c1.LambdaMetricsGraphWidget(), c2.LambdaMetricsGraphWidget())
+	dash.AddWidgetsRow(c1.QueueMetricsGraphWidget(), c1.DLQMetricsGraphWidget(), c2.QueueMetricsGraphWidget(), c2.DLQMetricsGraphWidget())
+	dash.AddWidgetsRow(c0.TopicMetricsGraphWidget(), c3.QueueMetricsGraphWidget(), c3.DLQMetricsGraphWidget())
+
+	return stack
 }
 
 func setupDashboard(stack awscdk.Stack) dashboard.Dashboard {
@@ -85,7 +124,7 @@ func setupQueueKey(stack awscdk.Stack) awskms.IKey {
 	return awskms.NewKey(stack, aws.String("Key"), &keyProps)
 }
 
-func setupPubHandler(stack awscdk.Stack, props gatewayhandler.GatewayCommonProps, topic gatewayhandler.NamedTopic) gatewayhandler.GatewayConstruct {
+func setupPubHandler(stack awscdk.Stack, stackProps stackprops.CdkStackProps, commonProps gatewayhandler.GatewayCommonProps, topic gatewayhandler.NamedTopic) gatewayhandler.GatewayConstruct {
 	environment := map[string]*string{
 		"VERSION":   aws.String(version),
 		"TOPIC_ARN": topic.TopicArn(),
@@ -99,7 +138,7 @@ func setupPubHandler(stack awscdk.Stack, props gatewayhandler.GatewayCommonProps
 		Environment:      environment,
 	}
 
-	return builder.Setup(stack, props)
+	return builder.Setup(stack, stackProps, commonProps)
 }
 
 func setupContinuousSubHandler(stack awscdk.Stack, props snshandler.SNSCommonProps, topic awssns.Topic) snshandler.SNSConstruct {
@@ -146,60 +185,16 @@ func setupEmptySubHandler(stack awscdk.Stack, props snshandler.SNSCommonProps, t
 	return builder.Setup(stack, props)
 }
 
-func NewSQSWorkshopStack(scope constructs.Construct, id string, props *CdkWorkshopStackProps) (stack awscdk.Stack) {
-	var stackProps awscdk.StackProps
-
-	//	stack...
-	if props != nil {
-		stackProps = props.StackProps
-	}
-
-	stack = awscdk.NewStack(scope, &id, &stackProps)
-
-	// dashboard...
-	dash := setupDashboard(stack)
-
-	// topic...
-	topic := setupTopic(stack, topicId, topicName)
-
-	// table...
-	table := setupMessageTable(stack, tableId, tableName)
-
-	// key...
-	queueKey := setupQueueKey(stack)
-
-	// pub lambda...
-	pubProps := gatewayhandler.GatewayCommonProps{
-		Dashboard: dash,
-	}
-
-	c0 := setupPubHandler(stack, pubProps, topic)
-
-	// sub lambdas...
-	subProps := snshandler.SNSCommonProps{
-		QueueKey:        queueKey,
-		QueueMaxRetries: queueMaxRetries,
-		MessageTable:    table,
-		Dashboard:       dash,
-	}
-
-	c1 := setupContinuousSubHandler(stack, subProps, topic)
-	c2 := setupSuspendableSubHandler(stack, subProps, topic)
-	c3 := setupEmptySubHandler(stack, subProps, topic)
-
-	// dashboard widgets...
-	dash.AddWidgetsRow(c0.GatewayMetricsGraphWidget(), c0.LambdaMetricsGraphWidget(), c1.LambdaMetricsGraphWidget(), c2.LambdaMetricsGraphWidget())
-	dash.AddWidgetsRow(c1.QueueMetricsGraphWidget(), c1.DLQMetricsGraphWidget(), c2.QueueMetricsGraphWidget(), c2.DLQMetricsGraphWidget())
-	dash.AddWidgetsRow(c0.TopicMetricsGraphWidget(), c3.QueueMetricsGraphWidget(), c3.DLQMetricsGraphWidget())
-
-	return stack
-}
-
 func main() {
 	defer jsii.Close()
 
+	stackProps := &stackprops.CdkStackProps{
+		StackProps: awscdk.StackProps{},
+		Version:    version,
+	}
+
 	app := awscdk.NewApp(nil)
-	NewSQSWorkshopStack(app, stackId, &CdkWorkshopStackProps{})
+	NewSQSStack(app, stackId, stackProps)
 
 	app.Synth(nil)
 }

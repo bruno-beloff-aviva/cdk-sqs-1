@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"sqstest/service/testmessage"
+	"sqstest/service/testreception"
 	"strings"
 
 	pipe "github.com/b4b4r07/go-pipe"
@@ -34,7 +34,7 @@ func listTables() []string {
 func getKeys(tableName string) gjson.Result {
 	var b bytes.Buffer
 
-	getArgs := append([]string{"dynamodb", "scan", "--table-name", tableName, "--attributes-to-get"}, testmessage.GetDeletionKeys()...)
+	getArgs := append([]string{"dynamodb", "scan", "--table-name", tableName, "--attributes-to-get"}, testreception.DeletionKeys...)
 
 	err := pipe.Command(&b,
 		exec.Command("aws", getArgs...),
