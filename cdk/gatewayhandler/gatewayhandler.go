@@ -104,12 +104,9 @@ func (b GatewayBuilder) setupGateway(stack awscdk.Stack, alias awslambda.Alias) 
 	}
 
 	restApiProps := awsapigateway.LambdaRestApiProps{
-		Handler:            alias,
-		DefaultIntegration: awsapigateway.NewLambdaIntegration(alias, &awsapigateway.LambdaIntegrationOptions{}),
-		DeployOptions:      &stageOptions,
+		Handler:       alias,
+		DeployOptions: &stageOptions,
 	}
-
-	alias.FunctionArn()
 
 	return awsapigateway.NewLambdaRestApi(stack, aws.String(b.EndpointId), &restApiProps)
 }
