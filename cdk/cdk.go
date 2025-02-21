@@ -25,7 +25,7 @@ const account = "673007244143"
 const region = "eu-west-2"
 
 const project = "SQS1"
-const version = "0.2.12"
+const version = "0.2.13"
 
 var queueKeyId = project + "QueueKey"
 var queueKeyAlias = "QueueKeyLive"
@@ -142,7 +142,11 @@ func setupQueueKey(stack awscdk.Stack) awskms.IKey {
 
 	fmt.Printf("*** found key: %v\n", key)
 
-	return awskms.NewKey(stack, aws.String(queueKeyId), &keyProps)
+	if key == nil {
+		key = awskms.NewKey(stack, aws.String(queueKeyId), &keyProps)
+	}
+
+	return key
 }
 
 func setupPubHandler(stack awscdk.Stack, stackProps stackprops.CdkStackProps, commonProps gatewayhandler.GatewayCommonProps, topic gatewayhandler.NamedTopic) gatewayhandler.GatewayConstruct {
