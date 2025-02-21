@@ -34,7 +34,7 @@ func NewDynamoManager(logger *zapray.Logger, cfg aws.Config, tableName string) D
 	return DynamoManager{logger: logger, dBClient: dBClient, tableName: tableName}
 }
 
-// --------------------------------------------------------------------------------------------------------------------
+// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 func (m DynamoManager) TableIsAvailable(ctx context.Context) bool {
 	_, err := m.dBClient.DescribeTable(ctx, &dynamodb.DescribeTableInput{TableName: jsii.String(m.tableName)})
@@ -113,7 +113,7 @@ func (m DynamoManager) Increment(ctx context.Context, object DynamoAble, field s
 	return err
 }
 
-// --------------------------------------------------------------------------------------------------------------------
+// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 func dBKeyMap(objectKey map[string]any, marshal func(any) types.AttributeValue) map[string]types.AttributeValue {
 	dBKey := make(map[string]types.AttributeValue, len(objectKey))

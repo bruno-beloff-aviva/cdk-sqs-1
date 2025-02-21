@@ -45,22 +45,23 @@ type GatewayBuilder struct {
 }
 
 type GatewayConstruct struct {
-	Builder      GatewayBuilder
-	Dashboard    dashboard.Dashboard
-	Handler      awslambdago.GoFunction
-	HandlerAlias awslambda.Alias
-	Gateway      awsapigateway.LambdaRestApi
+	Builder   GatewayBuilder
+	Dashboard dashboard.Dashboard
+	Handler   awslambdago.GoFunction
+	Gateway   awsapigateway.LambdaRestApi
 }
 
 // ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 func (b GatewayBuilder) Setup(stack awscdk.Stack, stackProps stackprops.CdkStackProps, commonProps GatewayCommonProps) (c GatewayConstruct) {
+	var alias awslambda.Alias
+
 	c.Builder = b
 	c.Dashboard = commonProps.Dashboard
-	c.Handler, c.HandlerAlias = b.setupPubHandler(stack, stackProps)
-	c.Gateway = b.setupGateway(stack, c.HandlerAlias)
+	c.Handler, alias = b.setupPubHandler(stack, stackProps)
+	c.Gateway = b.setupGateway(stack, alias)
 
-	b.PublicationTopic.GrantPublish(c.HandlerAlias)
+	b.PublicationTopic.GrantPublish(alias)
 
 	return c
 }
@@ -116,7 +117,7 @@ func (b GatewayBuilder) setupGateway(stack awscdk.Stack, alias awslambda.Alias) 
 // ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 func (c GatewayConstruct) LambdaMetricsGraphWidget() awscloudwatch.GraphWidget {
-	region := c.HandlerAlias.Stack().Region()
+	region := c.Handler.Stack().Region()
 
 	invocationsMetric := c.Dashboard.CreateLambdaMetric(*region, "Invocations", c.Handler.FunctionName(), "Sum")
 	errorsMetric := c.Dashboard.CreateLambdaMetric(*region, "Errors", c.Handler.FunctionName(), "Sum")
@@ -126,7 +127,7 @@ func (c GatewayConstruct) LambdaMetricsGraphWidget() awscloudwatch.GraphWidget {
 }
 
 func (c GatewayConstruct) GatewayMetricsGraphWidget() awscloudwatch.GraphWidget {
-	region := c.HandlerAlias.Stack().Region()
+	region := c.Handler.Stack().Region()
 
 	invocationsMetric := c.Dashboard.CreateGatewayMetric(*region, "Count", c.Builder.EndpointId, stage, "Sum")
 	errorsMetric := c.Dashboard.CreateGatewayMetric(*region, "5XXError", c.Builder.EndpointId, stage, "Sum")
@@ -136,7 +137,7 @@ func (c GatewayConstruct) GatewayMetricsGraphWidget() awscloudwatch.GraphWidget 
 }
 
 func (c GatewayConstruct) TopicMetricsGraphWidget() awscloudwatch.GraphWidget {
-	region := c.HandlerAlias.Stack().Region()
+	region := c.Handler.Stack().Region()
 
 	publicationsMetric := c.Dashboard.CreateTopicMetric(*region, "NumberOfMessagesPublished", c.Builder.PublicationTopic.TopicName(), "Sum")
 	failsMetric := c.Dashboard.CreateTopicMetric(*region, "NumberOfNotificationsFailed", c.Builder.PublicationTopic.TopicName(), "Sum")
