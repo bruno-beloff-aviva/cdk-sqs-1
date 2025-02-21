@@ -21,8 +21,10 @@ import (
 	"github.com/aws/jsii-runtime-go"
 )
 
-const account = "673007244143"
-const region = "eu-west-2"
+// TODO: keep the account out of it!!
+
+// const account = "673007244143"
+// const region = "eu-west-2"
 
 const project = "SQS1"
 const version = "0.2.13"
@@ -140,7 +142,7 @@ func setupQueueKey(stack awscdk.Stack) awskms.IKey {
 		ReturnDummyKeyOnMissing: aws.Bool(false),
 	})
 
-	fmt.Printf("*** found key: %v\n", key)
+	fmt.Printf("*** found key: %v\n", key.KeyId())
 
 	if key == nil {
 		key = awskms.NewKey(stack, aws.String(queueKeyId), &keyProps)
@@ -217,22 +219,22 @@ func setupEmptySubHandler(stack awscdk.Stack, commonProps snshandler.SNSCommonPr
 func main() {
 	defer jsii.Close()
 
-	env := awscdk.Environment{
-		Account: aws.String(account),
-		Region:  aws.String(region),
-	}
+	// env := awscdk.Environment{
+	// 	Account: aws.String(account),
+	// 	Region:  aws.String(region),
+	// }
 
-	stackProps := awscdk.StackProps{
-		Env: &env,
-	}
+	// stackProps := awscdk.StackProps{
+	// 	Env: &env,
+	// }
 
-	cdkStackProps := &stackprops.CdkStackProps{
-		StackProps: stackProps,
+	cdkStackProps := stackprops.CdkStackProps{
+		StackProps: awscdk.StackProps{},
 		Version:    version,
 	}
 
 	app := awscdk.NewApp(nil)
-	NewSQSStack(app, stackId, cdkStackProps)
+	NewSQSStack(app, stackId, &cdkStackProps)
 
 	app.Synth(nil)
 }
