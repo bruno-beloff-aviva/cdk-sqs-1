@@ -47,18 +47,17 @@ type GatewayBuilder struct {
 type GatewayConstruct struct {
 	Builder      GatewayBuilder
 	Dashboard    dashboard.Dashboard
+	Handler      awslambdago.GoFunction
 	HandlerAlias awslambda.Alias
 	Gateway      awsapigateway.LambdaRestApi
 }
 
 // ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-func (b GatewayBuilder) Setup(stack awscdk.Stack, stackProps stackprops.CdkStackProps, commonProps GatewayCommonProps) GatewayConstruct {
-	var c GatewayConstruct
-
+func (b GatewayBuilder) Setup(stack awscdk.Stack, stackProps stackprops.CdkStackProps, commonProps GatewayCommonProps) (c GatewayConstruct) {
 	c.Builder = b
 	c.Dashboard = commonProps.Dashboard
-	c.HandlerAlias = b.setupPubHandler(stack, stackProps)
+	c.Handler, c.HandlerAlias = b.setupPubHandler(stack, stackProps)
 	c.Gateway = b.setupGateway(stack, c.HandlerAlias)
 
 	b.PublicationTopic.GrantPublish(c.HandlerAlias)
@@ -66,9 +65,7 @@ func (b GatewayBuilder) Setup(stack awscdk.Stack, stackProps stackprops.CdkStack
 	return c
 }
 
-// TODO: the alias does not work with the dashboard - use the actual handler?
-
-func (b GatewayBuilder) setupPubHandler(stack awscdk.Stack, stackProps stackprops.CdkStackProps) awslambda.Alias {
+func (b GatewayBuilder) setupPubHandler(stack awscdk.Stack, stackProps stackprops.CdkStackProps) (handler awslambdago.GoFunction, alias awslambda.Alias) {
 	handlerProps := awslambdago.GoFunctionProps{
 		Description:   aws.String("SNS event-raising handler " + stackProps.Version),
 		Runtime:       awslambda.Runtime_PROVIDED_AL2(),
@@ -84,20 +81,20 @@ func (b GatewayBuilder) setupPubHandler(stack awscdk.Stack, stackProps stackprop
 		},
 	}
 
-	handler := awslambdago.NewGoFunction(stack, aws.String(b.HandlerId), &handlerProps)
+	handler = awslambdago.NewGoFunction(stack, aws.String(b.HandlerId), &handlerProps)
 
 	version := handler.CurrentVersion()
 
-	alias := awslambda.NewAlias(stack, aws.String(b.HandlerId+"Alias"), &awslambda.AliasProps{
+	alias = awslambda.NewAlias(stack, aws.String(b.HandlerId+"Alias"), &awslambda.AliasProps{
 		AliasName:   aws.String("Live"),
 		Description: aws.String("Live version of the PubHandler"),
 		Version:     version,
 	})
 
-	return alias
+	return handler, alias
 }
 
-func (b GatewayBuilder) setupGateway(stack awscdk.Stack, alias awslambda.Alias) awsapigateway.LambdaRestApi {
+func (b GatewayBuilder) setupGateway(stack awscdk.Stack, alias awslambda.Alias) (gateway awsapigateway.LambdaRestApi) {
 	stageOptions := awsapigateway.StageOptions{
 		StageName:        aws.String(stage),
 		LoggingLevel:     awsapigateway.MethodLoggingLevel_INFO,
@@ -111,7 +108,9 @@ func (b GatewayBuilder) setupGateway(stack awscdk.Stack, alias awslambda.Alias) 
 		DeployOptions: &stageOptions,
 	}
 
-	return awsapigateway.NewLambdaRestApi(stack, aws.String(b.EndpointId), &restApiProps)
+	gateway = awsapigateway.NewLambdaRestApi(stack, aws.String(b.EndpointId), &restApiProps)
+
+	return gateway
 }
 
 // ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -119,8 +118,8 @@ func (b GatewayBuilder) setupGateway(stack awscdk.Stack, alias awslambda.Alias) 
 func (c GatewayConstruct) LambdaMetricsGraphWidget() awscloudwatch.GraphWidget {
 	region := c.HandlerAlias.Stack().Region()
 
-	invocationsMetric := c.Dashboard.CreateLambdaMetric(*region, "Invocations", c.HandlerAlias.FunctionName(), "Sum")
-	errorsMetric := c.Dashboard.CreateLambdaMetric(*region, "Errors", c.HandlerAlias.FunctionName(), "Sum")
+	invocationsMetric := c.Dashboard.CreateLambdaMetric(*region, "Invocations", c.Handler.FunctionName(), "Sum")
+	errorsMetric := c.Dashboard.CreateLambdaMetric(*region, "Errors", c.Handler.FunctionName(), "Sum")
 	metrics := []awscloudwatch.IMetric{invocationsMetric, errorsMetric}
 
 	return c.Dashboard.CreateGraphWidget(*region, fmt.Sprintf("%s - Invocations & Errors", c.Builder.HandlerId), metrics)

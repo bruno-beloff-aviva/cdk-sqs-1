@@ -20,13 +20,11 @@ import (
 	"github.com/aws/jsii-runtime-go"
 )
 
-// TODO: keep the account out of it!!
-
 // const account = "673007244143"
 // const region = "eu-west-2"
 
 const project = "SQS1"
-const version = "0.2.14"
+const version = "0.2.15"
 
 var queueKeyId = project + "QueueKey"
 var queueKeyAlias = "QueueKeyLive"
@@ -51,8 +49,6 @@ const suspendableSubHandlerId = project + "SudspendableHandler"
 const stackId = project + "Stack"
 
 const dashboardId = project + "Dashboard"
-
-// TODO: don't create a queue key if it already exists.
 
 func NewSQSStack(scope constructs.Construct, id string, stackProps *stackprops.CdkStackProps) (stack awscdk.Stack) {
 	stack = stackProps.NewStack(scope, id)
@@ -131,22 +127,6 @@ func setupQueueKey(stack awscdk.Stack) awskms.IKey {
 		EnableKeyRotation: aws.Bool(true),
 	}
 
-	// *** queue alias ARN: arn:${Token[AWS.Partition.5]}:kms:${Token[AWS.Region.6]}:${Token[AWS.AccountId.2]}:SQS1QueueKey
-
-	// alias := awskms.Alias_FromAliasName(stack, aws.String(queueKeyAlias), aws.String(queueKeyId))
-	// fmt.Printf("*** queue alias ARN: %v\n", *alias.KeyArn())
-
-	// key := awskms.Key_FromLookup(stack, &queueKeyId, &awskms.KeyLookupOptions{
-	// 	AliasName:               aws.String(queueKeyAlias),
-	// 	ReturnDummyKeyOnMissing: aws.Bool(false),
-	// })
-
-	// fmt.Printf("*** found key: %v\n", key.KeyId())
-
-	// if key == nil {
-	// 	key = awskms.NewKey(stack, aws.String(queueKeyId), &keyProps)
-	// }
-
 	return awskms.NewKey(stack, aws.String(queueKeyId), &keyProps)
 }
 
@@ -210,10 +190,6 @@ func setupEmptySubHandler(stack awscdk.Stack, commonProps snshandler.SNSCommonPr
 
 	return builder.Setup(stack, commonProps)
 }
-
-// panic: Error: Cannot retrieve value from context provider key-provider since account/region are not specified at the stack level.
-// Configure "env" with an account and region when you define your stack.
-// See https://docs.aws.amazon.com/cdk/latest/guide/environments.html for more details.
 
 func main() {
 	defer jsii.Close()
