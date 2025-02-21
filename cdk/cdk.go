@@ -21,6 +21,9 @@ import (
 	"github.com/aws/jsii-runtime-go"
 )
 
+const account = "673007244143"
+const region = "eu-west-2"
+
 const project = "SQS1"
 const version = "0.2.12"
 
@@ -133,7 +136,8 @@ func setupQueueKey(stack awscdk.Stack) awskms.IKey {
 	// fmt.Printf("*** queue alias ARN: %v\n", *alias.KeyArn())
 
 	key := awskms.Key_FromLookup(stack, &queueKeyId, &awskms.KeyLookupOptions{
-		AliasName: &queueKeyAlias,
+		AliasName:               aws.String(queueKeyAlias),
+		ReturnDummyKeyOnMissing: aws.Bool(false),
 	})
 
 	fmt.Printf("*** found key: %v\n", key)
@@ -202,16 +206,29 @@ func setupEmptySubHandler(stack awscdk.Stack, commonProps snshandler.SNSCommonPr
 	return builder.Setup(stack, commonProps)
 }
 
+// panic: Error: Cannot retrieve value from context provider key-provider since account/region are not specified at the stack level.
+// Configure "env" with an account and region when you define your stack.
+// See https://docs.aws.amazon.com/cdk/latest/guide/environments.html for more details.
+
 func main() {
 	defer jsii.Close()
 
-	stackProps := &stackprops.CdkStackProps{
-		StackProps: awscdk.StackProps{},
+	env := awscdk.Environment{
+		Account: aws.String(account),
+		Region:  aws.String(region),
+	}
+
+	stackProps := awscdk.StackProps{
+		Env: &env,
+	}
+
+	cdkStackProps := &stackprops.CdkStackProps{
+		StackProps: stackProps,
 		Version:    version,
 	}
 
 	app := awscdk.NewApp(nil)
-	NewSQSStack(app, stackId, stackProps)
+	NewSQSStack(app, stackId, cdkStackProps)
 
 	app.Synth(nil)
 }
