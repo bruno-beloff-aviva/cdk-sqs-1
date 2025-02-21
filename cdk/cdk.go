@@ -6,7 +6,6 @@ package main
 // https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_lambda_event_sources.SqsEventSource.html
 
 import (
-	"fmt"
 	"sqstest/cdk/dashboard"
 	"sqstest/cdk/gatewayhandler"
 	"sqstest/cdk/snshandler"
@@ -137,18 +136,18 @@ func setupQueueKey(stack awscdk.Stack) awskms.IKey {
 	// alias := awskms.Alias_FromAliasName(stack, aws.String(queueKeyAlias), aws.String(queueKeyId))
 	// fmt.Printf("*** queue alias ARN: %v\n", *alias.KeyArn())
 
-	key := awskms.Key_FromLookup(stack, &queueKeyId, &awskms.KeyLookupOptions{
-		AliasName:               aws.String(queueKeyAlias),
-		ReturnDummyKeyOnMissing: aws.Bool(false),
-	})
+	// key := awskms.Key_FromLookup(stack, &queueKeyId, &awskms.KeyLookupOptions{
+	// 	AliasName:               aws.String(queueKeyAlias),
+	// 	ReturnDummyKeyOnMissing: aws.Bool(false),
+	// })
 
-	fmt.Printf("*** found key: %v\n", key.KeyId())
+	// fmt.Printf("*** found key: %v\n", key.KeyId())
 
-	if key == nil {
-		key = awskms.NewKey(stack, aws.String(queueKeyId), &keyProps)
-	}
+	// if key == nil {
+	// 	key = awskms.NewKey(stack, aws.String(queueKeyId), &keyProps)
+	// }
 
-	return key
+	return awskms.NewKey(stack, aws.String(queueKeyId), &keyProps)
 }
 
 func setupPubHandler(stack awscdk.Stack, stackProps stackprops.CdkStackProps, commonProps gatewayhandler.GatewayCommonProps, topic gatewayhandler.NamedTopic) gatewayhandler.GatewayConstruct {
