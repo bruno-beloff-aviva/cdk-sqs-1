@@ -22,10 +22,10 @@ import (
 )
 
 const project = "SQS1"
-const version = "0.2.11"
+const version = "0.2.12"
 
-const queueKeyId = project + "QueueKey"
-const queueKeyAlias = "QueueKeyLive"
+var queueKeyId = project + "QueueKey"
+var queueKeyAlias = "QueueKeyLive"
 
 const queue1Name = "TestQueue1"
 const queue2Name = "TestQueue2"
@@ -129,8 +129,14 @@ func setupQueueKey(stack awscdk.Stack) awskms.IKey {
 
 	// *** queue alias ARN: arn:${Token[AWS.Partition.5]}:kms:${Token[AWS.Region.6]}:${Token[AWS.AccountId.2]}:SQS1QueueKey
 
-	alias := awskms.Alias_FromAliasName(stack, aws.String(queueKeyAlias), aws.String(queueKeyId))
-	fmt.Printf("*** queue alias ARN: %v\n", *alias.KeyArn())
+	// alias := awskms.Alias_FromAliasName(stack, aws.String(queueKeyAlias), aws.String(queueKeyId))
+	// fmt.Printf("*** queue alias ARN: %v\n", *alias.KeyArn())
+
+	key := awskms.Key_FromLookup(stack, &queueKeyId, &awskms.KeyLookupOptions{
+		AliasName: &queueKeyAlias,
+	})
+
+	fmt.Printf("*** found key: %v\n", key)
 
 	return awskms.NewKey(stack, aws.String(queueKeyId), &keyProps)
 }

@@ -1,15 +1,20 @@
 package main
 
 import (
+	"fmt"
+	"os"
 	"sqstest/apiclient"
 )
 
-// TODO: present the URL as an argument
-
-const baseUrl = "https://fsfv22wx52.execute-api.eu-west-2.amazonaws.com/prod/"
 const interval = 2
 
 func main() {
+	if len(os.Args) != 2 {
+		fmt.Println("Usage: apirunner PUB_API_URL")
+		os.Exit(1)
+	}
+
+	baseUrl := os.Args[1]
 	client := apiclient.NewClient(baseUrl, interval)
 
 	tape := apiclient.NewTape()
