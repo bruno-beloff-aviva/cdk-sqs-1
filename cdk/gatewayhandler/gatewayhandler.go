@@ -66,6 +66,8 @@ func (b GatewayBuilder) Setup(stack awscdk.Stack, stackProps stackprops.CdkStack
 	return c
 }
 
+// TODO: the alias does not work with the dashboard - use the actual handler?
+
 func (b GatewayBuilder) setupPubHandler(stack awscdk.Stack, stackProps stackprops.CdkStackProps) awslambda.Alias {
 	handlerProps := awslambdago.GoFunctionProps{
 		Description:   aws.String("SNS event-raising handler " + stackProps.Version),

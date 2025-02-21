@@ -6,6 +6,7 @@ package main
 // https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_lambda_event_sources.SqsEventSource.html
 
 import (
+	"fmt"
 	"sqstest/cdk/dashboard"
 	"sqstest/cdk/gatewayhandler"
 	"sqstest/cdk/snshandler"
@@ -22,6 +23,9 @@ import (
 
 const project = "SQS1"
 const version = "0.2.8"
+
+const queueKeyId = project + "QueueKey"
+const queueKeyAlias = "LiveQueueKey"
 
 const queue1Name = "TestQueue1"
 const queue2Name = "TestQueue2"
@@ -43,6 +47,8 @@ const suspendableSubHandlerId = project + "SudspendableHandler"
 const stackId = project + "Stack"
 
 const dashboardId = project + "Dashboard"
+
+// TODO: don't create a queue key if it already exists.
 
 func NewSQSStack(scope constructs.Construct, id string, stackProps *stackprops.CdkStackProps) (stack awscdk.Stack) {
 	stack = stackProps.NewStack(scope, id)
@@ -117,11 +123,14 @@ func setupTopic(stack awscdk.Stack, id string, name string) gatewayhandler.Named
 
 func setupQueueKey(stack awscdk.Stack) awskms.IKey {
 	keyProps := awskms.KeyProps{
-		Alias:             aws.String("QueueKey"),
+		Alias:             aws.String(queueKeyAlias),
 		EnableKeyRotation: aws.Bool(true),
 	}
 
-	return awskms.NewKey(stack, aws.String("Key"), &keyProps)
+	alias := awskms.Alias_FromAliasName(stack, aws.String(queueKeyAlias), aws.String(queueKeyId))
+	fmt.Printf("queue alias: %v\n", alias)
+
+	return awskms.NewKey(stack, aws.String(queueKeyId), &keyProps)
 }
 
 func setupPubHandler(stack awscdk.Stack, stackProps stackprops.CdkStackProps, commonProps gatewayhandler.GatewayCommonProps, topic gatewayhandler.NamedTopic) gatewayhandler.GatewayConstruct {
