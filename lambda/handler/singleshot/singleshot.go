@@ -32,7 +32,7 @@ func NewSingleshotGateway[T any](logger *zapray.Logger, handler SingleshotHandle
 func (g SingleshotGateway[T]) Handle(ctx context.Context, event T) error {
 	// Check...
 	policyOrQuoteID, eventID, err := g.handler.UniqueID(event)
-	if err == nil {
+	if err != nil {
 		g.logger.Error("Error getting UniqueID", zap.Error(err))
 		return err
 	}
