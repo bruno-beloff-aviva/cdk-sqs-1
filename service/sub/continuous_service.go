@@ -23,11 +23,10 @@ type ContinuousService struct {
 }
 
 func NewContinuousService(logger *zapray.Logger, cfg aws.Config, dbManager dbmanager.DynamoManager, id string) ContinuousService {
-	self := ContinuousService{logger: logger, dbManager: dbManager, id: id}
+	service := ContinuousService{logger: logger, dbManager: dbManager, id: id}
+	service.gateway = singleshot.NewSingleshotGateway(service, services.NullEventHasBeenProcessed, services.NullMarkEventAsProcessed)
 
-	self.gateway = singleshot.NewSingleshotGateway(logger, self, services.NullEventHasBeenProcessed, services.NullMarkEventAsProcessed)
-
-	return self
+	return service
 }
 
 func (m ContinuousService) Receive(ctx context.Context, record events.SQSMessage) (err error) {
@@ -40,15 +39,15 @@ func (m ContinuousService) Receive(ctx context.Context, record events.SQSMessage
 		return err
 	}
 
-	return m.gateway.Handle(ctx, message)
+	return m.gateway.ProcessOnce(ctx, message)
 }
 
-func (m ContinuousService) ProcessOnce(ctx context.Context, event testmessage.TestMessage) (err error) {
-	m.logger.Info("ProcessOnce: ", zap.Any("event", event))
+func (m ContinuousService) Process(ctx context.Context, event testmessage.TestMessage) (err error) {
+	m.logger.Debug("Process: ", zap.Any("event", event))
 
 	// dbManager.Put...
 	reception := testreception.NewTestReception(m.id, event)
-	m.logger.Info("Reception: ", zap.Any("reception", reception))
+	m.logger.Info("Process: ", zap.Any("reception", reception))
 
 	err = m.dbManager.Put(ctx, &reception)
 	if err != nil {
@@ -60,4 +59,8 @@ func (m ContinuousService) ProcessOnce(ctx context.Context, event testmessage.Te
 
 func (m ContinuousService) UniqueID(event testmessage.TestMessage) (policyOrQuoteID string, eventID string, err error) {
 	return event.Client, event.Sent, nil
+}
+
+func (m ContinuousService) Logger() *zap.Logger {
+	return m.logger.Logger
 }
