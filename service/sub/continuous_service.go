@@ -21,7 +21,7 @@ type ContinuousService struct {
 	logger    *zapray.Logger
 	dbManager dbmanager.DynamoManager
 	id        string
-	gateway   singleshot.SingleshotGateway[testmessage.TestMessage]
+	// gateway   singleshot.SingleshotGateway[testmessage.TestMessage]
 }
 
 func NewContinuousService(logger *zapray.Logger, cfg aws.Config, dbManager dbmanager.DynamoManager, id string) ContinuousService {
@@ -60,7 +60,7 @@ func (m ContinuousService) Receive(ctx context.Context, record events.SQSMessage
 		return err
 	}
 
-	err = m.gateway.ProcessOnce(ctx, message)
+	err = m.Gateway.ProcessOnce(ctx, message)
 
 	if err == nil {
 		// TODO: success metrics here

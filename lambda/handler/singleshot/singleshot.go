@@ -16,11 +16,11 @@ type SingleshotHandler[T any] interface {
 type SingleShotService[T any] struct {
 	SingleshotHandler[T]
 	logger  *zapray.Logger
-	gateway SingleshotGateway[T]
+	Gateway SingleshotGateway[T]
 }
 
 func (m *SingleShotService[T]) NewGateway(eventHasBeenProcessed services.EventHasBeenProcessedFunc, EventAsProcessed services.MarkEventAsProcessedFunc) {
-	m.gateway = NewSingleshotGateway(m.logger, m, eventHasBeenProcessed, EventAsProcessed)
+	m.Gateway = NewSingleshotGateway(m.logger, m, eventHasBeenProcessed, EventAsProcessed)
 }
 
 type SingleshotGateway[T any] struct {
