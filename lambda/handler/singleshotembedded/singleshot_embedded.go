@@ -1,4 +1,4 @@
-package singleshot
+package singleshotembedded
 
 import (
 	"context"
@@ -13,37 +13,25 @@ type SingleshotHandler[T any] interface {
 	UniqueID(event T) (policyOrQuoteID string, eventID string, err error)
 }
 
-type SingleShotService[T any] struct {
-	SingleshotHandler[T]
-	logger  *zapray.Logger
-	gateway SingleshotGateway[T]
-}
-
-func (m *SingleShotService[T]) NewGateway(eventHasBeenProcessed services.EventHasBeenProcessedFunc, EventAsProcessed services.MarkEventAsProcessedFunc) {
-	m.gateway = NewSingleshotGateway(m.logger, m, eventHasBeenProcessed, EventAsProcessed)
-}
-
 type SingleshotGateway[T any] struct {
 	logger                *zapray.Logger
-	handler               SingleshotHandler[T]
 	eventHasBeenProcessed services.EventHasBeenProcessedFunc
 	markEventAsProcessed  services.MarkEventAsProcessedFunc
 }
 
-func NewSingleshotGateway[T any](logger *zapray.Logger, handler SingleshotHandler[T], eventHasBeenProcessed services.EventHasBeenProcessedFunc, markEventAsProcessed services.MarkEventAsProcessedFunc) SingleshotGateway[T] {
+func NewSingleshotGateway[T any](logger *zapray.Logger, eventHasBeenProcessed services.EventHasBeenProcessedFunc, markEventAsProcessed services.MarkEventAsProcessedFunc) SingleshotGateway[T] {
 	return SingleshotGateway[T]{
 		logger:                logger,
-		handler:               handler,
 		eventHasBeenProcessed: eventHasBeenProcessed,
 		markEventAsProcessed:  markEventAsProcessed,
 	}
 }
 
-func (g SingleshotGateway[T]) ProcessOnce(ctx context.Context, event T) error {
+func (g SingleshotGateway[T]) ProcessOnce(ctx context.Context, event T) (err error) {
 	g.logger.Debug("ProcessOnce: ", zap.Any("event", event))
 
 	// Check...
-	policyOrQuoteID, eventID, err := g.handler.UniqueID(event)
+	policyOrQuoteID, eventID, err := g.UniqueID(event)
 	if err != nil {
 		g.logger.Error("Error getting UniqueID", zap.Error(err))
 		return err
@@ -60,7 +48,7 @@ func (g SingleshotGateway[T]) ProcessOnce(ctx context.Context, event T) error {
 		return nil
 	}
 
-	err = g.handler.Process(ctx, event)
+	err = g.Process(ctx, event)
 	if err != nil {
 		g.logger.Error("Process error", zap.Error(err))
 		return err
@@ -70,8 +58,20 @@ func (g SingleshotGateway[T]) ProcessOnce(ctx context.Context, event T) error {
 	err = g.markEventAsProcessed(ctx, policyOrQuoteID, eventID)
 	if err != nil {
 		g.logger.Error("Error marking event as processed", zap.Error(err))
-		return nil
+		return err
 	}
 
 	return nil
+}
+
+func (g SingleshotGateway[T]) Process(ctx context.Context, event T) (err error) {
+	g.logger.Error("NULL Process!")
+
+	return nil
+}
+
+func (g SingleshotGateway[T]) UniqueID(event T) (policyOrQuoteID string, eventID string, err error) {
+	g.logger.Error("NULL UniqueID!")
+
+	return "", "", nil
 }
