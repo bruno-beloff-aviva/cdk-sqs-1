@@ -3,9 +3,11 @@ package sub
 import (
 	"context"
 	"encoding/json"
+	"sqstest/lambda/handler/singleshot"
 	"sqstest/manager/dbmanager"
 	"sqstest/service/testmessage"
 	"sqstest/service/testreception"
+	"sqstest/services"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -17,33 +19,45 @@ type ContinuousService struct {
 	logger    *zapray.Logger
 	dbManager dbmanager.DynamoManager
 	id        string
+	gateway   singleshot.SingleshotGateway[testmessage.TestMessage]
 }
 
 func NewContinuousService(logger *zapray.Logger, cfg aws.Config, dbManager dbmanager.DynamoManager, id string) ContinuousService {
-	return ContinuousService{logger: logger, dbManager: dbManager, id: id}
+	self := ContinuousService{logger: logger, dbManager: dbManager, id: id}
+
+	self.gateway = singleshot.NewSingleshotGateway(logger, self, services.NullEventHasBeenProcessed, services.NullMarkEventAsProcessed)
+
+	return self
 }
 
 func (m ContinuousService) Receive(ctx context.Context, record events.SQSMessage) (err error) {
-	m.logger.Debug("Receive", zap.String("record body", record.Body))
+	m.logger.Info("Receive", zap.String("record body", record.Body))
 
 	var message testmessage.TestMessage
-	var reception testreception.TestReception
 
 	err = json.Unmarshal([]byte(record.Body), &message)
 	if err != nil {
 		return err
 	}
 
-	m.logger.Debug("Receive: ", zap.Any("message", message))
+	return m.gateway.Handle(ctx, message)
+}
+
+func (m ContinuousService) ProcessOnce(ctx context.Context, event testmessage.TestMessage) (err error) {
+	m.logger.Info("ProcessOnce: ", zap.Any("event", event))
 
 	// dbManager.Put...
-	reception = testreception.NewTestReception(m.id, message)
-	m.logger.Info("Receive: ", zap.Any("reception", reception))
+	reception := testreception.NewTestReception(m.id, event)
+	m.logger.Info("Reception: ", zap.Any("reception", reception))
 
 	err = m.dbManager.Put(ctx, &reception)
 	if err != nil {
-		m.logger.Error("Receive: ", zap.Error(err))
+		m.logger.Error("Put: ", zap.Error(err))
 	}
 
-	return nil
+	return err
+}
+
+func (m ContinuousService) UniqueID(event testmessage.TestMessage) (policyOrQuoteID string, eventID string, err error) {
+	return event.Client, event.Sent, nil
 }

@@ -41,6 +41,8 @@ type SNSConstruct struct {
 	Dashboard dashboard.Dashboard
 }
 
+// TODO: use FIFO queues
+
 // ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 func (b SNSBuilder) Setup(stack awscdk.Stack, commonProps SNSCommonProps) SNSConstruct {

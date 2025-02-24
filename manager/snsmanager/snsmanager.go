@@ -22,8 +22,6 @@ func NewSNSManager(logger *zapray.Logger, cfg aws.Config) SNSManager {
 	return SNSManager{logger: logger, snsClient: snsClient}
 }
 
-// func (actor SnsActions) Publish(ctx context.Context, topicArn string, message string, groupId string, dedupId string, filterKey string, filterValue string) error {
-
 func (m SNSManager) Pub(ctx context.Context, topicArn string, message string) error {
 	m.logger.Debug("Pub", zap.String("topicArn", topicArn))
 
