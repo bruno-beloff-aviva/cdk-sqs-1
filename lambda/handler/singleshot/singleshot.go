@@ -13,15 +13,18 @@ type SingleshotHandler[T any] interface {
 	UniqueID(event T) (policyOrQuoteID string, eventID string, err error)
 }
 
+// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 type SingleShotService[T any] struct {
 	SingleshotHandler[T]
-	logger  *zapray.Logger
 	Gateway SingleshotGateway[T]
 }
 
-func (m *SingleShotService[T]) NewGateway(eventHasBeenProcessed services.EventHasBeenProcessedFunc, EventAsProcessed services.MarkEventAsProcessedFunc) {
-	m.Gateway = NewSingleshotGateway(m.logger, m, eventHasBeenProcessed, EventAsProcessed)
+func (m *SingleShotService[T]) NewGateway(logger *zapray.Logger, eventHasBeenProcessed services.EventHasBeenProcessedFunc, EventAsProcessed services.MarkEventAsProcessedFunc) {
+	m.Gateway = NewSingleshotGateway(logger, m, eventHasBeenProcessed, EventAsProcessed)
 }
+
+// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 type SingleshotGateway[T any] struct {
 	logger                *zapray.Logger

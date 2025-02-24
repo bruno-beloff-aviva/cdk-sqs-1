@@ -39,7 +39,7 @@ func NewContinuousService(logger *zapray.Logger, cfg aws.Config, dbManager dbman
 	service := ContinuousService{logger: logger, dbManager: dbManager, id: id}
 	// service.attachGateway(services.NullEventHasBeenProcessed, services.NullMarkEventAsProcessed)
 
-	service.NewGateway(services.NullEventHasBeenProcessed, services.NullMarkEventAsProcessed)
+	service.NewGateway(logger, services.NullEventHasBeenProcessed, services.NullMarkEventAsProcessed)
 
 	// service.gateway = singleshot.NewSingleshotGateway(logger, service, services.NullEventHasBeenProcessed, services.NullMarkEventAsProcessed)
 
