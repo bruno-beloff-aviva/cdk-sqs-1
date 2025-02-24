@@ -39,16 +39,16 @@ func NewContinuousService(logger *zapray.Logger, cfg aws.Config, dbManager dbman
 	service := ContinuousService{logger: logger, dbManager: dbManager, id: id}
 	// service.attachGateway(services.NullEventHasBeenProcessed, services.NullMarkEventAsProcessed)
 
-	service.NewGateway(logger, services.NullEventHasBeenProcessed, services.NullMarkEventAsProcessed)
+	service.AttachGateway(services.NullEventHasBeenProcessed, services.NullMarkEventAsProcessed)
 
 	// service.gateway = singleshot.NewSingleshotGateway(logger, service, services.NullEventHasBeenProcessed, services.NullMarkEventAsProcessed)
 
 	return service
 }
 
-// func (m *ContinuousService) attachGateway(eventHasBeenProcessed services.EventHasBeenProcessedFunc, EventAsProcessed services.MarkEventAsProcessedFunc) {
-// 	m.gateway = singleshot.NewSingleshotGateway(m.logger, m, eventHasBeenProcessed, EventAsProcessed)
-// }
+func (m *ContinuousService) AttachGateway(eventHasBeenProcessed services.EventHasBeenProcessedFunc, EventAsProcessed services.MarkEventAsProcessedFunc) {
+	m.Gateway = singleshot.NewSingleshotGateway(m.logger, m, eventHasBeenProcessed, EventAsProcessed)
+}
 
 func (m ContinuousService) Receive(ctx context.Context, record events.SQSMessage) (err error) {
 	m.logger.Info("Receive", zap.String("record body", record.Body))

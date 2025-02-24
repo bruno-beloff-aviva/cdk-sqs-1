@@ -16,24 +16,24 @@ type SingleshotHandler[T any] interface {
 // ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 type SingleShotService[T any] struct {
-	logger  *zapray.Logger
+	// logger  *zapray.Logger
 	Gateway SingleshotGateway[T]
 }
 
-func (m *SingleShotService[T]) NewGateway(logger *zapray.Logger, eventHasBeenProcessed services.EventHasBeenProcessedFunc, EventAsProcessed services.MarkEventAsProcessedFunc) {
-	m.logger = logger
-	m.Gateway = NewSingleshotGateway(logger, m, eventHasBeenProcessed, EventAsProcessed)
-}
+// func (m *SingleShotService[T]) NewGateway(logger *zapray.Logger, eventHasBeenProcessed services.EventHasBeenProcessedFunc, EventAsProcessed services.MarkEventAsProcessedFunc) {
+// 	m.logger = logger
+// 	m.Gateway = NewSingleshotGateway(logger, m, eventHasBeenProcessed, EventAsProcessed)
+// }
 
-func (m *SingleShotService[T]) Process(ctx context.Context, event T) (err error) {
-	m.logger.Error("NULL Process!")
-	return nil
-}
+// func (m *SingleShotService[T]) Process(ctx context.Context, event T) (err error) {
+// 	m.logger.Error("NULL Process!")
+// 	return nil
+// }
 
-func (m *SingleShotService[T]) UniqueID(event T) (policyOrQuoteID string, eventID string, err error) {
-	m.logger.Error("NULL Process!")
-	return "", "", nil
-}
+// func (m *SingleShotService[T]) UniqueID(event T) (policyOrQuoteID string, eventID string, err error) {
+// 	m.logger.Error("NULL UniqueID!")
+// 	return "", "", nil
+// }
 
 // ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
