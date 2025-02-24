@@ -16,17 +16,21 @@ import (
 )
 
 type ContinuousService struct {
+	singleshot.SingleshotGateway[testmessage.TestMessage]
 	logger    *zapray.Logger
 	dbManager dbmanager.DynamoManager
 	id        string
-	gateway   singleshot.SingleshotGateway[testmessage.TestMessage]
 }
 
 func NewContinuousService(logger *zapray.Logger, cfg aws.Config, dbManager dbmanager.DynamoManager, id string) ContinuousService {
-	service := ContinuousService{logger: logger, dbManager: dbManager, id: id}
-	service.gateway = singleshot.NewSingleshotGateway(service, services.NullEventHasBeenProcessed, services.NullMarkEventAsProcessed)
+	handler := ContinuousService{
+		singleshot.NewSingleshotGateway[testmessage.TestMessage](logger, services.NullEventHasBeenProcessed, services.NullMarkEventAsProcessed),
+		logger,
+		dbManager,
+		id,
+	}
 
-	return service
+	return handler
 }
 
 func (m ContinuousService) Receive(ctx context.Context, record events.SQSMessage) (err error) {
@@ -39,7 +43,7 @@ func (m ContinuousService) Receive(ctx context.Context, record events.SQSMessage
 		return err
 	}
 
-	return m.gateway.ProcessOnce(ctx, message)
+	return m.ProcessOnce(ctx, message)
 }
 
 func (m ContinuousService) Process(ctx context.Context, event testmessage.TestMessage) (err error) {
@@ -59,8 +63,4 @@ func (m ContinuousService) Process(ctx context.Context, event testmessage.TestMe
 
 func (m ContinuousService) UniqueID(event testmessage.TestMessage) (policyOrQuoteID string, eventID string, err error) {
 	return event.Client, event.Sent, nil
-}
-
-func (m ContinuousService) Logger() *zap.Logger {
-	return m.logger.Logger
 }
