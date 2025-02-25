@@ -24,9 +24,13 @@ type ContinuousService struct {
 
 func NewContinuousService(logger *zapray.Logger, cfg aws.Config, dbManager dbmanager.DynamoManager, id string) ContinuousService {
 	handler := ContinuousService{logger: logger, dbManager: dbManager, id: id}
-	handler.gateway = singleshot.NewSingleshotGateway(logger, handler, services.NullEventHasBeenProcessed, services.NullMarkEventAsProcessed)
+	handler.attachGateway(services.NullEventHasBeenProcessed, services.NullMarkEventAsProcessed)
 
 	return handler
+}
+
+func (m *ContinuousService) attachGateway(eventHasBeenProcessed services.EventHasBeenProcessedFunc, markEventAsProcessed services.MarkEventAsProcessedFunc) {
+	m.gateway = singleshot.NewSingleshotGateway(m.logger, m, eventHasBeenProcessed, markEventAsProcessed)
 }
 
 func (m ContinuousService) Receive(ctx context.Context, record events.SQSMessage) (err error) {
