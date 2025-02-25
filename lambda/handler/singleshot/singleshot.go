@@ -19,8 +19,8 @@ type GatedHandler[T any] struct {
 }
 
 func (h *GatedHandler[T]) AttachGateway(logger *zapray.Logger, eventHasBeenProcessed services.EventHasBeenProcessedFunc, markEventAsProcessed services.MarkEventAsProcessedFunc) {
-	logger.Info("*** AttachGateway: ", zap.Any("h", h))
 	h.Gateway = NewSingleshotGateway(logger, h, eventHasBeenProcessed, markEventAsProcessed)
+	logger.Info("*** AttachGateway: ", zap.Any("h", h))
 }
 
 // ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
