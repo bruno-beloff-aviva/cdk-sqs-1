@@ -24,6 +24,7 @@ type ContinuousService struct {
 
 func NewContinuousService(logger *zapray.Logger, cfg aws.Config, dbManager dbmanager.DynamoManager, id string) ContinuousService {
 	handler := ContinuousService{logger: logger, dbManager: dbManager, id: id}
+	handler.logger.Info("*** ContinuousService: ", zap.Any("handler", handler))
 	handler.AttachGateway(logger, services.NullEventHasBeenProcessed, services.NullMarkEventAsProcessed)
 
 	return handler

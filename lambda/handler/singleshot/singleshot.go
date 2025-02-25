@@ -19,6 +19,7 @@ type GatedHandler[T any] struct {
 }
 
 func (h *GatedHandler[T]) AttachGateway(logger *zapray.Logger, eventHasBeenProcessed services.EventHasBeenProcessedFunc, markEventAsProcessed services.MarkEventAsProcessedFunc) {
+	logger.Info("*** AttachGateway: ", zap.Any("h", h))
 	h.Gateway = NewSingleshotGateway(logger, h, eventHasBeenProcessed, markEventAsProcessed)
 }
 
@@ -42,6 +43,7 @@ func NewSingleshotGateway[T any](logger *zapray.Logger, handler SingleshotHandle
 
 func (g SingleshotGateway[T]) ProcessOnce(ctx context.Context, event T) error {
 	g.logger.Debug("ProcessOnce: ", zap.Any("event", event))
+	g.logger.Info("*** ProcessOnce: ", zap.Any("g.handler", g.handler))
 
 	// Check...
 	policyOrQuoteID, eventID, err := g.handler.UniqueID(event)
