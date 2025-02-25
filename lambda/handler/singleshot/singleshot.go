@@ -13,8 +13,6 @@ type SingleshotHandler[T any] interface {
 	UniqueID(event T) (policyOrQuoteID string, eventID string, err error)
 }
 
-// ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 type SingleshotGateway[T any] struct {
 	logger                *zapray.Logger
 	handler               SingleshotHandler[T]
@@ -31,39 +29,39 @@ func NewSingleshotGateway[T any](logger *zapray.Logger, handler SingleshotHandle
 	}
 }
 
-func (g SingleshotGateway[T]) ProcessOnce(ctx context.Context, event T) error {
+func (g SingleshotGateway[T]) ProcessOnce(ctx context.Context, event T) (bool, error) {
 	g.logger.Debug("ProcessOnce: ", zap.Any("event", event))
 
 	// Check...
 	policyOrQuoteID, eventID, err := g.handler.UniqueID(event)
 	if err != nil {
 		g.logger.Error("Error getting UniqueID", zap.Error(err))
-		return err
+		return false, err
 	}
 
 	eventHasBeenProcessed, err := g.eventHasBeenProcessed(ctx, policyOrQuoteID, eventID)
 	if err != nil {
 		g.logger.Error("Error checking if event has been processed", zap.Error(err))
-		return err
+		return false, err
 	}
 
 	if eventHasBeenProcessed {
 		g.logger.Info("Event has already been processed")
-		return nil
+		return false, nil
 	}
 
 	err = g.handler.Process(ctx, event)
 	if err != nil {
 		g.logger.Error("Process error", zap.Error(err))
-		return err
+		return true, err
 	}
 
 	// Mark as processed...
 	err = g.markEventAsProcessed(ctx, policyOrQuoteID, eventID)
 	if err != nil {
 		g.logger.Error("Error marking event as processed", zap.Error(err))
-		return nil
+		return true, nil
 	}
 
-	return nil
+	return true, nil
 }
