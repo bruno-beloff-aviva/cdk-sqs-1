@@ -13,16 +13,6 @@ type SingleshotHandler[T any] interface {
 	UniqueID(event T) (policyOrQuoteID string, eventID string, err error)
 }
 
-type GatedHandler[T any] struct {
-	SingleshotHandler[T]
-	Gateway SingleshotGateway[T]
-}
-
-func (h *GatedHandler[T]) AttachGateway(logger *zapray.Logger, eventHasBeenProcessed services.EventHasBeenProcessedFunc, markEventAsProcessed services.MarkEventAsProcessedFunc) {
-	h.Gateway = NewSingleshotGateway(logger, h, eventHasBeenProcessed, markEventAsProcessed)
-	logger.Info("*** AttachGateway: ", zap.Any("h", h))
-}
-
 // ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 type SingleshotGateway[T any] struct {
@@ -43,7 +33,6 @@ func NewSingleshotGateway[T any](logger *zapray.Logger, handler SingleshotHandle
 
 func (g SingleshotGateway[T]) ProcessOnce(ctx context.Context, event T) error {
 	g.logger.Debug("ProcessOnce: ", zap.Any("event", event))
-	g.logger.Info("*** ProcessOnce: ", zap.Any("g.handler", g.handler))
 
 	// Check...
 	policyOrQuoteID, eventID, err := g.handler.UniqueID(event)
