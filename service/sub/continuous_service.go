@@ -16,7 +16,7 @@ import (
 )
 
 type ContinuousService struct {
-	singleshot.SingleShotService[testmessage.TestMessage]
+	singleshot.GatedHandler[testmessage.TestMessage]
 	logger    *zapray.Logger
 	dbManager dbmanager.DynamoManager
 	id        string
@@ -24,15 +24,10 @@ type ContinuousService struct {
 
 func NewContinuousService(logger *zapray.Logger, cfg aws.Config, dbManager dbmanager.DynamoManager, id string) ContinuousService {
 	handler := ContinuousService{logger: logger, dbManager: dbManager, id: id}
-	// service.attachGateway(services.NullEventHasBeenProcessed, services.NullMarkEventAsProcessed)
-	handler.NewGateway(handler, logger, services.NullEventHasBeenProcessed, services.NullMarkEventAsProcessed)
+	handler.AttachGateway(logger, services.NullEventHasBeenProcessed, services.NullMarkEventAsProcessed)
 
 	return handler
 }
-
-// func (m *ContinuousService) attachGateway(eventHasBeenProcessed services.EventHasBeenProcessedFunc, EventAsProcessed services.MarkEventAsProcessedFunc) {
-// 	m.Gateway = singleshot.NewSingleshotGateway(m.logger, m, eventHasBeenProcessed, EventAsProcessed)
-// }
 
 func (m ContinuousService) Receive(ctx context.Context, record events.SQSMessage) (err error) {
 	m.logger.Info("Receive", zap.String("record body", record.Body))
