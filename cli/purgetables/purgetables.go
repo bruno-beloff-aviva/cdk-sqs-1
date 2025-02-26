@@ -82,5 +82,5 @@ func main() {
 		}
 	}
 
-	fmt.Printf("Purged %d rows(s) in %d tables.\n", purgeCount, tableCount)
+	fmt.Printf("Purged %d rows(s) in %d table(s).\n", purgeCount, tableCount)
 }

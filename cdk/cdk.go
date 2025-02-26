@@ -50,7 +50,7 @@ func NewSQSStack(scope constructs.Construct, id string, stackProps *stackprops.C
 	dash := setupDashboard(stack)
 
 	// event bus...
-	setupEventBus(stack)
+	eventBus := setupEventBus(stack)
 
 	// topic...
 	topic := setupTopic(stack, topicId, topicName)
@@ -66,7 +66,7 @@ func NewSQSStack(scope constructs.Construct, id string, stackProps *stackprops.C
 		Dashboard: dash,
 	}
 
-	c0 := setupPubHandler(stack, *stackProps, pubProps, topic)
+	c0 := setupPubHandler(stack, *stackProps, pubProps, eventBus, topic)
 
 	// sub lambdas...
 	subProps := snshandler.SNSCommonProps{
@@ -79,6 +79,7 @@ func NewSQSStack(scope constructs.Construct, id string, stackProps *stackprops.C
 	c1 := setupContinuousSubHandler(stack, subProps, topic)
 	c2 := setupSuspendableSubHandler(stack, subProps, topic)
 	c3 := setupEmptySubHandler(stack, subProps, topic)
+	eventBus.GrantPutEventsTo(c0.Handler)
 
 	// dashboard widgets...
 	dash.AddWidgetsRow(c0.GatewayMetricsGraphWidget(), c0.LambdaMetricsGraphWidget(), c1.LambdaMetricsGraphWidget(), c2.LambdaMetricsGraphWidget())
@@ -134,15 +135,17 @@ func setupEventBus(stack awscdk.Stack) awsevents.IEventBus {
 	return awsevents.NewEventBus(stack, aws.String(eventBusId), &busProps)
 }
 
-func setupPubHandler(stack awscdk.Stack, stackProps stackprops.CdkStackProps, commonProps gatewayhandler.GatewayCommonProps, topic gatewayhandler.NamedTopic) gatewayhandler.GatewayConstruct {
+func setupPubHandler(stack awscdk.Stack, stackProps stackprops.CdkStackProps, commonProps gatewayhandler.GatewayCommonProps, eventBus awsevents.IEventBus, topic gatewayhandler.NamedTopic) gatewayhandler.GatewayConstruct {
 	environment := map[string]*string{
-		"VERSION":   aws.String(version),
-		"TOPIC_ARN": topic.TopicArn(),
+		"VERSION":          aws.String(version),
+		"TOPIC_ARN":        topic.TopicArn(),
+		"EVENT_BRIDGE_ARN": eventBus.EventBusArn(),
 	}
 
 	builder := gatewayhandler.GatewayBuilder{
 		EndpointId:       pubEndpointId,
 		HandlerId:        pubHandlerId,
+		EventBus:         eventBus,
 		PublicationTopic: topic,
 		Entry:            "lambda/pub/",
 		Environment:      environment,

@@ -15,6 +15,7 @@ import (
 	"github.com/aws/aws-cdk-go/awscdk/v2"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awsapigateway"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awscloudwatch"
+	"github.com/aws/aws-cdk-go/awscdk/v2/awsevents"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awslambda"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awslogs"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awssns"
@@ -39,6 +40,7 @@ type GatewayCommonProps struct {
 type GatewayBuilder struct {
 	EndpointId       string
 	HandlerId        string
+	EventBus         awsevents.IEventBus
 	PublicationTopic NamedTopic
 	Entry            string
 	Environment      map[string]*string
@@ -61,6 +63,7 @@ func (b GatewayBuilder) Setup(stack awscdk.Stack, stackProps stackprops.CdkStack
 	c.Handler, alias = b.setupPubHandler(stack, stackProps)
 	c.Gateway = b.setupGateway(stack, alias)
 
+	b.EventBus.GrantPutEventsTo(alias)
 	b.PublicationTopic.GrantPublish(alias)
 
 	return c
