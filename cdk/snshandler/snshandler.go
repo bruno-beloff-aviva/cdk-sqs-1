@@ -70,9 +70,9 @@ func (b SNSBuilder) Setup(stack awscdk.Stack, commonProps SNSCommonProps) SNSCon
 
 func (b SNSBuilder) setupQueue(stack awscdk.Stack, commonProps SNSCommonProps) awssqs.Queue {
 	queueProps := sqs.SqsQueueWithDLQProps{
-		Stack:                    stack,
-		QueueName:                b.QueueName,
-		Fifo:                     true,
+		Stack:     stack,
+		QueueName: b.QueueName,
+		// Fifo:                     true,			// Not with SNS
 		SQSKey:                   commonProps.QueueKey,
 		QMaxReceiveCount:         commonProps.QueueMaxRetries,
 		QAlarmPeriod:             1,
