@@ -47,16 +47,19 @@ func getKeys(tableName string) gjson.Result {
 	return gjson.Get(b.String(), "Items")
 }
 
-func purgeTable(tableName string, keys gjson.Result) {
+func purgeTable(tableName string, keys gjson.Result) (purgeCount int) {
 	for _, key := range keys.Array() {
 		keyStr := key.String()
 
-		fmt.Printf("Purging %s\n", keyStr)
+		fmt.Printf("Deleting %s\n", keyStr)
 		_, err := exec.Command("aws", "dynamodb", "delete-item", "--table-name", tableName, "--key", keyStr).Output()
 		if err != nil {
 			panic(err)
 		}
+		purgeCount++
 	}
+
+	return purgeCount
 }
 
 func main() {
@@ -69,14 +72,15 @@ func main() {
 	names := listTables()
 
 	purgeCount := 0
+	tableCount := 0
 	for _, name := range names {
 		if strings.HasPrefix(name, tablePrefix) {
 			keys := getKeys(name)
+			tableCount++
 
-			purgeTable(name, keys)
-			purgeCount++
+			purgeCount += purgeTable(name, keys)
 		}
 	}
 
-	fmt.Printf("Purged %d table(s).\n", purgeCount)
+	fmt.Printf("Purged %d rows(s) in %d tables.\n", purgeCount, tableCount)
 }
