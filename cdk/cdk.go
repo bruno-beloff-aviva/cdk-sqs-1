@@ -18,6 +18,7 @@ import (
 	"github.com/aws/aws-cdk-go/awscdk/v2/awseventstargets"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awskms"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awssns"
+	"github.com/aws/aws-cdk-go/awscdk/v2/awssqs"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/constructs-go/constructs/v10"
 )
@@ -96,15 +97,44 @@ func NewSQSStack(scope constructs.Construct, id string, stackProps *stackprops.C
 		},
 	}
 
+	// 		Input:        awsevents.RuleTargetInput.FromText(aws.String(`{"source":"$.source","detail-type":"$.detail-type","detail":"$.detail"}`)),
+
+	// targetConf := awsevents.RuleTargetInput_FromText(aws.String(`{"source":"$.source","detail-type":"$.detail-type","detail":"$.detail"}`))
+
+	// inputProps := awsevents.RuleTargetInputProperties{
+	// 	Input:     aws.String(`{"source":"$.source","detail-type":"$.detail-type","detail":"$.detail"}`),
+	// 	InputPath: aws.String("$.source"),
+	// 	InputPathsMap: &map[string]*string{
+	// 		"$.source":      aws.String("$.source"),
+	// 		"$.detail-type": aws.String("$.detail-type"),
+	// 		"$.detail":      aws.String("$.detail"),
+	// 	},
+	// 	InputTemplate: aws.String(`{"source":"$.source","detail-type":"$.detail-type","detail":"$.detail"}`),
+	// }
+
+	// target := awsevents.RuleTargetConfig{
+	// 	Arn:   aws.String("arn:aws:lambda:us-west-2:123456789012:function:my-function"),
+	// 	Input: awsevents.RuleTargetInput_FromText(aws.String(`{"source":"$.source","detail-type":"$.detail-type","detail":"$.detail"}`)),
+	// }
+
+	// 			awseventstargets.NewSqsQueue(c1.Queue, &awseventstargets.SqsQueueProps{}),
+
+	// https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_events.RuleTargetInput.html
+
+	// awsevents.NewRuleTargetInput_Override(&inputProps)
 	ruleProps := &awsevents.RuleProps{
 		EventBus:     eventBus,
 		EventPattern: eventPattern,
-		Targets: &[]awsevents.IRuleTarget{
-			awseventstargets.NewSqsQueue(c1.Queue, &awseventstargets.SqsQueueProps{}),
-		},
+		// Targets: &[]awsevents.IRuleTarget{
+		// 	awseventstargets.NewSqsQueue(c1.Queue, &awseventstargets.SqsQueueProps{}),
+		// },
 	}
 
-	awsevents.NewRule(stack, aws.String("TestRule1"), ruleProps)
+	rule := awsevents.NewRule(stack, aws.String("TestRule1"), ruleProps)
+
+	rule.AddTarget(awseventstargets.NewSqsQueue(c1.Queue, &awseventstargets.SqsQueueProps{
+		Message: awsevents.RuleTargetInput_FromText(aws.String(`{"source":"$.source","detail-type":"$.detail-type","detail":"$.detail"}`)),
+	}))
 
 	// dashboard widgets...
 	dash.AddWidgetsRow(c0.GatewayMetricsGraphWidget(), c0.LambdaMetricsGraphWidget(), c1.LambdaMetricsGraphWidget(), c2.LambdaMetricsGraphWidget())
@@ -155,6 +185,9 @@ func setupQueueKey(stack awscdk.Stack) awskms.IKey {
 func setupEventBus(stack awscdk.Stack) awsevents.IEventBus {
 	busProps := awsevents.EventBusProps{
 		EventBusName: aws.String(eventBusName),
+		DeadLetterQueue: awssqs.NewQueue(stack, aws.String("DeadLetterQueue"), &awssqs.QueueProps{ // TODO: sort out DLQ
+			QueueName: aws.String("DeadLetterQueue"),
+		}),
 	}
 
 	bus := awsevents.NewEventBus(stack, aws.String(eventBusId), &busProps)
