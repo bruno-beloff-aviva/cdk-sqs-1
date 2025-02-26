@@ -35,7 +35,7 @@ func (l Lambda) Version() string {
 	return strings.Split(l.FunctionArn, ":")[7]
 }
 
-func listLambdas(stackName string) (lambdas []Lambda) {
+func listLambdaGroups(stackName string) (lambdaGroups map[string][]Lambda) {
 	var b bytes.Buffer
 
 	query := fmt.Sprintf("Functions[?starts_with(FunctionName,`%s`)==`true`].*", stackName)
@@ -48,17 +48,20 @@ func listLambdas(stackName string) (lambdas []Lambda) {
 		panic(err)
 	}
 
+	lambdaGroups = make(map[string][]Lambda)
+
 	for _, resource := range gjson.Parse(b.String()).Array() {
-		lambdas = append(lambdas, NewLambda(resource.Array()))
+		lambda := NewLambda(resource.Array())
+		lambdaGroups[lambda.PhysicalID] = append(lambdaGroups[lambda.PhysicalID], lambda)
 	}
 
-	return lambdas
+	return lambdaGroups
 }
 
 func purgeGroup(group []Lambda, keepCount int) {
 	for i := 1; i < len(group)-keepCount; i++ {
 		lambda := group[i]
-		fmt.Printf("Purging %s\n", lambda)
+		fmt.Printf("Purging %s\n", lambda.FunctionArn)
 
 		_, err := exec.Command("aws", "lambda", "delete-function", "--function-name", lambda.PhysicalID, "--qualifier", lambda.Version()).Output()
 		if err != nil {
@@ -75,13 +78,8 @@ func main() {
 
 	keepCount := 2
 	stackName := os.Args[1]
-	lambdaGroups := make(map[string][]Lambda)
 
-	for _, lambda := range listLambdas(stackName) {
-		lambdaGroups[lambda.PhysicalID] = append(lambdaGroups[lambda.PhysicalID], lambda)
-	}
-
-	for _, group := range lambdaGroups {
+	for _, group := range listLambdaGroups(stackName) {
 		purgeGroup(group, keepCount)
 	}
 }

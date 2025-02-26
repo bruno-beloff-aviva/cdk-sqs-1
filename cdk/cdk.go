@@ -26,7 +26,7 @@ import (
 // const region = "eu-west-2"
 
 const project = "SQS1"
-const version = "0.2.18"
+const version = "0.2.19"
 
 var queueKeyId = project + "QueueKey"
 var queueKeyAlias = "QueueKeyLive"
