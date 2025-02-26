@@ -7,6 +7,7 @@ package main
 
 import (
 	"sqstest/cdk/dashboard"
+	"sqstest/cdk/eventhandler"
 	"sqstest/cdk/gatewayhandler"
 	"sqstest/cdk/snshandler"
 	"sqstest/cdk/stackprops"
@@ -14,6 +15,7 @@ import (
 	"github.com/aws/aws-cdk-go/awscdk/v2"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awsdynamodb"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awsevents"
+	"github.com/aws/aws-cdk-go/awscdk/v2/awseventstargets"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awskms"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awssns"
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -69,17 +71,33 @@ func NewSQSStack(scope constructs.Construct, id string, stackProps *stackprops.C
 	c0 := setupPubHandler(stack, *stackProps, pubProps, eventBus, topic)
 
 	// sub lambdas...
-	subProps := snshandler.SNSCommonProps{
+	ebSubProps := eventhandler.EventHandlerCommonProps{
 		QueueKey:        queueKey,
 		QueueMaxRetries: queueMaxRetries,
 		MessageTable:    table,
 		Dashboard:       dash,
 	}
 
-	c1 := setupContinuousSubHandler(stack, subProps, topic)
-	c2 := setupSuspendableSubHandler(stack, subProps, topic)
-	c3 := setupEmptySubHandler(stack, subProps, topic)
+	snsSubProps := snshandler.SNSCommonProps{
+		QueueKey:        queueKey,
+		QueueMaxRetries: queueMaxRetries,
+		MessageTable:    table,
+		Dashboard:       dash,
+	}
+
+	c1 := setupContinuousSubHandler(stack, ebSubProps, topic)
+	c2 := setupSuspendableSubHandler(stack, snsSubProps, topic)
+	c3 := setupEmptySubHandler(stack, snsSubProps, topic)
 	eventBus.GrantPutEventsTo(c0.Handler)
+
+	ruleProps := &awsevents.RuleProps{
+		EventBus: eventBus,
+		Targets: &[]awsevents.IRuleTarget{
+			awseventstargets.NewSqsQueue(c1.Queue, &awseventstargets.SqsQueueProps{}),
+		},
+	}
+
+	awsevents.NewRule(stack, aws.String("TestRule1"), ruleProps)
 
 	// dashboard widgets...
 	dash.AddWidgetsRow(c0.GatewayMetricsGraphWidget(), c0.LambdaMetricsGraphWidget(), c1.LambdaMetricsGraphWidget(), c2.LambdaMetricsGraphWidget())
@@ -132,7 +150,9 @@ func setupEventBus(stack awscdk.Stack) awsevents.IEventBus {
 		EventBusName: aws.String(eventBusName),
 	}
 
-	return awsevents.NewEventBus(stack, aws.String(eventBusId), &busProps)
+	bus := awsevents.NewEventBus(stack, aws.String(eventBusId), &busProps)
+
+	return bus
 }
 
 func setupPubHandler(stack awscdk.Stack, stackProps stackprops.CdkStackProps, commonProps gatewayhandler.GatewayCommonProps, eventBus awsevents.IEventBus, topic gatewayhandler.NamedTopic) gatewayhandler.GatewayConstruct {
@@ -154,13 +174,13 @@ func setupPubHandler(stack awscdk.Stack, stackProps stackprops.CdkStackProps, co
 	return builder.Setup(stack, stackProps, commonProps)
 }
 
-func setupContinuousSubHandler(stack awscdk.Stack, commonProps snshandler.SNSCommonProps, topic awssns.Topic) snshandler.SNSConstruct {
+func setupContinuousSubHandler(stack awscdk.Stack, commonProps eventhandler.EventHandlerCommonProps, topic awssns.Topic) eventhandler.EventHandlerConstruct {
 	environment := map[string]*string{
 		"VERSION":            aws.String(version),
 		"MESSAGE_TABLE_NAME": aws.String(tableName),
 	}
 
-	builder := snshandler.SNSBuilder{
+	builder := eventhandler.EventHandlerBuilder{
 		SubscriptionTopic: topic,
 		QueueName:         queue1Name,
 		HandlerId:         continuousSubHandlerId,
@@ -170,6 +190,23 @@ func setupContinuousSubHandler(stack awscdk.Stack, commonProps snshandler.SNSCom
 
 	return builder.Setup(stack, commonProps)
 }
+
+// func setupContinuousSubHandler(stack awscdk.Stack, commonProps snshandler.SNSCommonProps, topic awssns.Topic) snshandler.SNSConstruct {
+// 	environment := map[string]*string{
+// 		"VERSION":            aws.String(version),
+// 		"MESSAGE_TABLE_NAME": aws.String(tableName),
+// 	}
+
+// 	builder := snshandler.SNSBuilder{
+// 		SubscriptionTopic: topic,
+// 		QueueName:         queue1Name,
+// 		HandlerId:         continuousSubHandlerId,
+// 		Entry:             "lambda/subcontinuous/",
+// 		Environment:       environment,
+// 	}
+
+// 	return builder.Setup(stack, commonProps)
+// }
 
 func setupSuspendableSubHandler(stack awscdk.Stack, commonProps snshandler.SNSCommonProps, topic awssns.Topic) snshandler.SNSConstruct {
 	environment := map[string]*string{

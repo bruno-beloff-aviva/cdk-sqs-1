@@ -1,4 +1,4 @@
-package snshandler
+package eventhandler
 
 import (
 	"fmt"
@@ -19,14 +19,14 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 )
 
-type SNSCommonProps struct {
+type EventHandlerCommonProps struct {
 	QueueKey        awskms.IKey
 	QueueMaxRetries int
 	MessageTable    awsdynamodb.ITable
 	Dashboard       dashboard.Dashboard
 }
 
-type SNSBuilder struct {
+type EventHandlerBuilder struct {
 	SubscriptionTopic awssns.Topic
 	QueueName         string
 	HandlerId         string
@@ -34,21 +34,25 @@ type SNSBuilder struct {
 	Environment       map[string]*string
 }
 
-type SNSConstruct struct {
-	Builder   SNSBuilder
+type EventHandlerConstruct struct {
+	Builder   EventHandlerBuilder
 	Queue     awssqs.Queue
 	Handler   awslambdago.GoFunction
 	Dashboard dashboard.Dashboard
 }
 
+// TODO: use FIFO queues
+
 // ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-func (b SNSBuilder) Setup(stack awscdk.Stack, commonProps SNSCommonProps) SNSConstruct {
-	var c SNSConstruct
+func (b EventHandlerBuilder) Setup(stack awscdk.Stack, commonProps EventHandlerCommonProps) EventHandlerConstruct {
+	var c EventHandlerConstruct
 
 	c.Builder = b
 	c.Dashboard = commonProps.Dashboard
 	c.Queue = b.setupQueue(stack, commonProps)
+
+	// TODO: EventBridge rule to trigger queue
 
 	subProps := awssnssubscriptions.SqsSubscriptionProps{
 		RawMessageDelivery: aws.Bool(true),
@@ -66,10 +70,11 @@ func (b SNSBuilder) Setup(stack awscdk.Stack, commonProps SNSCommonProps) SNSCon
 	return c
 }
 
-func (b SNSBuilder) setupQueue(stack awscdk.Stack, commonProps SNSCommonProps) awssqs.Queue {
+func (b EventHandlerBuilder) setupQueue(stack awscdk.Stack, commonProps EventHandlerCommonProps) awssqs.Queue {
 	queueProps := sqs.SqsQueueWithDLQProps{
-		Stack:                    stack,
-		QueueName:                b.QueueName,
+		Stack:     stack,
+		QueueName: b.QueueName,
+		// Fifo:                     true,			// Not with EventHandler
 		SQSKey:                   commonProps.QueueKey,
 		QMaxReceiveCount:         commonProps.QueueMaxRetries,
 		QAlarmPeriod:             1,
@@ -83,9 +88,9 @@ func (b SNSBuilder) setupQueue(stack awscdk.Stack, commonProps SNSCommonProps) a
 	return sqs.NewSqsQueueWithDLQ(queueProps)
 }
 
-func (b SNSBuilder) setupSubHandler(stack awscdk.Stack, queue awssqs.IQueue) awslambdago.GoFunction {
+func (b EventHandlerBuilder) setupSubHandler(stack awscdk.Stack, queue awssqs.IQueue) awslambdago.GoFunction {
 	handlerProps := awslambdago.GoFunctionProps{
-		Description:   aws.String("Handler with queue listening to SNS events"),
+		Description:   aws.String("Handler with queue listening to EventHandler events"),
 		Runtime:       awslambda.Runtime_PROVIDED_AL2(),
 		Architecture:  awslambda.Architecture_ARM_64(),
 		Entry:         aws.String(b.Entry),
@@ -108,7 +113,7 @@ func (b SNSBuilder) setupSubHandler(stack awscdk.Stack, queue awssqs.IQueue) aws
 
 // ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-func (c SNSConstruct) LambdaMetricsGraphWidget() awscloudwatch.GraphWidget {
+func (c EventHandlerConstruct) LambdaMetricsGraphWidget() awscloudwatch.GraphWidget {
 	region := c.Handler.Stack().Region()
 
 	invocationsMetric := c.Dashboard.CreateLambdaMetric(*region, "Invocations", c.Handler.FunctionName(), "Sum")
@@ -118,7 +123,7 @@ func (c SNSConstruct) LambdaMetricsGraphWidget() awscloudwatch.GraphWidget {
 	return c.Dashboard.CreateGraphWidget(*region, fmt.Sprintf("%s - Invocations & Errors", c.Builder.HandlerId), metrics)
 }
 
-func (c SNSConstruct) QueueMetricsGraphWidget() awscloudwatch.GraphWidget {
+func (c EventHandlerConstruct) QueueMetricsGraphWidget() awscloudwatch.GraphWidget {
 	region := c.Queue.Stack().Region()
 	queueName := c.Queue.QueueName()
 
@@ -129,7 +134,7 @@ func (c SNSConstruct) QueueMetricsGraphWidget() awscloudwatch.GraphWidget {
 	return c.Dashboard.CreateGraphWidget(*region, fmt.Sprintf("%s - Sent & Visible", c.Builder.QueueName), metrics)
 }
 
-func (c SNSConstruct) DLQMetricsGraphWidget() awscloudwatch.GraphWidget {
+func (c EventHandlerConstruct) DLQMetricsGraphWidget() awscloudwatch.GraphWidget {
 	region := c.Queue.Stack().Region()
 	queueName := c.Queue.DeadLetterQueue().Queue.QueueName()
 
