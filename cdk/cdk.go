@@ -21,7 +21,7 @@ import (
 
 const (
 	project                 = "SQS1"
-	version                 = "0.2.21"
+	version                 = "0.2.22"
 	queueKeyAlias           = "QueueKeyLive"
 	queue1Name              = "TestQueue1"
 	queue2Name              = "TestQueue2"

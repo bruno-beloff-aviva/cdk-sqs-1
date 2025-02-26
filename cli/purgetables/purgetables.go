@@ -51,7 +51,7 @@ func purgeTable(tableName string, keys gjson.Result) {
 	for _, key := range keys.Array() {
 		keyStr := key.String()
 
-		fmt.Printf("deleting %s\n", keyStr)
+		fmt.Printf("Purging %s\n", keyStr)
 		_, err := exec.Command("aws", "dynamodb", "delete-item", "--table-name", tableName, "--key", keyStr).Output()
 		if err != nil {
 			panic(err)
@@ -68,12 +68,15 @@ func main() {
 	tablePrefix := os.Args[1]
 	names := listTables()
 
+	purgeCount := 0
 	for _, name := range names {
 		if strings.HasPrefix(name, tablePrefix) {
-			fmt.Printf("Purging %s\n", name)
 			keys := getKeys(name)
 
 			purgeTable(name, keys)
+			purgeCount++
 		}
 	}
+
+	fmt.Printf("Purged %d table(s).\n", purgeCount)
 }

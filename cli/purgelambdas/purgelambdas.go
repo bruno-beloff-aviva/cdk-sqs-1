@@ -59,16 +59,19 @@ func listLambdaGroups(stackName string) (lambdaGroups map[string][]Lambda) {
 	return lambdaGroups
 }
 
-func purgeGroup(group []Lambda, keepCount int) {
+func purgeGroup(group []Lambda, keepCount int) (purgeCount int) {
 	for i := 1; i < len(group)-keepCount; i++ {
 		lambda := group[i]
 		fmt.Printf("Purging %s\n", lambda.FunctionArn)
 
 		_, err := exec.Command("aws", "lambda", "delete-function", "--function-name", lambda.PhysicalID, "--qualifier", lambda.Version()).Output()
 		if err != nil {
-			fmt.Println("error: ", err)
+			panic(err)
 		}
+		purgeCount++
 	}
+
+	return purgeCount
 }
 
 func main() {
@@ -80,7 +83,10 @@ func main() {
 	keepCount := 2
 	stackName := os.Args[1]
 
+	purgeCount := 0
 	for _, group := range listLambdaGroups(stackName) {
-		purgeGroup(group, keepCount)
+		purgeCount += purgeGroup(group, keepCount)
 	}
+
+	fmt.Printf("Purged %d lambda(s).\n", purgeCount)
 }

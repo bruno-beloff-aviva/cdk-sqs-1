@@ -7,8 +7,10 @@ import (
 	"github.com/aws/jsii-runtime-go"
 )
 
-const statisticPeriod = 1  // minutes
-const displayInterval = 30 // minutes
+const (
+	statisticPeriod = 1  // minutes
+	displayInterval = 30 // minutes
+)
 
 type Dashboard struct {
 	Dashboard awscloudwatch.Dashboard

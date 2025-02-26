@@ -27,10 +27,11 @@ func listQueues() []string {
 	return listing["QueueUrls"]
 }
 
-func purgeQueue(queueUrl string) {
+func purgeQueue(url string) {
 	var err error
 
-	_, err = exec.Command("aws", "sqs", "purge-queue", "--queue-url", queueUrl).Output()
+	fmt.Printf("Purging %s\n", url)
+	_, err = exec.Command("aws", "sqs", "purge-queue", "--queue-url", url).Output()
 	if err != nil {
 		panic(err)
 	}
@@ -45,10 +46,13 @@ func main() {
 	queueIdentifier := os.Args[1]
 	urls := listQueues()
 
+	purgeCount := 0
 	for _, url := range urls {
 		if strings.Contains(url, queueIdentifier) {
-			fmt.Printf("Purging %s\n", url)
 			purgeQueue(url)
+			purgeCount++
 		}
 	}
+
+	fmt.Printf("Purged %d queue(s).\n", purgeCount)
 }
