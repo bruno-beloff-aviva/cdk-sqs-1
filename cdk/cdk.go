@@ -90,8 +90,15 @@ func NewSQSStack(scope constructs.Construct, id string, stackProps *stackprops.C
 	c3 := setupEmptySubHandler(stack, snsSubProps, topic)
 	eventBus.GrantPutEventsTo(c0.Handler)
 
+	eventPattern := &awsevents.EventPattern{
+		Source: &[]*string{
+			aws.String(pubEndpointId),
+		},
+	}
+
 	ruleProps := &awsevents.RuleProps{
-		EventBus: eventBus,
+		EventBus:     eventBus,
+		EventPattern: eventPattern,
 		Targets: &[]awsevents.IRuleTarget{
 			awseventstargets.NewSqsQueue(c1.Queue, &awseventstargets.SqsQueueProps{}),
 		},
