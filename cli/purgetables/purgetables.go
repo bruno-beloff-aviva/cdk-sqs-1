@@ -76,9 +76,9 @@ func main() {
 	for _, name := range names {
 		if strings.HasPrefix(name, tablePrefix) {
 			keys := getKeys(name)
-			tableCount++
 
 			purgeCount += purgeTable(name, keys)
+			tableCount++
 		}
 	}
 

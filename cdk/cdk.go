@@ -13,6 +13,7 @@ import (
 
 	"github.com/aws/aws-cdk-go/awscdk/v2"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awsdynamodb"
+	"github.com/aws/aws-cdk-go/awscdk/v2/awsevents"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awskms"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awssns"
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -27,8 +28,10 @@ const (
 	queue2Name              = "TestQueue2"
 	queue3Name              = "TestQueue3"
 	queueMaxRetries         = 3
+	eventBusName            = "TestEventBus"
 	tableName               = "TestMessageTableV2"
 	topicName               = "TestTopic"
+	eventBusId              = project + eventBusName
 	tableId                 = project + tableName
 	queueKeyId              = project + "QueueKey"
 	topicId                 = project + topicName
@@ -45,6 +48,9 @@ func NewSQSStack(scope constructs.Construct, id string, stackProps *stackprops.C
 
 	// dashboard...
 	dash := setupDashboard(stack)
+
+	// event bus...
+	setupEventBus(stack)
 
 	// topic...
 	topic := setupTopic(stack, topicId, topicName)
@@ -118,6 +124,14 @@ func setupQueueKey(stack awscdk.Stack) awskms.IKey {
 	}
 
 	return awskms.NewKey(stack, aws.String(queueKeyId), &keyProps)
+}
+
+func setupEventBus(stack awscdk.Stack) awsevents.IEventBus {
+	busProps := awsevents.EventBusProps{
+		EventBusName: aws.String(eventBusName),
+	}
+
+	return awsevents.NewEventBus(stack, aws.String(eventBusId), &busProps)
 }
 
 func setupPubHandler(stack awscdk.Stack, stackProps stackprops.CdkStackProps, commonProps gatewayhandler.GatewayCommonProps, topic gatewayhandler.NamedTopic) gatewayhandler.GatewayConstruct {
