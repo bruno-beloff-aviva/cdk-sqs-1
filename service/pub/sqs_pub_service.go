@@ -23,8 +23,8 @@ func NewSQSPubService(logger *zapray.Logger, cfg aws.Config, queueUrl string) SQ
 	return SQSPubService{logger: logger, sqsManager: sqsManager, queueUrl: queueUrl}
 }
 
-func (m SQSPubService) Publish(ctx context.Context, clientId string, path string) (testmessage.TestMessage, error) {
-	m.logger.Debug("Publish", zap.String("clientId", clientId))
+func (s SQSPubService) Publish(ctx context.Context, clientId string, path string) (testmessage.TestMessage, error) {
+	s.logger.Debug("Publish", zap.String("clientId", clientId))
 
 	message := testmessage.NewTestMessage(clientId, path)
 
@@ -35,7 +35,7 @@ func (m SQSPubService) Publish(ctx context.Context, clientId string, path string
 		panic(err)
 	}
 
-	m.logger.Info("Publish", zap.Any("message", message))
+	s.logger.Info("Publish", zap.Any("message", message))
 
-	return message, m.sqsManager.Pub(ctx, m.queueUrl, strmsg)
+	return message, s.sqsManager.Pub(ctx, s.queueUrl, strmsg)
 }

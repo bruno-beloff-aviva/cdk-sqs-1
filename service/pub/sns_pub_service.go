@@ -23,8 +23,8 @@ func NewSNSPubService(logger *zapray.Logger, cfg aws.Config, topicArn string) SN
 	return SNSPubService{logger: logger, snsManager: snsManager, topicArn: topicArn}
 }
 
-func (m SNSPubService) Publish(ctx context.Context, clientId string, path string) (testmessage.TestMessage, error) {
-	m.logger.Debug("Publish", zap.String("clientId", clientId))
+func (s SNSPubService) Publish(ctx context.Context, clientId string, path string) (testmessage.TestMessage, error) {
+	s.logger.Debug("Publish", zap.String("clientId", clientId))
 
 	message := testmessage.NewTestMessage(clientId, path)
 
@@ -35,7 +35,7 @@ func (m SNSPubService) Publish(ctx context.Context, clientId string, path string
 		panic(err)
 	}
 
-	m.logger.Info("Publish", zap.Any("message", message))
+	s.logger.Info("Publish", zap.Any("message", message))
 
-	return message, m.snsManager.Pub(ctx, m.topicArn, strmsg)
+	return message, s.snsManager.Pub(ctx, s.topicArn, strmsg)
 }

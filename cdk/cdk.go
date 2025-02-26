@@ -137,9 +137,9 @@ func setupEventBus(stack awscdk.Stack) awsevents.IEventBus {
 
 func setupPubHandler(stack awscdk.Stack, stackProps stackprops.CdkStackProps, commonProps gatewayhandler.GatewayCommonProps, eventBus awsevents.IEventBus, topic gatewayhandler.NamedTopic) gatewayhandler.GatewayConstruct {
 	environment := map[string]*string{
-		"VERSION":          aws.String(version),
-		"TOPIC_ARN":        topic.TopicArn(),
-		"EVENT_BRIDGE_ARN": eventBus.EventBusArn(),
+		"VERSION":        aws.String(version),
+		"TOPIC_ARN":      topic.TopicArn(),
+		"EVENT_BUS_NAME": eventBus.EventBusName(),
 	}
 
 	builder := gatewayhandler.GatewayBuilder{
