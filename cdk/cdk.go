@@ -133,7 +133,7 @@ func NewSQSStack(scope constructs.Construct, id string, stackProps *stackprops.C
 	rule := awsevents.NewRule(stack, aws.String("TestRule1"), ruleProps)
 
 	rule.AddTarget(awseventstargets.NewSqsQueue(c1.Queue, &awseventstargets.SqsQueueProps{
-		Message: awsevents.RuleTargetInput_FromEventPath(aws.String("detail")),
+		Message: awsevents.RuleTargetInput_FromEventPath(aws.String("$.detail")),
 		// Message: awsevents.RuleTargetInput_FromText(aws.String(`{"source":"$.source","detail-type":"$.detail-type","detail":"$.detail"}`)),
 	}))
 
