@@ -72,6 +72,7 @@ func (b SNSBuilder) setupQueue(stack awscdk.Stack, commonProps SNSCommonProps) a
 	queueProps := sqs.SqsQueueWithDLQProps{
 		Stack:                    stack,
 		QueueName:                b.QueueName,
+		Fifo:                     true,
 		SQSKey:                   commonProps.QueueKey,
 		QMaxReceiveCount:         commonProps.QueueMaxRetries,
 		QAlarmPeriod:             1,

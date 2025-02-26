@@ -17,40 +17,28 @@ import (
 	"github.com/aws/aws-cdk-go/awscdk/v2/awssns"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/constructs-go/constructs/v10"
-	"github.com/aws/jsii-runtime-go"
 )
 
-// TODO: use const(...) with SNAKE_CAPS for all these
-
-// const account = "673007244143"
-// const region = "eu-west-2"
-
-const project = "SQS1"
-const version = "0.2.19"
-
-var queueKeyId = project + "QueueKey"
-var queueKeyAlias = "QueueKeyLive"
-
-const queue1Name = "TestQueue1"
-const queue2Name = "TestQueue2"
-const queue3Name = "TestQueue3"
-const queueMaxRetries = 3
-
-const tableName = "TestMessageTableV2"
-const tableId = project + tableName
-
-const topicName = "TestTopic"
-const topicId = project + topicName
-
-const pubHandlerId = project + "PubHandler"
-const pubEndpointId = project + "PubEndpoint"
-
-const continuousSubHandlerId = project + "ContinuousHandler"
-const suspendableSubHandlerId = project + "SudspendableHandler"
-
-const stackId = project + "Stack"
-
-const dashboardId = project + "Dashboard"
+const (
+	project                 = "SQS1"
+	version                 = "0.2.20"
+	queueKeyAlias           = "QueueKeyLive"
+	queue1Name              = "TestQueue1"
+	queue2Name              = "TestQueue2"
+	queue3Name              = "TestQueue3"
+	queueMaxRetries         = 3
+	tableName               = "TestMessageTableV2"
+	topicName               = "TestTopic"
+	tableId                 = project + tableName
+	queueKeyId              = project + "QueueKey"
+	topicId                 = project + topicName
+	pubHandlerId            = project + "PubHandler"
+	pubEndpointId           = project + "PubEndpoint"
+	continuousSubHandlerId  = project + "ContinuousHandler"
+	suspendableSubHandlerId = project + "SudspendableHandler"
+	stackId                 = project + "Stack"
+	dashboardId             = project + "Dashboard"
+)
 
 func NewSQSStack(scope constructs.Construct, id string, stackProps *stackprops.CdkStackProps) (stack awscdk.Stack) {
 	stack = stackProps.NewStack(scope, id)
@@ -194,17 +182,6 @@ func setupEmptySubHandler(stack awscdk.Stack, commonProps snshandler.SNSCommonPr
 }
 
 func main() {
-	defer jsii.Close()
-
-	// env := awscdk.Environment{
-	// 	Account: aws.String(account),
-	// 	Region:  aws.String(region),
-	// }
-
-	// stackProps := awscdk.StackProps{
-	// 	Env: &env,
-	// }
-
 	cdkStackProps := stackprops.CdkStackProps{
 		StackProps: awscdk.StackProps{},
 		Version:    version,

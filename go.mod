@@ -44,6 +44,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.28.14 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sts v1.33.14 // indirect
 	github.com/aws/aws-xray-sdk-go v1.8.4 // indirect
+	github.com/aws/constructs-go/constructs v0.0.0-20210203051210-8754df3d2bfd
 	github.com/aws/smithy-go v1.22.2 // indirect
 	github.com/b4b4r07/go-pipe v0.0.0-20191010045404-84b446f57366
 	github.com/cdklabs/awscdk-asset-awscli-go/awscliv1/v2 v2.2.220 // indirect

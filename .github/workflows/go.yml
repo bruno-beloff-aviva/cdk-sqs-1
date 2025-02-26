@@ -61,7 +61,7 @@ jobs:
       run: go run ./cli/purgequeues/purgequeues.go SQS1Stack-TestQueue
 
     - name: Purge Tables
-      run: go run ./cli/purgetables/purgetables.go TestMessageTableV1
+      run: go run ./cli/purgetables/purgetables.go TestMessageTable
 
     - name: Purge Lambdas
       run: go run ./cli/purgelambdas/purgelambdas.go SQS1Stack-

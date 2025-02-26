@@ -41,6 +41,7 @@ func listLambdaGroups(stackName string) (lambdaGroups map[string][]Lambda) {
 	query := fmt.Sprintf("Functions[?starts_with(FunctionName,`%s`)==`true`].*", stackName)
 
 	err := pipe.Command(&b,
+		// list-functions returns in version order, with $latest first...
 		exec.Command("aws", "lambda", "list-functions", "--function-version", "ALL", "--query", query),
 		exec.Command("jq", "-c"),
 	)
@@ -72,7 +73,7 @@ func purgeGroup(group []Lambda, keepCount int) {
 
 func main() {
 	if len(os.Args) != 2 {
-		fmt.Println("Usage: purgetable STACK_NAME")
+		fmt.Println("Usage: purgelambdas STACK_NAME")
 		os.Exit(1)
 	}
 

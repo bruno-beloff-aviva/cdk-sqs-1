@@ -61,15 +61,15 @@ func purgeTable(tableName string, keys gjson.Result) {
 
 func main() {
 	if len(os.Args) != 2 {
-		fmt.Println("Usage: purgetable TABLE_IDENTIFIER")
+		fmt.Println("Usage: purgetables TABLE_PREFIX")
 		os.Exit(1)
 	}
 
-	tableIdentifier := os.Args[1]
+	tablePrefix := os.Args[1]
 	names := listTables()
 
 	for _, name := range names {
-		if strings.Contains(name, tableIdentifier) {
+		if strings.HasPrefix(name, tablePrefix) {
 			fmt.Printf("Purging %s\n", name)
 			keys := getKeys(name)
 
