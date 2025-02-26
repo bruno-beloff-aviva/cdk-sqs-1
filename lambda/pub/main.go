@@ -35,15 +35,14 @@ func main() {
 	version := os.Getenv("VERSION")
 	logger.Info("version: " + version)
 
+	eventSource := os.Getenv("EVENT_SOURCE")
+	logger.Info("eventSource: " + eventSource)
+
 	eventBusName := os.Getenv("EVENT_BUS_NAME")
 	logger.Info("eventBusName: " + eventBusName)
 
-	// topicArn := os.Getenv("TOPIC_ARN")
-	// logger.Info("topicArn: " + topicArn)
-
 	//	service...
-	pubService := pub.NewEventBridgePubService(logger, cfg, eventBusName)
-	// pubService := pub.NewSNSPubService(logger, cfg, topicArn)
+	pubService := pub.NewEventBridgePubService(logger, cfg, eventSource, eventBusName)
 
 	//	lambda...
 	publishHandler := pubhandler.NewPubHandler(logger, pubService)
