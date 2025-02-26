@@ -7,5 +7,5 @@ import (
 )
 
 type SubService interface {
-	Receive(ctx context.Context, record events.SQSMessage) (err error)
+	Handle(ctx context.Context, record events.SQSMessage) (err error)
 }

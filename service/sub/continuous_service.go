@@ -29,12 +29,12 @@ func NewContinuousService(logger *zapray.Logger, cfg aws.Config, dbManager dbman
 	return handler
 }
 
-func (m *ContinuousService) newGateway(eventHasBeenProcessed services.EventHasBeenProcessedFunc, markEventAsProcessed services.MarkEventAsProcessedFunc) {
-	m.gateway = singleshot.NewSingleshotGateway(m.logger, m, eventHasBeenProcessed, markEventAsProcessed)
+func (s *ContinuousService) newGateway(eventHasBeenProcessed services.EventHasBeenProcessedFunc, markEventAsProcessed services.MarkEventAsProcessedFunc) {
+	s.gateway = singleshot.NewSingleshotGateway(s.logger, s, eventHasBeenProcessed, markEventAsProcessed)
 }
 
-func (m ContinuousService) Receive(ctx context.Context, record events.SQSMessage) (err error) {
-	m.logger.Info("Receive", zap.String("record body", record.Body))
+func (s ContinuousService) Handle(ctx context.Context, record events.SQSMessage) (err error) {
+	s.logger.Info("Handle", zap.String("record body", record.Body))
 
 	var message testmessage.TestMessage
 
@@ -43,29 +43,29 @@ func (m ContinuousService) Receive(ctx context.Context, record events.SQSMessage
 		return err
 	}
 
-	processed, err := m.gateway.ProcessOnce(ctx, message)
+	processPerformed, err := s.gateway.ProcessOnce(ctx, message)
 
-	if processed {
-		m.logger.Info("process done")
+	if processPerformed && err == nil {
+		s.logger.Info("process done - metrics here")
 	}
 
 	return err
 }
 
-func (m ContinuousService) UniqueID(event testmessage.TestMessage) (policyOrQuoteID string, eventID string, err error) {
+func (s ContinuousService) UniqueID(event testmessage.TestMessage) (policyOrQuoteID string, eventID string, err error) {
 	return event.Client, event.Sent, nil
 }
 
-func (m ContinuousService) Process(ctx context.Context, event testmessage.TestMessage) (err error) {
-	m.logger.Debug("Process: ", zap.Any("event", event))
+func (s ContinuousService) Process(ctx context.Context, event testmessage.TestMessage) (err error) {
+	s.logger.Debug("Process: ", zap.Any("event", event))
 
 	// dbManager.Put...
-	reception := testreception.NewTestReception(m.id, event)
-	m.logger.Info("Process: ", zap.Any("reception", reception))
+	reception := testreception.NewTestReception(s.id, event)
+	s.logger.Info("Process: ", zap.Any("reception", reception))
 
-	err = m.dbManager.Put(ctx, &reception)
+	err = s.dbManager.Put(ctx, &reception)
 	if err != nil {
-		m.logger.Error("Put: ", zap.Error(err))
+		s.logger.Error("Put: ", zap.Error(err))
 	}
 
 	return err

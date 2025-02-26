@@ -27,7 +27,7 @@ func (h SubHandler) Handle(ctx context.Context, event events.SQSEvent) (err erro
 	h.logger.Debug("Handle: ", zap.Int("records", len(event.Records)))
 
 	for _, record := range event.Records {
-		err = h.subService.Receive(ctx, record)
+		err = h.subService.Handle(ctx, record)
 		if err != nil {
 			h.logger.Info("Handle: ", zap.String("err", err.Error()))
 			return err

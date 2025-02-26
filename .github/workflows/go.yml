@@ -63,4 +63,6 @@ jobs:
     - name: Purge Tables
       run: go run ./cli/purgetables/purgetables.go TestMessageTableV1
 
-      # TODO: prune old versions of lambda functions
+    - name: Purge Lambdas
+      run: go run ./cli/purgelambdas/purgelambdas.go SQS1Stack-
+

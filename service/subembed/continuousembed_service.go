@@ -33,8 +33,8 @@ func NewContinuousService(logger *zapray.Logger, cfg aws.Config, dbManager dbman
 	return handler
 }
 
-func (m ContinuousService) Receive(ctx context.Context, record events.SQSMessage) (err error) {
-	m.logger.Info("Receive", zap.String("record body", record.Body))
+func (m ContinuousService) Handle(ctx context.Context, record events.SQSMessage) (err error) {
+	m.logger.Info("Handle", zap.String("record body", record.Body))
 
 	var message testmessage.TestMessage
 

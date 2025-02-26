@@ -9,8 +9,8 @@ import (
 )
 
 type SingleshotHandler[T any] interface {
-	Process(ctx context.Context, event T) (err error)
 	UniqueID(event T) (policyOrQuoteID string, eventID string, err error)
+	Process(ctx context.Context, event T) (err error)
 }
 
 type SingleshotGateway[T any] struct {

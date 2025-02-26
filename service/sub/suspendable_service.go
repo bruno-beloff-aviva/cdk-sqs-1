@@ -29,8 +29,8 @@ func NewSuspendableService(logger *zapray.Logger, cfg aws.Config, dbManager dbma
 	return SuspendableService{logger: logger, dbManager: dbManager, id: id}
 }
 
-func (m SuspendableService) Receive(ctx context.Context, record events.SQSMessage) (err error) {
-	m.logger.Debug("Receive", zap.String("record body", record.Body))
+func (m SuspendableService) Handle(ctx context.Context, record events.SQSMessage) (err error) {
+	m.logger.Debug("Handle", zap.String("record body", record.Body))
 
 	var message testmessage.TestMessage
 	var reception testreception.TestReception
