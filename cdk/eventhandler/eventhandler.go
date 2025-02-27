@@ -13,7 +13,6 @@ import (
 	"github.com/aws/aws-cdk-go/awscdk/v2/awslambdaeventsources"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awslogs"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awssns"
-	"github.com/aws/aws-cdk-go/awscdk/v2/awssnssubscriptions"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awssqs"
 	awslambdago "github.com/aws/aws-cdk-go/awscdklambdagoalpha/v2"
 	"github.com/aws/aws-sdk-go/aws"
@@ -52,10 +51,10 @@ func (b EventHandlerBuilder) Setup(stack awscdk.Stack, commonProps EventHandlerC
 	c.Dashboard = commonProps.Dashboard
 	c.Queue = b.setupQueue(stack, commonProps)
 
-	subProps := awssnssubscriptions.SqsSubscriptionProps{
-		RawMessageDelivery: aws.Bool(true),
-	}
-	b.SubscriptionTopic.AddSubscription(awssnssubscriptions.NewSqsSubscription(c.Queue, &subProps))
+	// subProps := awssnssubscriptions.SqsSubscriptionProps{
+	// 	RawMessageDelivery: aws.Bool(true),
+	// }
+	// b.SubscriptionTopic.AddSubscription(awssnssubscriptions.NewSqsSubscription(c.Queue, &subProps))
 
 	if b.HandlerId == "" {
 		return c
