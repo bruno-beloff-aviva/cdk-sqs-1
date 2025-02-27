@@ -12,7 +12,6 @@ import (
 	"github.com/aws/aws-cdk-go/awscdk/v2/awslambda"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awslambdaeventsources"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awslogs"
-	"github.com/aws/aws-cdk-go/awscdk/v2/awssns"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awssqs"
 	awslambdago "github.com/aws/aws-cdk-go/awscdklambdagoalpha/v2"
 	"github.com/aws/aws-sdk-go/aws"
@@ -26,11 +25,10 @@ type EventHandlerCommonProps struct {
 }
 
 type EventHandlerBuilder struct {
-	SubscriptionTopic awssns.Topic // TODO: do we need this?
-	QueueName         string
-	HandlerId         string
-	Entry             string
-	Environment       map[string]*string
+	QueueName   string
+	HandlerId   string
+	Entry       string
+	Environment map[string]*string
 }
 
 type EventHandlerConstruct struct {
@@ -40,8 +38,6 @@ type EventHandlerConstruct struct {
 	Dashboard dashboard.Dashboard
 }
 
-// TODO: use FIFO queues
-
 // ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 func (b EventHandlerBuilder) Setup(stack awscdk.Stack, commonProps EventHandlerCommonProps) EventHandlerConstruct {
@@ -50,11 +46,6 @@ func (b EventHandlerBuilder) Setup(stack awscdk.Stack, commonProps EventHandlerC
 	c.Builder = b
 	c.Dashboard = commonProps.Dashboard
 	c.Queue = b.setupQueue(stack, commonProps)
-
-	// subProps := awssnssubscriptions.SqsSubscriptionProps{
-	// 	RawMessageDelivery: aws.Bool(true),
-	// }
-	// b.SubscriptionTopic.AddSubscription(awssnssubscriptions.NewSqsSubscription(c.Queue, &subProps))
 
 	if b.HandlerId == "" {
 		return c

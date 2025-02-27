@@ -38,12 +38,11 @@ type GatewayCommonProps struct {
 
 // specific to an Gateway handler
 type GatewayBuilder struct {
-	EndpointId       string
-	HandlerId        string
-	EventBus         awsevents.IEventBus
-	PublicationTopic NamedTopic
-	Entry            string
-	Environment      map[string]*string
+	EndpointId  string
+	HandlerId   string
+	EventBus    awsevents.IEventBus
+	Entry       string
+	Environment map[string]*string
 }
 
 type GatewayConstruct struct {
@@ -64,7 +63,6 @@ func (b GatewayBuilder) Setup(stack awscdk.Stack, stackProps stackprops.CdkStack
 	c.Gateway = b.setupGateway(stack, alias)
 
 	b.EventBus.GrantPutEventsTo(alias)
-	b.PublicationTopic.GrantPublish(alias)
 
 	return c
 }
@@ -139,12 +137,12 @@ func (c GatewayConstruct) GatewayMetricsGraphWidget() awscloudwatch.GraphWidget 
 	return c.Dashboard.CreateGraphWidget(*region, fmt.Sprintf("%s - Invocations & Errors", c.Builder.EndpointId), metrics)
 }
 
-func (c GatewayConstruct) TopicMetricsGraphWidget() awscloudwatch.GraphWidget {
-	region := c.Handler.Stack().Region()
+// func (c GatewayConstruct) TopicMetricsGraphWidget() awscloudwatch.GraphWidget {
+// 	region := c.Handler.Stack().Region()
 
-	publicationsMetric := c.Dashboard.CreateTopicMetric(*region, "NumberOfMessagesPublished", c.Builder.PublicationTopic.TopicName(), "Sum")
-	failsMetric := c.Dashboard.CreateTopicMetric(*region, "NumberOfNotificationsFailed", c.Builder.PublicationTopic.TopicName(), "Sum")
-	metrics := []awscloudwatch.IMetric{publicationsMetric, failsMetric}
+// 	publicationsMetric := c.Dashboard.CreateTopicMetric(*region, "NumberOfMessagesPublished", c.Builder.PublicationTopic.TopicName(), "Sum")
+// 	failsMetric := c.Dashboard.CreateTopicMetric(*region, "NumberOfNotificationsFailed", c.Builder.PublicationTopic.TopicName(), "Sum")
+// 	metrics := []awscloudwatch.IMetric{publicationsMetric, failsMetric}
 
-	return c.Dashboard.CreateGraphWidget(*region, fmt.Sprintf("%s - Publications & Failures", c.Builder.PublicationTopic.Name), metrics)
-}
+// 	return c.Dashboard.CreateGraphWidget(*region, fmt.Sprintf("%s - Publications & Failures", c.Builder.PublicationTopic.Name), metrics)
+// }
