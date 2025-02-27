@@ -148,6 +148,8 @@ func setupEventBus(stack awscdk.Stack) awsevents.IEventBus {
 	return bus
 }
 
+// https://dev.to/chrisarmstrong/sqs-queues-as-an-eventbridge-rule-target-3d2g
+
 func setupEventBusRule(stack awscdk.Stack, eventBus awsevents.IEventBus, source string) (rule awsevents.Rule, targetInput awseventstargets.SqsQueueProps) {
 	eventPattern := &awsevents.EventPattern{
 		Source: &[]*string{
@@ -164,7 +166,8 @@ func setupEventBusRule(stack awscdk.Stack, eventBus awsevents.IEventBus, source 
 	rule = awsevents.NewRule(stack, aws.String(project+"GatewayTestMessageRule"), &ruleProps) // TODO: sort out name for rule
 
 	targetInput = awseventstargets.SqsQueueProps{
-		Message: awsevents.RuleTargetInput_FromEventPath(aws.String("$.detail")),
+		Message:        awsevents.RuleTargetInput_FromEventPath(aws.String("$.detail")),
+		MessageGroupId: aws.String("messageGroupId"),
 	}
 
 	return rule, targetInput
