@@ -9,7 +9,6 @@ import (
 	"sqstest/cdk/dashboard"
 	"sqstest/cdk/eventhandler"
 	"sqstest/cdk/gatewayhandler"
-	"sqstest/cdk/snshandler"
 	"sqstest/cdk/stackprops"
 
 	"github.com/aws/aws-cdk-go/awscdk/v2"
@@ -25,7 +24,7 @@ import (
 
 const (
 	project                 = "SQS1"
-	version                 = "0.2.22"
+	version                 = "0.2.25"
 	queueKeyAlias           = "QueueKeyLive"
 	queue1Name              = "TestQueue1"
 	queue2Name              = "TestQueue2"
@@ -80,39 +79,22 @@ func NewSQSStack(scope constructs.Construct, id string, stackProps *stackprops.C
 		Dashboard:       dash,
 	}
 
-	snsSubProps := snshandler.SNSCommonProps{
-		QueueKey:        queueKey,
-		QueueMaxRetries: queueMaxRetries,
-		MessageTable:    table,
-		Dashboard:       dash,
-	}
+	// snsSubProps := snshandler.SNSCommonProps{
+	// 	QueueKey:        queueKey,
+	// 	QueueMaxRetries: queueMaxRetries,
+	// 	MessageTable:    table,
+	// 	Dashboard:       dash,
+	// }
 
 	c1 := setupContinuousSubHandler(stack, ebSubProps, topic)
-	c2 := setupSuspendableSubHandler(stack, snsSubProps, topic)
-	c3 := setupEmptySubHandler(stack, snsSubProps, topic)
+	c2 := setupSuspendableSubHandler(stack, ebSubProps, topic)
+	c3 := setupEmptySubHandler(stack, ebSubProps, topic)
 
-	rule, queueProps := setupEventBusRule(stack, eventBus, pubEndpointId)
+	rule, targetInput := setupEventBusRule(stack, eventBus, pubEndpointId)
 
-	rule.AddTarget(awseventstargets.NewSqsQueue(c1.Queue, &queueProps))
-
-	// eventPattern := &awsevents.EventPattern{
-	// 	Source: &[]*string{
-	// 		aws.String(pubEndpointId),
-	// 	},
-	// }
-
-	// ruleProps := awsevents.RuleProps{
-	// 	EventBus:     eventBus,
-	// 	EventPattern: eventPattern,
-	// }
-
-	// queueProps := awseventstargets.SqsQueueProps{
-	// 	Message: awsevents.RuleTargetInput_FromEventPath(aws.String("$.detail")),
-	// }
-
-	// rule := awsevents.NewRule(stack, aws.String("TestRule1"), &ruleProps)
-
-	// rule.AddTarget(awseventstargets.NewSqsQueue(c1.Queue, &queueProps))
+	rule.AddTarget(awseventstargets.NewSqsQueue(c1.Queue, &targetInput))
+	rule.AddTarget(awseventstargets.NewSqsQueue(c2.Queue, &targetInput))
+	rule.AddTarget(awseventstargets.NewSqsQueue(c3.Queue, &targetInput))
 
 	// dashboard widgets...
 	dash.AddWidgetsRow(c0.GatewayMetricsGraphWidget(), c0.LambdaMetricsGraphWidget(), c1.LambdaMetricsGraphWidget(), c2.LambdaMetricsGraphWidget())
@@ -163,8 +145,8 @@ func setupQueueKey(stack awscdk.Stack) awskms.IKey {
 func setupEventBus(stack awscdk.Stack) awsevents.IEventBus {
 	busProps := awsevents.EventBusProps{
 		EventBusName: aws.String(eventBusName),
-		DeadLetterQueue: awssqs.NewQueue(stack, aws.String(project+"EBDeadLetterQueue"), &awssqs.QueueProps{ // TODO: sort out DLQ
-			QueueName: aws.String("EBDeadLetterQueue"),
+		DeadLetterQueue: awssqs.NewQueue(stack, aws.String(eventBusId+"DLQ"), &awssqs.QueueProps{
+			QueueName: aws.String(eventBusName + "DLQ"),
 		}),
 	}
 
@@ -173,7 +155,7 @@ func setupEventBus(stack awscdk.Stack) awsevents.IEventBus {
 	return bus
 }
 
-func setupEventBusRule(stack awscdk.Stack, eventBus awsevents.IEventBus, source string) (rule awsevents.Rule, queueProps awseventstargets.SqsQueueProps) {
+func setupEventBusRule(stack awscdk.Stack, eventBus awsevents.IEventBus, source string) (rule awsevents.Rule, targetInput awseventstargets.SqsQueueProps) {
 	eventPattern := &awsevents.EventPattern{
 		Source: &[]*string{
 			aws.String(source),
@@ -188,11 +170,11 @@ func setupEventBusRule(stack awscdk.Stack, eventBus awsevents.IEventBus, source 
 
 	rule = awsevents.NewRule(stack, aws.String(project+"GatewayTestMessageRule"), &ruleProps) // TODO: sort out name for rule
 
-	queueProps = awseventstargets.SqsQueueProps{
+	targetInput = awseventstargets.SqsQueueProps{
 		Message: awsevents.RuleTargetInput_FromEventPath(aws.String("$.detail")),
 	}
 
-	return rule, queueProps
+	return rule, targetInput
 }
 
 func setupPubHandler(stack awscdk.Stack, stackProps stackprops.CdkStackProps, commonProps gatewayhandler.GatewayCommonProps, eventBus awsevents.IEventBus, topic gatewayhandler.NamedTopic) gatewayhandler.GatewayConstruct {
@@ -248,14 +230,14 @@ func setupContinuousSubHandler(stack awscdk.Stack, commonProps eventhandler.Even
 // 	return builder.Setup(stack, commonProps)
 // }
 
-func setupSuspendableSubHandler(stack awscdk.Stack, commonProps snshandler.SNSCommonProps, topic awssns.Topic) snshandler.SNSConstruct {
+func setupSuspendableSubHandler(stack awscdk.Stack, commonProps eventhandler.EventHandlerCommonProps, topic awssns.Topic) eventhandler.EventHandlerConstruct {
 	environment := map[string]*string{
 		"VERSION":            aws.String(version),
 		"MESSAGE_TABLE_NAME": aws.String(tableName),
 		"SUSPENDED":          aws.String("false"),
 	}
 
-	builder := snshandler.SNSBuilder{
+	builder := eventhandler.EventHandlerBuilder{
 		SubscriptionTopic: topic,
 		QueueName:         queue2Name,
 		HandlerId:         suspendableSubHandlerId,
@@ -266,8 +248,8 @@ func setupSuspendableSubHandler(stack awscdk.Stack, commonProps snshandler.SNSCo
 	return builder.Setup(stack, commonProps)
 }
 
-func setupEmptySubHandler(stack awscdk.Stack, commonProps snshandler.SNSCommonProps, topic awssns.Topic) snshandler.SNSConstruct {
-	builder := snshandler.SNSBuilder{
+func setupEmptySubHandler(stack awscdk.Stack, commonProps eventhandler.EventHandlerCommonProps, topic awssns.Topic) eventhandler.EventHandlerConstruct {
+	builder := eventhandler.EventHandlerBuilder{
 		SubscriptionTopic: topic,
 		QueueName:         queue3Name,
 	}
