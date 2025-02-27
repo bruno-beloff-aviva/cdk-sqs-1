@@ -72,23 +72,16 @@ func NewSQSStack(scope constructs.Construct, id string, stackProps *stackprops.C
 	eventBus.GrantPutEventsTo(c0.Handler)
 
 	// sub lambdas...
-	ebSubProps := eventhandler.EventHandlerCommonProps{
+	subProps := eventhandler.EventHandlerCommonProps{
 		QueueKey:        queueKey,
 		QueueMaxRetries: queueMaxRetries,
 		MessageTable:    table,
 		Dashboard:       dash,
 	}
 
-	// snsSubProps := snshandler.SNSCommonProps{
-	// 	QueueKey:        queueKey,
-	// 	QueueMaxRetries: queueMaxRetries,
-	// 	MessageTable:    table,
-	// 	Dashboard:       dash,
-	// }
-
-	c1 := setupContinuousSubHandler(stack, ebSubProps, topic)
-	c2 := setupSuspendableSubHandler(stack, ebSubProps, topic)
-	c3 := setupEmptySubHandler(stack, ebSubProps, topic)
+	c1 := setupContinuousSubHandler(stack, subProps, topic)
+	c2 := setupSuspendableSubHandler(stack, subProps, topic)
+	c3 := setupEmptySubHandler(stack, subProps, topic)
 
 	rule, targetInput := setupEventBusRule(stack, eventBus, pubEndpointId)
 
@@ -212,23 +205,6 @@ func setupContinuousSubHandler(stack awscdk.Stack, commonProps eventhandler.Even
 
 	return builder.Setup(stack, commonProps)
 }
-
-// func setupContinuousSubHandler(stack awscdk.Stack, commonProps snshandler.SNSCommonProps, topic awssns.Topic) snshandler.SNSConstruct {
-// 	environment := map[string]*string{
-// 		"VERSION":            aws.String(version),
-// 		"MESSAGE_TABLE_NAME": aws.String(tableName),
-// 	}
-
-// 	builder := snshandler.SNSBuilder{
-// 		SubscriptionTopic: topic,
-// 		QueueName:         queue1Name,
-// 		HandlerId:         continuousSubHandlerId,
-// 		Entry:             "lambda/subcontinuous/",
-// 		Environment:       environment,
-// 	}
-
-// 	return builder.Setup(stack, commonProps)
-// }
 
 func setupSuspendableSubHandler(stack awscdk.Stack, commonProps eventhandler.EventHandlerCommonProps, topic awssns.Topic) eventhandler.EventHandlerConstruct {
 	environment := map[string]*string{

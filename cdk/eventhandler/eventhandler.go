@@ -70,9 +70,9 @@ func (b EventHandlerBuilder) Setup(stack awscdk.Stack, commonProps EventHandlerC
 
 func (b EventHandlerBuilder) setupQueue(stack awscdk.Stack, commonProps EventHandlerCommonProps) awssqs.Queue {
 	queueProps := sqs.SqsQueueWithDLQProps{
-		Stack:     stack,
-		QueueName: b.QueueName,
-		// Fifo:                     true,			// Not with EventHandler
+		Stack:                    stack,
+		QueueName:                b.QueueName,
+		Fifo:                     true,
 		SQSKey:                   commonProps.QueueKey,
 		QMaxReceiveCount:         commonProps.QueueMaxRetries,
 		QAlarmPeriod:             1,
