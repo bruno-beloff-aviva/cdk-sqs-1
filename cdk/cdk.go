@@ -70,6 +70,7 @@ func NewSQSStack(scope constructs.Construct, id string, stackProps *stackprops.C
 	}
 
 	c0 := setupPubHandler(stack, *stackProps, pubProps, eventBus, topic)
+	eventBus.GrantPutEventsTo(c0.Handler)
 
 	// sub lambdas...
 	ebSubProps := eventhandler.EventHandlerCommonProps{
@@ -89,53 +90,29 @@ func NewSQSStack(scope constructs.Construct, id string, stackProps *stackprops.C
 	c1 := setupContinuousSubHandler(stack, ebSubProps, topic)
 	c2 := setupSuspendableSubHandler(stack, snsSubProps, topic)
 	c3 := setupEmptySubHandler(stack, snsSubProps, topic)
-	eventBus.GrantPutEventsTo(c0.Handler)
 
-	eventPattern := &awsevents.EventPattern{
-		Source: &[]*string{
-			aws.String(pubEndpointId),
-		},
-	}
+	rule, queueProps := setupEventBusRule(stack, eventBus, pubEndpointId)
 
-	// 		Input:        awsevents.RuleTargetInput.FromText(aws.String(`{"source":"$.source","detail-type":"$.detail-type","detail":"$.detail"}`)),
+	rule.AddTarget(awseventstargets.NewSqsQueue(c1.Queue, &queueProps))
 
-	// targetConf := awsevents.RuleTargetInput_FromText(aws.String(`{"source":"$.source","detail-type":"$.detail-type","detail":"$.detail"}`))
-
-	// inputProps := awsevents.RuleTargetInputProperties{
-	// 	Input:     aws.String(`{"source":"$.source","detail-type":"$.detail-type","detail":"$.detail"}`),
-	// 	InputPath: aws.String("$.source"),
-	// 	InputPathsMap: &map[string]*string{
-	// 		"$.source":      aws.String("$.source"),
-	// 		"$.detail-type": aws.String("$.detail-type"),
-	// 		"$.detail":      aws.String("$.detail"),
+	// eventPattern := &awsevents.EventPattern{
+	// 	Source: &[]*string{
+	// 		aws.String(pubEndpointId),
 	// 	},
-	// 	InputTemplate: aws.String(`{"source":"$.source","detail-type":"$.detail-type","detail":"$.detail"}`),
 	// }
 
-	// target := awsevents.RuleTargetConfig{
-	// 	Arn:   aws.String("arn:aws:lambda:us-west-2:123456789012:function:my-function"),
-	// 	Input: awsevents.RuleTargetInput_FromText(aws.String(`{"source":"$.source","detail-type":"$.detail-type","detail":"$.detail"}`)),
+	// ruleProps := awsevents.RuleProps{
+	// 	EventBus:     eventBus,
+	// 	EventPattern: eventPattern,
 	// }
 
-	// 			awseventstargets.NewSqsQueue(c1.Queue, &awseventstargets.SqsQueueProps{}),
+	// queueProps := awseventstargets.SqsQueueProps{
+	// 	Message: awsevents.RuleTargetInput_FromEventPath(aws.String("$.detail")),
+	// }
 
-	// https://docs.aws.amazon.com/cdk/api/v2/docs/aws-cdk-lib.aws_events.RuleTargetInput.html
+	// rule := awsevents.NewRule(stack, aws.String("TestRule1"), &ruleProps)
 
-	// awsevents.NewRuleTargetInput_Override(&inputProps)
-	ruleProps := &awsevents.RuleProps{
-		EventBus:     eventBus,
-		EventPattern: eventPattern,
-		// Targets: &[]awsevents.IRuleTarget{
-		// 	awseventstargets.NewSqsQueue(c1.Queue, &awseventstargets.SqsQueueProps{}),
-		// },
-	}
-
-	rule := awsevents.NewRule(stack, aws.String("TestRule1"), ruleProps)
-
-	rule.AddTarget(awseventstargets.NewSqsQueue(c1.Queue, &awseventstargets.SqsQueueProps{
-		Message: awsevents.RuleTargetInput_FromEventPath(aws.String("$.detail")),
-		// Message: awsevents.RuleTargetInput_FromText(aws.String(`{"source":"$.source","detail-type":"$.detail-type","detail":"$.detail"}`)),
-	}))
+	// rule.AddTarget(awseventstargets.NewSqsQueue(c1.Queue, &queueProps))
 
 	// dashboard widgets...
 	dash.AddWidgetsRow(c0.GatewayMetricsGraphWidget(), c0.LambdaMetricsGraphWidget(), c1.LambdaMetricsGraphWidget(), c2.LambdaMetricsGraphWidget())
@@ -161,7 +138,7 @@ func setupMessageTable(stack awscdk.Stack, id string, name string) awsdynamodb.I
 	return awsdynamodb.NewTable(stack, aws.String(id), &tableProps)
 }
 
-func setupTopic(stack awscdk.Stack, id string, name string) gatewayhandler.NamedTopic {
+func setupTopic(stack awscdk.Stack, id string, name string) gatewayhandler.NamedTopic { // TODO: remove this?
 	topicProps := awssns.TopicProps{
 		DisplayName: aws.String(name),
 	}
@@ -186,14 +163,36 @@ func setupQueueKey(stack awscdk.Stack) awskms.IKey {
 func setupEventBus(stack awscdk.Stack) awsevents.IEventBus {
 	busProps := awsevents.EventBusProps{
 		EventBusName: aws.String(eventBusName),
-		DeadLetterQueue: awssqs.NewQueue(stack, aws.String("DeadLetterQueue"), &awssqs.QueueProps{ // TODO: sort out DLQ
-			QueueName: aws.String("DeadLetterQueue"),
+		DeadLetterQueue: awssqs.NewQueue(stack, aws.String(project+"EBDeadLetterQueue"), &awssqs.QueueProps{ // TODO: sort out DLQ
+			QueueName: aws.String("EBDeadLetterQueue"),
 		}),
 	}
 
 	bus := awsevents.NewEventBus(stack, aws.String(eventBusId), &busProps)
 
 	return bus
+}
+
+func setupEventBusRule(stack awscdk.Stack, eventBus awsevents.IEventBus, source string) (rule awsevents.Rule, queueProps awseventstargets.SqsQueueProps) {
+	eventPattern := &awsevents.EventPattern{
+		Source: &[]*string{
+			aws.String(source),
+		},
+	}
+
+	ruleProps := awsevents.RuleProps{
+		EventBus:     eventBus,
+		EventPattern: eventPattern,
+		RuleName:     aws.String("GatewayTestMessageRule"),
+	}
+
+	rule = awsevents.NewRule(stack, aws.String(project+"GatewayTestMessageRule"), &ruleProps) // TODO: sort out name for rule
+
+	queueProps = awseventstargets.SqsQueueProps{
+		Message: awsevents.RuleTargetInput_FromEventPath(aws.String("$.detail")),
+	}
+
+	return rule, queueProps
 }
 
 func setupPubHandler(stack awscdk.Stack, stackProps stackprops.CdkStackProps, commonProps gatewayhandler.GatewayCommonProps, eventBus awsevents.IEventBus, topic gatewayhandler.NamedTopic) gatewayhandler.GatewayConstruct {

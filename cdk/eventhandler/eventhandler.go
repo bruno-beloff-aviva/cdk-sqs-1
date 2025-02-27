@@ -27,7 +27,7 @@ type EventHandlerCommonProps struct {
 }
 
 type EventHandlerBuilder struct {
-	SubscriptionTopic awssns.Topic
+	SubscriptionTopic awssns.Topic // TODO: do we need this?
 	QueueName         string
 	HandlerId         string
 	Entry             string
@@ -51,8 +51,6 @@ func (b EventHandlerBuilder) Setup(stack awscdk.Stack, commonProps EventHandlerC
 	c.Builder = b
 	c.Dashboard = commonProps.Dashboard
 	c.Queue = b.setupQueue(stack, commonProps)
-
-	// TODO: EventBridge rule to trigger queue
 
 	subProps := awssnssubscriptions.SqsSubscriptionProps{
 		RawMessageDelivery: aws.Bool(true),
