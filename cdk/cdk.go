@@ -24,13 +24,14 @@ import (
 
 const (
 	project                 = "SQS1"
-	version                 = "0.2.26"
+	version                 = "0.2.27"
 	queueKeyAlias           = "QueueKeyLive"
 	queue1Name              = "TestQueue1"
 	queue2Name              = "TestQueue2"
 	queue3Name              = "TestQueue3"
 	queueMaxRetries         = 3
 	eventBusName            = "TestEventBus"
+	eventBusRuleName        = "GatewayTestMessage"
 	tableName               = "TestMessageTableV2"
 	eventBusId              = project + eventBusName
 	tableId                 = project + tableName
@@ -46,19 +47,16 @@ const (
 func NewSQSStack(scope constructs.Construct, id string, stackProps *stackprops.CdkStackProps) (stack awscdk.Stack) {
 	stack = stackProps.NewStack(scope, id)
 
-	// dashboard...
+	// Dashboard...
 	dash := setupDashboard(stack)
 
-	// event bus...
+	// EventBus...
 	eventBus := setupEventBus(stack)
 
-	// topic...
-	// topic := setupTopic(stack, topicId, topicName)
-
-	// table...
+	// DBTable...
 	table := setupMessageTable(stack, tableId, tableName)
 
-	// key...
+	// QueueKey...
 	queueKey := setupQueueKey(stack)
 
 	// pub lambda...
@@ -81,13 +79,14 @@ func NewSQSStack(scope constructs.Construct, id string, stackProps *stackprops.C
 	c2 := setupSuspendableSubHandler(stack, subProps, queue2Name)
 	c3 := setupEmptySubHandler(stack, subProps, queue3Name)
 
+	// EventBus rule...
 	rule, targetInput := setupEventBusRule(stack, eventBus, pubEndpointId)
 
 	rule.AddTarget(awseventstargets.NewSqsQueue(c1.Queue, &targetInput))
 	rule.AddTarget(awseventstargets.NewSqsQueue(c2.Queue, &targetInput))
 	rule.AddTarget(awseventstargets.NewSqsQueue(c3.Queue, &targetInput))
 
-	// dashboard widgets...
+	// Dashboard widgets...
 	dash.AddWidgetsRow(c0.GatewayMetricsGraphWidget(), c0.LambdaMetricsGraphWidget(), c1.LambdaMetricsGraphWidget(), c2.LambdaMetricsGraphWidget())
 	dash.AddWidgetsRow(c1.QueueMetricsGraphWidget(), c1.DLQMetricsGraphWidget(), c2.QueueMetricsGraphWidget(), c2.DLQMetricsGraphWidget())
 	dash.AddWidgetsRow(c3.QueueMetricsGraphWidget(), c3.DLQMetricsGraphWidget())
@@ -110,19 +109,6 @@ func setupMessageTable(stack awscdk.Stack, id string, name string) awsdynamodb.I
 
 	return awsdynamodb.NewTable(stack, aws.String(id), &tableProps)
 }
-
-// func setupTopic(stack awscdk.Stack, id string, name string) gatewayhandler.NamedTopic { // TODO: remove this?
-// 	topicProps := awssns.TopicProps{
-// 		DisplayName: aws.String(name),
-// 	}
-
-// 	topic := gatewayhandler.NamedTopic{
-// 		Topic: awssns.NewTopic(stack, aws.String(id), &topicProps),
-// 		Name:  name,
-// 	}
-
-// 	return topic
-// }
 
 func setupQueueKey(stack awscdk.Stack) awskms.IKey {
 	keyProps := awskms.KeyProps{
@@ -156,14 +142,14 @@ func setupEventBusRule(stack awscdk.Stack, eventBus awsevents.IEventBus, source 
 	ruleProps := awsevents.RuleProps{
 		EventBus:     eventBus,
 		EventPattern: eventPattern,
-		RuleName:     aws.String("GatewayTestMessageRule"),
+		RuleName:     aws.String(eventBusRuleName + "Rule"),
 	}
 
-	rule = awsevents.NewRule(stack, aws.String(project+"GatewayTestMessageRule"), &ruleProps) // TODO: sort out name for rule / gid
+	rule = awsevents.NewRule(stack, aws.String(project+eventBusRuleName+"Rule"), &ruleProps)
 
 	targetInput = awseventstargets.SqsQueueProps{
 		Message:        awsevents.RuleTargetInput_FromEventPath(aws.String("$.detail")),
-		MessageGroupId: aws.String("GatewayTestMessageGroup"),
+		MessageGroupId: aws.String(eventBusRuleName + "Group"),
 	}
 
 	return rule, targetInput

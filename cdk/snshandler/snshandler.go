@@ -2,8 +2,8 @@ package snshandler
 
 import (
 	"fmt"
-	"sqstest/aviva/sqs"
 	"sqstest/cdk/dashboard"
+	"sqstest/cdkstandards/sqs"
 
 	"github.com/aws/aws-cdk-go/awscdk/v2"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awscloudwatch"

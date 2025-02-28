@@ -2,8 +2,8 @@ package eventhandler
 
 import (
 	"fmt"
-	"sqstest/aviva/sqs"
 	"sqstest/cdk/dashboard"
+	"sqstest/cdkstandards/sqs"
 
 	"github.com/aws/aws-cdk-go/awscdk/v2"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awscloudwatch"
@@ -79,7 +79,7 @@ func (b EventHandlerBuilder) setupQueue(stack awscdk.Stack, commonProps EventHan
 
 func (b EventHandlerBuilder) setupSubHandler(stack awscdk.Stack, queue awssqs.IQueue) awslambdago.GoFunction {
 	handlerProps := awslambdago.GoFunctionProps{
-		Description:   aws.String("Handler with queue listening to EventHandler events"),
+		Description:   aws.String("Handler with queue listening to EventBridge events"),
 		Runtime:       awslambda.Runtime_PROVIDED_AL2(),
 		Architecture:  awslambda.Architecture_ARM_64(),
 		Entry:         aws.String(b.Entry),
