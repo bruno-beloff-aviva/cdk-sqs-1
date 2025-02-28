@@ -9,6 +9,7 @@ import (
 	"context"
 	"strings"
 
+	"github.com/aws/aws-cdk-go/awscdk/v2/awsdynamodb"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
@@ -19,13 +20,17 @@ import (
 )
 
 type DynamoAble interface {
-	GetPartitionKey() map[string]any
+	PartitionKey() map[string]any
 }
 
 type DynamoManager struct {
 	logger    *zapray.Logger
 	dBClient  *dynamodb.Client
 	tableName string
+}
+
+func StringAttribute(keyName string) *awsdynamodb.Attribute {
+	return &awsdynamodb.Attribute{Name: aws.String(keyName), Type: awsdynamodb.AttributeType_STRING}
 }
 
 func NewDynamoManager(logger *zapray.Logger, cfg aws.Config, tableName string) DynamoManager {
@@ -47,7 +52,7 @@ func (m DynamoManager) TableIsAvailable(ctx context.Context) bool {
 }
 
 func (m DynamoManager) Get(ctx context.Context, object DynamoAble) error {
-	m.logger.Debug("Get: ", zap.Any("key", object.GetPartitionKey()))
+	m.logger.Debug("Get: ", zap.Any("key", object.PartitionKey()))
 
 	params := dynamodb.GetItemInput{
 		Key:       getDBKey(object),
@@ -57,7 +62,7 @@ func (m DynamoManager) Get(ctx context.Context, object DynamoAble) error {
 	response, err := m.dBClient.GetItem(ctx, &params)
 
 	if err != nil {
-		m.logger.Error("GetItem: ", zap.Any("key", object.GetPartitionKey()), zap.Error(err))
+		m.logger.Error("GetItem: ", zap.Any("key", object.PartitionKey()), zap.Error(err))
 	} else {
 		err = attributevalue.UnmarshalMap(response.Item, &object)
 		if err != nil {
@@ -136,5 +141,5 @@ func dBKeyMarshal(objectValue any) types.AttributeValue {
 }
 
 func getDBKey(object DynamoAble) map[string]types.AttributeValue {
-	return dBKeyMap(object.GetPartitionKey(), dBKeyMarshal)
+	return dBKeyMap(object.PartitionKey(), dBKeyMarshal)
 }

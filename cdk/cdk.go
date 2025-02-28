@@ -11,6 +11,7 @@ import (
 	"sqstest/cdk/eventhandler"
 	"sqstest/cdk/gatewayhandler"
 	"sqstest/cdk/stackprops"
+	"sqstest/service/testreception"
 
 	"github.com/aws/aws-cdk-go/awscdk/v2"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awsdynamodb"
@@ -102,8 +103,8 @@ func setupDashboard(stack awscdk.Stack) dashboard.Dashboard {
 
 func setupMessageTable(stack awscdk.Stack, id string, name string) awsdynamodb.ITable {
 	tableProps := awsdynamodb.TableProps{
-		PartitionKey: &awsdynamodb.Attribute{Name: aws.String("PK"), Type: awsdynamodb.AttributeType_STRING},
-		SortKey:      &awsdynamodb.Attribute{Name: aws.String("Received"), Type: awsdynamodb.AttributeType_STRING},
+		PartitionKey: testreception.DynamoPartitionKey(),
+		SortKey:      testreception.DynamoSortKey(),
 		TableName:    aws.String(name),
 	}
 
